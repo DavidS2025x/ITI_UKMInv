@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
+    <title>UKM Inventar</title>
+    <script src="JS/main.js" type="module"></script>
+</head>
+<body>
+    <div>
+        <div>
+            <h1>Uporabnik</h1>
+        </div>
+        <div>
+            Funkcije
+        </div>
+        <div>
+            <button onclick="logout()">Odjava</button>
+        </div>
+    </div>
+</body>
+
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+        uporabnikPodatki()
+        .then(data => {
+            console.log(data);
+        });
+    });
+</script>
+
+</html>
