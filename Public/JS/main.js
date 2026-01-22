@@ -6,8 +6,14 @@ async function uporabnikPodatki() {
         },
         body: JSON.stringify({})
     });
+
+    if (!response.ok) {
+        window.location.href = '/login';
+        return;
+    };
+    
     const userData = await response.json();
-    console.log(userData);
+    return userData;
 };
 
 async function logout() {

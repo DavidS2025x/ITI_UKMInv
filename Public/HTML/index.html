@@ -11,32 +11,73 @@
 
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <div class="container-fluid">
-    <a class="navbar-brand" style="padding: 0 !important;" href="#">
-      <img src="Icons/UKM_InvDB_Transparent.png" alt="UKM Inventar" height="50px">
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item" style="border-left: 1px solid black; border-right: 1px solid black;">
-          <a class="nav-link active" href="#">Nadzorna plošča</a>
-        </li>
-      </ul>
-      <button class="btn btn-outline-danger" type="button" onclick="logout()">Odjava</button>
-    </div>
-  </div>
-</nav>
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+      <div class="container-fluid">
+        <!-- Brand -->
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="#" style="font-size: 1.3rem; letter-spacing: 0.5px;">
+          <img src="Icons/UKM_InvDB_White.png" alt="UKM Inventar" height="35px" class="me-2">
+          UKM Inventar
+        </a>
+        
+        <!-- Toggler for mobile -->
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+          aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navigation items -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <!-- Left side nav items -->
+          <ul class="navbar-nav mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active px-3" href="#" style="transition: color 0.3s;">Nadzorna plošča</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link px-3" href="#" style="transition: color 0.3s;">Inventar</a>
+            </li>
+          </ul>
+          
+          <!-- Right side - User info and logout -->
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-lg-center">
+            <li class="nav-item d-flex align-items-center">
+              <span id="username" style="font-size: 0.95rem; color: #ecf0f1; margin-right: 15px;"></span>
+              <button class="btn btn-sm btn-light" type="button" onclick="logout()" style="font-size: 0.9rem; font-weight: bold; color: darkred;">Odjava</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    
+    <style>
+      .navbar-nav .nav-link {
+        border-bottom: 2px solid #7f8c8d;
+        transition: all 0.3s;
+      }
+      
+      .navbar-nav .nav-link:hover {
+        color: #ecf0f1 !important;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-bottom: 2px solid #ecf0f1;
+      }
+      
+      .navbar-nav .nav-link.active {
+        color: #3498db !important;
+        border-bottom: 2px solid #3498db;
+        font-weight: 600;
+      }
+    </style>
 </body>
 
 <script>
     window.addEventListener("DOMContentLoaded", () => {
         uporabnikPodatki()
         .then(data => {
+            // Update navbar with user info
+            document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
             console.log(data);
+        })
+        .catch(err => {
+            console.error('Error loading user data:', err);
         });
     });
 </script>

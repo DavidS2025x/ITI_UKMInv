@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 const express = require('express');
 const path = require('path');
 const mysql = require('mysql');
@@ -6,15 +8,15 @@ const bodyparser = require('body-parser');
 const session = require('express-session');
 const { send } = require('process');
 
-const port = 3000;
+const serverPort = process.env.PORT || 3000;
 
 // Database connection
 const pool = mysql.createPool({
     connectionLimit: 10,
-    host: 'sql7.freesqldatabase.com',
-    user: 'sql7812723',
-    password: 'WLcNYgwsrr',
-    database: 'sql7812723'
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_DBNAME
 });
 
 // Initial setup
@@ -22,7 +24,7 @@ server.use(bodyparser.urlencoded({ extended: true }));
 server.use(express.urlencoded({extended: true}));
 server.use(express.json());
 server.use(session({
-    secret: '!#SecretKeyUKM2025#!',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: true
 }));
@@ -43,14 +45,14 @@ server.get('/login', async (req, res) => {
 });
 
 server.post('/login', async (req, res) => {
-    let UporabniskoIme = req.body.UporabniskoIme;
-    let UporabniskoGeslo = req.body.UporabniskoGeslo;
-    let result = await SQLquery(`SELECT * FROM UporabnikiUKM LEFT JOIN Vloga ON UporabnikiUKM.OznakaVloge = Vloga.OznakaVloge WHERE UporabniskoIme = '${UporabniskoIme}' AND Geslo = '${UporabniskoGeslo}'`);
+    const UporabniskoIme = req.body.UporabniskoIme;
+    const UporabniskoGeslo = req.body.UporabniskoGeslo;
+    const result = await SQLquery(`SELECT * FROM UporabnikiUKM LEFT JOIN Vloga ON UporabnikiUKM.OznakaVloge = Vloga.OznakaVloge WHERE UporabniskoIme = ? AND Geslo = ?`, [UporabniskoIme, UporabniskoGeslo]);
     if(result.length > 0){
         req.session.UporabniskoIme = UporabniskoIme;
         req.session.Ime = result[0].Ime;
         req.session.Priimek = result[0].Priimek;
-        req.session.oznakaVloge = result[0].OznakaVloge;
+        req.session.OznakaVloge = result[0].OznakaVloge;
         req.session.D_Pregledopreme = result[0].PregledOpreme;
         req.session.D_DodajanjeOpreme = result[0].DodajanjeOpreme;
         req.session.D_UrejanjeOpreme = result[0].UrejanjeOpreme;
@@ -81,34 +83,36 @@ server.get('/NadzornaPlosca', async (req, res) => {
 
 // HTML routes
 
+
 // User data route
 server.post('/uporabnikPodatki', async (req, res) => {
     if(req.session.loggedIn){
-        res.send({"UporabniskoIme": req.session.UporabniskoIme,
-                  "Ime": req.session.Ime,
-                  "Priimek": req.session.Priimek,
-                  "OznakaVloge": req.session.oznakaVloge,
-                  "D_PregledOpreme": req.session.D_Pregledopreme,
-                  "D_DodajanjeOpreme": req.session.D_DodajanjeOpreme,
-                  "D_UrejanjeOpreme": req.session.D_UrejanjeOpreme,
-                  "D_BrisanjeOpreme": req.session.D_BrisanjeOpreme,
-                  "D_UrejanjeUporabnikov": req.session.D_UrejanjeUporabnikov,
-                  "D_OgledNadzornePlosce": req.session.D_OgledNadzornePlosce
-                });
+        res.json({
+            "UporabniskoIme": req.session.UporabniskoIme,
+            "Ime": req.session.Ime,
+            "Priimek": req.session.Priimek,
+            "OznakaVloge": req.session.OznakaVloge,
+            "D_PregledOpreme": req.session.D_Pregledopreme,
+            "D_DodajanjeOpreme": req.session.D_DodajanjeOpreme,
+            "D_UrejanjeOpreme": req.session.D_UrejanjeOpreme,
+            "D_BrisanjeOpreme": req.session.D_BrisanjeOpreme,
+            "D_UrejanjeUporabnikov": req.session.D_UrejanjeUporabnikov,
+            "D_OgledNadzornePlosce": req.session.D_OgledNadzornePlosce
+        });
     }else{
-        res.redirect('/login.html');
+        res.status(401).json({error: 'Not authenticated'});
     }
 });
 
 // Start server
-server.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}/`);
+server.listen(serverPort, () => {
+    console.log(`Server running at http://localhost:${serverPort}/`);
 });
 
 // SQL query function
-function SQLquery(SQLquery) {
+function SQLquery(SQLquery, params=[]) {
     return new Promise((resolve, reject) => {
-        pool.query(SQLquery, (err, results) => {
+        pool.query(SQLquery, params, (err, results) => {
             if (err){
                 reject(err);
             } else {
