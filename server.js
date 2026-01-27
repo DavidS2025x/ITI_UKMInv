@@ -63,7 +63,7 @@ server.post('/login', async (req, res) => {
         console.log(`User ${UporabniskoIme} logged in.`);
         console.log(req.session);
         console.log(result);
-        res.redirect('/NadzornaPlosca');
+        res.redirect('/nadzornaPlosca');
     }else{
         res.redirect('/login');
     }
@@ -77,12 +77,19 @@ server.post('/logout', async (req, res) => {
 // Routes
 
 // Data routes
-server.get('/NadzornaPlosca', async (req, res) => {
-    res.sendFile(path.join(__dirname,"Public","/HTML/index.html"));
+server.get('/delovnePostajePodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme){
+        const result = await SQLquery(`SELECT * FROM DelovnaPostaja`);
+        res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
 });
 
 // HTML routes
-
+server.get('/nadzornaPlosca', async (req, res) => {
+    res.sendFile(path.join(__dirname,"Public","/HTML/index.html"));
+});
 
 // User data route
 server.post('/uporabnikPodatki', async (req, res) => {

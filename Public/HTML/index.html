@@ -28,12 +28,9 @@
         <!-- Navigation items -->
         <div class="collapse navbar-collapse" id="navbarNav">
           <!-- Left side nav items -->
-          <ul class="navbar-nav mb-2 mb-lg-0">
+          <ul class="navbar-nav mb-2 mb-lg-0" id="navLinksContainer">
             <li class="nav-item">
-              <a class="nav-link active px-3" href="#" style="transition: color 0.3s;">Nadzorna plošča</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link px-3" href="#" style="transition: color 0.3s;">Inventar</a>
+              <a class="nav-link px-3" href="#" style="transition: color 0.3s;">Nadzorna plošča</a>
             </li>
           </ul>
           
@@ -48,6 +45,12 @@
       </div>
     </nav>
     
+    <!-- Main content area -->
+    <div class="container-fluid mt-4">
+      <div id="actionButtons" class="mb-4">
+        <!-- Buttons will be generated here based on user permissions -->
+      </div>
+    </div>
     <style>
       .navbar-nav .nav-link {
         border-bottom: 2px solid #7f8c8d;
@@ -74,6 +77,8 @@
         .then(data => {
             // Update navbar with user info
             document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+            // Generate action buttons based on permissions
+            addNavigationLinks(data);
             console.log(data);
         })
         .catch(err => {
