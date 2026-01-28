@@ -1,0 +1,16 @@
+.navbar-nav .nav-link {
+        border-bottom: 2px solid #7f8c8d;
+        transition: all 0.3s;
+    }
+      
+.navbar-nav .nav-link:hover {
+    color: #ecf0f1 !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid #ecf0f1;
+}
+      
+.navbar-nav .nav-link.active {
+    color: #3498db !important;
+    border-bottom: 2px solid #3498db;
+    font-weight: 600;
+}

@@ -7,6 +7,7 @@ const server = express();
 const bodyparser = require('body-parser');
 const session = require('express-session');
 const { send } = require('process');
+const fs = require('fs');
 
 const serverPort = process.env.PORT || 3000;
 
@@ -47,13 +48,13 @@ server.get('/login', async (req, res) => {
 server.post('/login', async (req, res) => {
     const UporabniskoIme = req.body.UporabniskoIme;
     const UporabniskoGeslo = req.body.UporabniskoGeslo;
-    const result = await SQLquery(`SELECT * FROM UporabnikiUKM LEFT JOIN Vloga ON UporabnikiUKM.OznakaVloge = Vloga.OznakaVloge WHERE UporabniskoIme = ? AND Geslo = ?`, [UporabniskoIme, UporabniskoGeslo]);
+    const result = await SQLquery(`SELECT * FROM uporabnikiukm LEFT JOIN vloga ON uporabnikiukm.OznakaVloge = vloga.OznakaVloge WHERE UporabniskoIme = ? AND Geslo = ?`, [UporabniskoIme, UporabniskoGeslo]);
     if(result.length > 0){
         req.session.UporabniskoIme = UporabniskoIme;
         req.session.Ime = result[0].Ime;
         req.session.Priimek = result[0].Priimek;
         req.session.OznakaVloge = result[0].OznakaVloge;
-        req.session.D_Pregledopreme = result[0].PregledOpreme;
+        req.session.D_PregledOpreme = result[0].PregledOpreme;
         req.session.D_DodajanjeOpreme = result[0].DodajanjeOpreme;
         req.session.D_UrejanjeOpreme = result[0].UrejanjeOpreme;
         req.session.D_BrisanjeOpreme = result[0].BrisanjeOpreme;
@@ -78,9 +79,38 @@ server.post('/logout', async (req, res) => {
 
 // Data routes
 server.get('/delovnePostajePodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme){
-        const result = await SQLquery(`SELECT * FROM DelovnaPostaja`);
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery(`SELECT * FROM delovnapostaja`);
+        console.log(result);
         res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/osebaPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery(`SELECT Ime, Priimek, UporabniskoIme AS 'Uporabnisko ime', OznakaSluzbe AS 'Sluzba' FROM osebaukm ORDER BY Priimek`);
+        console.log(result);
+        res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/enotaPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery(`SELECT * FROM enotaukm ORDER BY OznakaEnote`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/sluzbaPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery(`SELECT * FROM sluzbaukm ORDER BY OznakaSluzbe`);
+        return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
@@ -88,7 +118,40 @@ server.get('/delovnePostajePodatki', async (req, res) => {
 
 // HTML routes
 server.get('/nadzornaPlosca', async (req, res) => {
-    res.sendFile(path.join(__dirname,"Public","/HTML/index.html"));
+
+    if(req.session.loggedIn && req.session.D_OgledNadzornePlosce == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/index.html"), 'utf8');    
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
+});
+
+server.get('/opremaPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOpreme.html"), 'utf8');    
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
+});
+
+server.get('/osebaPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOseb.html"), 'utf8');    
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
 });
 
 // User data route
@@ -99,7 +162,7 @@ server.post('/uporabnikPodatki', async (req, res) => {
             "Ime": req.session.Ime,
             "Priimek": req.session.Priimek,
             "OznakaVloge": req.session.OznakaVloge,
-            "D_PregledOpreme": req.session.D_Pregledopreme,
+            "D_PregledOpreme": req.session.D_PregledOpreme,
             "D_DodajanjeOpreme": req.session.D_DodajanjeOpreme,
             "D_UrejanjeOpreme": req.session.D_UrejanjeOpreme,
             "D_BrisanjeOpreme": req.session.D_BrisanjeOpreme,

@@ -22,8 +22,8 @@ async function addNavigationLinks(userData) {
 
     const links = [
         { label: 'Nadzorna plošča', href: '/nadzornaPlosca', permission: 'D_OgledNadzornePlosce' },
-        { label: 'Oprema', href: '/pregledOpreme', permission: 'D_PregledOpreme' },
-        { label: 'Uporabniki', href: '/pregledUporabnikov', permission: 'D_PregledOpreme'}
+        { label: 'Oprema', href: '/opremaPregled', permission: 'D_PregledOpreme' },
+        { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'}
     ];
 
     links.forEach(link => {
