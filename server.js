@@ -116,6 +116,15 @@ server.get('/sluzbaPodatki', async (req, res) => {
     }
 });
 
+server.get('/uporabnikPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery(`SELECT UporabniskoIme AS 'Uporabniško ime', Ime, Priimek, OznakaVloge AS 'Vloga' FROM uporabnikiukm ORDER BY Priimek`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 // HTML routes
 server.get('/nadzornaPlosca', async (req, res) => {
 

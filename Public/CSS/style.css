@@ -14,3 +14,18 @@
     border-bottom: 2px solid #3498db;
     font-weight: 600;
 }
+
+/* Ensure add-button in Grid.js header is visible */
+.gridjs-search .btn {
+    background-color: #0d6efd !important;
+    color: #ffffff !important;
+    border-color: #0d6efd !important;
+    opacity: 1 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-left: 10px;
+    z-index: 100 !important;
+}

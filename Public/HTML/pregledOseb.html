@@ -19,6 +19,7 @@
             <button class="btn btn-outline-primary" onclick="tabela('osebe')">Osebe</button>
             <button class="btn btn-outline-primary" onclick="tabela('enote')">Enote</button>
             <button class="btn btn-outline-primary" onclick="tabela('sluzbe')">Službe</button>
+            <button class="btn btn-outline-primary" onclick="tabela('uporabniki')">Uporabniki</button>
         </div>
         <div id="table-responsive"></div>
     </div>
@@ -48,6 +49,7 @@ function tabela(izbor) {
         case 'osebe': url = '/osebaPodatki'; break;
         case 'enote': url = '/enotaPodatki'; break;
         case 'sluzbe': url = '/sluzbaPodatki'; break;
+        case 'uporabniki': url = '/uporabnikPodatki'; break;
         default: url = '/osebaPodatki';
     }
 
@@ -62,6 +64,7 @@ function tabela(izbor) {
             grid?.destroy(); // Destroy previous grid instance if exists
 
             const datacolumns = Object.keys(data[0]);
+            console.log(datacolumns);
             const columns = [
                 ...datacolumns,
                     {
@@ -96,10 +99,17 @@ function tabela(izbor) {
                 input.setAttribute('placeholder', 'Išči...');
             }
 
+            const head = container.querySelector('.gridjs-search');
+            console.log(head);
+            if (head) {
+                const buttonAdd = document.createElement('button');
+                buttonAdd.className = 'btn btn-sm btn-primary ms-2';
+                buttonAdd.textContent = '+';
+                buttonAdd.onclick = () => alert(`Dodaj novo vrstico`);
+                head.appendChild(buttonAdd);
+            }
         });
-}
-    
-    
+    }
 </script>
 
 </html>
