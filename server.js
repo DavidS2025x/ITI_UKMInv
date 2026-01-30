@@ -61,9 +61,6 @@ server.post('/login', async (req, res) => {
         req.session.D_UrejanjeUporabnikov = result[0].UrejanjeUporabnikov;
         req.session.D_OgledNadzornePlosce = result[0].OgledNadzornePlosce;
         req.session.loggedIn = true;
-        console.log(`User ${UporabniskoIme} logged in.`);
-        console.log(req.session);
-        console.log(result);
         res.redirect('/nadzornaPlosca');
     }else{
         res.redirect('/login');
@@ -81,7 +78,6 @@ server.post('/logout', async (req, res) => {
 server.get('/delovnePostajePodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
         const result = await SQLquery(`SELECT * FROM delovnapostaja`);
-        console.log(result);
         res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -91,7 +87,6 @@ server.get('/delovnePostajePodatki', async (req, res) => {
 server.get('/osebaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const result = await SQLquery(`SELECT UporabniskoIme AS "ID", Ime, Priimek, UporabniskoIme AS 'Uporabnisko ime', OznakaSluzbe AS 'Sluzba' FROM osebaukm ORDER BY Priimek`);
-        console.log(result);
         res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -153,10 +148,14 @@ server.get('/enotaPodatkiForm', async (req, res) => {
 });
 
 server.post('/dodajOsebo', async (req, res) => {
-    console.log(req);
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote } = req.body;
-        console.log(req.body);
+        let { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote } = req.body;
+        if (OznakaEnote === undefined || OznakaEnote === '') {
+            OznakaEnote = null;
+        }
+        if (OznakaSluzbe === undefined || OznakaSluzbe === '') {
+            OznakaSluzbe = null;
+        }
         const result = await SQLquery(`INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Oseba dodana'});
