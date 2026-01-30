@@ -18,10 +18,10 @@
     <!-- NAVIGATION -->
     <div class="container-fluid mt-5 w-75">
         <div>
-            <button class="btn btn-outline-primary" onclick="tabela('/osebaPodatki', '/vnosOseba')">Osebe</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/enotaPodatki', '/vnosEnota')">Enote</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/sluzbaPodatki', '/vnosSluzba')">Službe</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/uporabnikPodatki', '/vnosUporabnik')">Uporabniki</button>
+            <button class="btn btn-outline-primary" onclick="tabela('/osebaPodatki', '/izbrisOseba', '/vnosOseba')">Osebe</button>
+            <button class="btn btn-outline-primary" onclick="tabela('/enotaPodatki', '/izbrisEnota', '/vnosEnota')">Enote</button>
+            <button class="btn btn-outline-primary" onclick="tabela('/sluzbaPodatki', '/izbrisSluzba', '/vnosSluzba')">Službe</button>
+            <button class="btn btn-outline-primary" onclick="tabela('/uporabnikPodatki', '/izbrisUporabnik', '/vnosUporabnik')">Uporabniki</button>
         </div>
         <div id="table-responsive"></div>
     </div>
@@ -47,7 +47,7 @@
             }).catch(err => {
                 console.error('Error loading user data:', err);
             });
-            tabela('/osebaPodatki', '/vnosOseba');
+            tabela('/osebaPodatki', '/izbrisOseba', '/vnosOseba');
         });
 </script>
 

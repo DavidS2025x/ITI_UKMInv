@@ -168,6 +168,20 @@ server.post('/dodajOsebo', async (req, res) => {
     }
 });
 
+server.post('/izbrisOseba', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const { ID } = req.body;
+        const result = await SQLquery(`DELETE FROM osebaukm WHERE uporabniskoIme = ?`, [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Oseba izbrisana'});
+        }else{
+            res.status(500).json({success: false, message: 'Napaka pri brisanju osebe'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 // HTML routes
 server.get('/nadzornaPlosca', async (req, res) => {
 

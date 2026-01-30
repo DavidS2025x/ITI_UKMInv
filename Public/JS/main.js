@@ -57,7 +57,7 @@ async function logout() {
     }
 };
 
-function tabela(url, buttonAction) {
+function tabela(url, deleteurl ,buttonAction) {
     console.log(`Fetching data from: ${url}`);
     fetch(url)
         .then(r => r.json())
@@ -85,7 +85,7 @@ function tabela(url, buttonAction) {
                             }, 'Uredi'),
                             gridjs.h('button', {
                             className: 'btn btn-sm btn-danger',
-                            onClick: () => alert(`Briši: ${row.cells[0].data}`)
+                            onClick: () => fetch(`${deleteurl}/`, {method: 'POST', body: JSON.stringify({"ID": row.cells[0].data}), headers: {'Content-Type': 'application/json'}}).then(() => {tabela(url, deleteurl ,buttonAction);})
                             }, 'Briši')
                         ]);
                         }
