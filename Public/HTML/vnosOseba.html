@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
-    <title>Vnos osebe</title>
+    <title>Nova oseba</title>
     <script src="JS/main.js" type="module"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="CSS\style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
 </head>
@@ -23,10 +24,79 @@
                     // Update navbar with user info
                     document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
                     // Generate action buttons based on permissions
-                    addNavigationLinks(data);
-                    console.log(data);
+                    addNavigationLinks(data)
+                    .then(() => {
+                        const currentWindow = window.location.pathname.split('/').pop();
+                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
+                        links.forEach(link => {
+                            if (link.getAttribute('href').includes(currentWindow)) {
+                                link.classList.add('active');
+                            }
+                        });
+                    });
                 }).catch(err => {
                     console.error('Error loading user data:', err);
+                });
+
+                fetch('/sluzbaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const sluzbaSelect = document.getElementById('Sluzba');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaSluzbe;
+                        option.textContent = data.NazivSluzbe;
+                        sluzbaSelect.appendChild(option);
+                    });
+                });
+                
+                fetch('/enotaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    const enotaSelect = document.getElementById('Enota');
+                    data.forEach(data => {
+                        console.log(data);
+                        const option = document.createElement('option');
+                        option.value = data.OznakaEnote;
+                        option.textContent = data.NazivEnote;
+                        enotaSelect.appendChild(option);
+                    });
+                });
+
+                document.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const form = event.target;
+                    const payload = {
+                        UporabniskoIme: form.UporabniskoIme.value,
+                        Ime: form.Ime.value,
+                        Priimek: form.Priimek.value,
+                        InterniTelefoni: form.InterniTelefoni.value,
+                        MobilniTelefon: form.MobilniTelefon.value,
+                        ElektronskaPosta: form.ElektronskaPosta.value,
+                        OznakaSluzbe: form.Sluzba.value,
+                        OznakaEnote: form.Enota.value
+                    };
+                    console.log('Submitting payload', payload);
+                    fetch(form.action, {
+                        method: form.method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Oseba uspešno dodana!');
+                            form.reset();
+                        } else {
+                            response.json().then(j => console.error(j)).catch(()=>{});
+                            alert('Napaka pri dodajanju osebe.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error submitting form:', error);
+                        alert('Napaka pri dodajanju osebe.');
+                    });
                 });
             });
 </script>

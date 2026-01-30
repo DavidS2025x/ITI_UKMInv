@@ -1,31 +1,49 @@
-<div class="">
-    <form action="/vnosOseba" method="post">
-        <div class="mb-3">
-            <label for="UporabniskoIme">Uporabniško ime:</label>
-            <input type="text" id="UporabniskoIme" name="UporabniskoIme">
+<div class="card p-4 shadow" style="width: 550px; margin: auto; margin-top: 100px;">
+    <form action="/dodajOsebo" method="post">
+        <div class="d-flex justify-content-center mb-4">
+            <h1 style="font-weight: bold;">Nova oseba</h1>
         </div>
-        <div class="mb-3">
-            <label for="Ime">Ime:</label>
-            <input type="text" id="Ime" name="Ime">
+        <hr class="mb-3">
+        <div class="mb-3 d-flex flex-row">
+            <label for="UporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabniško ime</label>
+            <input type="text" id="UporabniskoIme" class="form-control" name="UporabniskoIme" required>
         </div>
-        <div class="mb-3">
-            <label for="Priimek">Priimek:</label>
-            <input type="text" id="Priimek" name="Priimek">
+        <div class="mb-3 d-flex flex-row">
+            <label for="Ime" class="form-label me-2" style="width: 200px; text-align: right;">Ime</label>
+            <input type="text" id="Ime" class="form-control" name="Ime" required>
         </div>
-        <div class="mb-3">
-            <label for="Geslo">Geslo:</label>
-            <input type="password" id="Geslo" name="Geslo">
+        <div class="mb-3 d-flex flex-row">
+            <label for="Priimek" class="form-label me-2" style="width: 200px; text-align: right;">Priimek</label>
+            <input type="text" id="Priimek" class="form-control" name="Priimek" required>
         </div>
-        <div>
-            <label for="Vloga">Vloga:</label>
-            <select id="Vloga" name="Vloga">
-                <option value="admin">Administrator</option>
-                <option value="user">Uporabnik</option>
+        <div class="mb-3 d-flex flex-row">
+            <label for="InterniTelefoni" class="form-label me-2" style="width: 200px; text-align: right;">Interni telefon</label>
+            <input type="text" id="InterniTelefoni" class="form-control" name="InterniTelefoni" required>
+        </div>
+        <div class="mb-3 d-flex flex-row">
+            <label for="MobilniTelefon" class="form-label me-2" style="width: 200px; text-align: right;">Zunanja številka</label>
+            <input type="text" id="MobilniTelefon" class="form-control" name="MobilniTelefon" required>
+        </div>
+        <div class="mb-3 d-flex flex-row">
+            <label for="ElektronskaPosta" class="form-label me-2" style="width: 200px; text-align: right;">Email</label>
+            <input type="email" id="ElektronskaPosta" class="form-control" name="ElektronskaPosta" required>
+        </div>
+        <div class="mb-3 d-flex flex-row">
+            <label for="Sluzba" class="form-label me-2" style="width: 200px; text-align: right;">Sluzba</label>
+            <select id="Sluzba" name="OznakaSluzbe" class="form-select" required>
+                <option value="">Brez</option>
             </select>
         </div>
-        <div>
-            <button type="submit">Vnos</button>
-            <button type="reset">Ponastavi</button>
+        <div class="mb-3 d-flex flex-row">
+            <label for="Enota" class="form-label me-2" style="width: 200px; text-align: right;">Enota</label>
+            <select id="Enota" name="OznakaEnote" class="form-select" required>
+                <option value="">Brez</option>
+            </select>
+        </div>
+        <hr class="mb-3">
+        <div class="mb-1 d-flex flex-row justify-content-end">
+            <button type="submit" class="btn btn-primary me-2">Vnos</button>
+            <button type="reset" class="btn btn-danger">Ponastavi</button>
         </div>
     </form>
 </div>

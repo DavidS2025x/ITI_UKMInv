@@ -23,7 +23,8 @@ async function addNavigationLinks(userData) {
     const links = [
         { label: 'Nadzorna plošča', href: '/nadzornaPlosca', permission: 'D_OgledNadzornePlosce' },
         { label: 'Oprema', href: '/opremaPregled', permission: 'D_PregledOpreme' },
-        { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'}
+        { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'},
+        { label: 'Šifranti', href: '/sifrantiPregled', permission: 'D_UrejanjeUporabnikov' }, 
     ];
 
     links.forEach(link => {
@@ -39,68 +40,6 @@ async function addNavigationLinks(userData) {
         };
     });
 };
-
-/*
-function generateActionButtons(userData) {
-    const buttonContainer = document.getElementById('actionButtons');
-    const buttons = [];
-    
-    // Define button configurations with their permission checks
-    const buttonConfigs = [
-        {
-            label: 'Pregled Opreme',
-            permission: 'D_PregledOpreme',
-            icon: '👁️',
-            color: 'btn-primary'
-        },
-        {
-            label: 'Dodaj Opremo',
-            permission: 'D_DodajanjeOpreme',
-            icon: '➕',
-            color: 'btn-success'
-        },
-        {
-            label: 'Uredi Opremo',
-            permission: 'D_UrejanjeOpreme',
-            icon: '✏️',
-            color: 'btn-warning'
-        },
-        {
-            label: 'Briši Opremo',
-            permission: 'D_BrisanjeOpreme',
-            icon: '🗑️',
-            color: 'btn-danger'
-        },
-        {
-            label: 'Uredi Uporabnike',
-            permission: 'D_UrejanjeUporabnikov',
-            icon: '👥',
-            color: 'btn-info'
-        }
-    ];
-    
-    // Generate buttons only if user has permission
-    buttonConfigs.forEach(config => {
-        if (userData[config.permission] === 1) {
-            const button = document.createElement('button');
-            button.className = `btn ${config.color} me-2 mb-2`;
-            button.style.fontSize = '0.95rem';
-            button.innerHTML = `${config.icon} ${config.label}`;
-            button.type = 'button';
-            button.onclick = () => console.log(`Clicked: ${config.label}`);
-            buttons.push(button);
-        }
-    });
-    
-    // Clear and populate button container
-    buttonContainer.innerHTML = '';
-    if (buttons.length > 0) {
-        buttons.forEach(btn => buttonContainer.appendChild(btn));
-    } else {
-        buttonContainer.innerHTML = '<p class="text-muted">No permissions available</p>';
-    }
-}
-*/
 
 async function logout() {
     const response = await fetch('/logout', {
@@ -118,7 +57,77 @@ async function logout() {
     }
 };
 
+function tabela(url, buttonAction) {
+    console.log(`Fetching data from: ${url}`);
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+            const container = document.getElementById("table-responsive");
+            
+            // Destroy previous grid instance if exists
+            if (window.currentGrid) {
+                window.currentGrid.destroy();
+            }
+            container.innerHTML = "";
+
+            const datacolumns = Object.keys(data[0]);
+            console.log(datacolumns);
+            const columns = [
+                ...datacolumns,
+                    {
+                        name: 'Akcije',
+                        formatter: (cell, row) => {
+                        return gridjs.h('div', { className: 'd-flex justify-content-center align-items-center'}, [
+                            gridjs.h('button', {
+                            className: 'btn btn-sm btn-primary me-1', // optional spacing
+                            onClick: () => alert(`Uredi: ${row.cells[0].data}`)
+                            }, 'Uredi'),
+                            gridjs.h('button', {
+                            className: 'btn btn-sm btn-danger',
+                            onClick: () => alert(`Briši: ${row.cells[0].data}`)
+                            }, 'Briši')
+                        ]);
+                        }
+                    }
+                ];
+
+            const rows = data.map(row => datacolumns.map(col => row[col]));
+
+            window.currentGrid = new gridjs.Grid({
+                columns,
+                data: rows,
+                search: true,
+                sort: true,
+                pagination: { enabled: true, limit: 10 }
+            }).render(container);
+
+            const input = container.querySelector('.gridjs-input');
+            if (input) {
+                input.setAttribute('placeholder', 'Išči...');
+                input.setAttribute('aria-label', 'Išči...');
+            }
+
+            const head = container.querySelector('.gridjs-search');
+            console.log(head);
+            if (head) {
+                const plusIcon = document.createElement('i');
+                plusIcon.className = 'bi bi-plus-lg';
+                const buttonAdd = document.createElement('button');
+                buttonAdd.className = 'btn btn-sm btn-primary ms-2 d-flex justify-content-center align-items-center';
+                buttonAdd.appendChild(plusIcon);
+                buttonAdd.onclick = () => window.location.href = buttonAction;
+                head.appendChild(buttonAdd);
+            }
+
+            const table = container.querySelector('.gridjs-container');
+            if (table) {
+                table.classList.add('loaded');
+            }
+        });
+    }
+
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
 window.addNavigationLinks = addNavigationLinks;
-//window.generateActionButtons = generateActionButtons;
+window.tabela = tabela;

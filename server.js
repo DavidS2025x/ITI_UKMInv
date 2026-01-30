@@ -90,7 +90,7 @@ server.get('/delovnePostajePodatki', async (req, res) => {
 
 server.get('/osebaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT Ime, Priimek, UporabniskoIme AS 'Uporabnisko ime', OznakaSluzbe AS 'Sluzba' FROM osebaukm ORDER BY Priimek`);
+        const result = await SQLquery(`SELECT UporabniskoIme AS "ID", Ime, Priimek, UporabniskoIme AS 'Uporabnisko ime', OznakaSluzbe AS 'Sluzba' FROM osebaukm ORDER BY Priimek`);
         console.log(result);
         res.json(result);
     } else {
@@ -100,7 +100,7 @@ server.get('/osebaPodatki', async (req, res) => {
 
 server.get('/enotaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT * FROM enotaukm ORDER BY OznakaEnote`);
+        const result = await SQLquery(`SELECT OznakaEnote AS 'ID', OznakaEnote AS 'Oznaka enote', NazivEnote AS 'Naziv enote', VodjaEnoteUporabniskoIme AS 'Vodja enote' FROM enotaukm ORDER BY OznakaEnote`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -109,7 +109,7 @@ server.get('/enotaPodatki', async (req, res) => {
 
 server.get('/sluzbaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT * FROM sluzbaukm ORDER BY OznakaSluzbe`);
+        const result = await SQLquery(`SELECT OznakaSluzbe AS 'ID', OznakaSluzbe AS 'Oznaka sluzbe', NazivSluzbe AS 'Naziv sluzbe', OznakaEnote AS 'Oznaka enote', VodjaSluzbeUporabniskoIme AS 'Vodja službe'  FROM sluzbaukm ORDER BY OznakaSluzbe`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -120,6 +120,50 @@ server.get('/uporabnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const result = await SQLquery(`SELECT UporabniskoIme AS 'Uporabniško ime', Ime, Priimek, OznakaVloge AS 'Vloga' FROM uporabnikiukm ORDER BY Priimek`);
         return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/vlogaPodatki', async (req, res) => {
+    if(req.session.loggedIn){
+        const result = await SQLquery(`SELECT OznakaVloge, NazivVloge FROM vloga ORDER BY OznakaVloge`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/sluzbaPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn){
+        const result = await SQLquery(`SELECT OznakaSluzbe, NazivSluzbe FROM sluzbaukm ORDER BY OznakaSluzbe`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/enotaPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn){
+        const result = await SQLquery(`SELECT OznakaEnote, NazivEnote FROM enotaukm ORDER BY OznakaEnote`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/dodajOsebo', async (req, res) => {
+    console.log(req);
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote } = req.body;
+        console.log(req.body);
+        const result = await SQLquery(`INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Oseba dodana'});
+        }else{
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju osebe'});
+        }
+        
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
@@ -157,6 +201,32 @@ server.get('/osebaPregled', async (req, res) => {
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOseb.html"), 'utf8');    
 
         page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
+});
+
+server.get('/sifrantiPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledSifrantov.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
+});
+
+server.get('/vnosOseba', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecOseba.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosOseba.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
         res.send(page);
     }else{
         res.redirect('/login');
