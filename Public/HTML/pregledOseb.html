@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="height: 100% !important;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,20 +14,68 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>let grid = null;</script>
 </head>
-<body>
-    <!-- NAVIGATION -->
-    <div class="container-fluid mt-5 w-75">
-        <div>
-            <button class="btn btn-outline-primary" onclick="tabela('/osebaPodatki', '/izbrisOseba', '/vnosOseba')">Osebe</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/enotaPodatki', '/izbrisEnota', '/vnosEnota')">Enote</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/sluzbaPodatki', '/izbrisSluzba', '/vnosSluzba')">Službe</button>
-            <button class="btn btn-outline-primary" onclick="tabela('/uporabnikPodatki', '/izbrisUporabnik', '/vnosUporabnik')">Uporabniki</button>
+<body style="height: 100%;">
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Izbris</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="confirmModalBody modal-body">
+            </div>
+
+            <div class="modal-footer">
+                <div id="modalID" style="visibility: hidden;"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
+            </div>
+            </div>
         </div>
-        <div id="table-responsive"></div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="container-fluid d-flex align-items-start ps-0" style="height: calc(100% - 61px);">
+
+    <!-- LEFT: buttons -->
+    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: 100% !important;">
+        <button class="btn btn-primary mb-2"
+        onclick="tabela('/osebaPodatki', '/vnosOseba', true); actionUrl = '/izbrisOseba'; document.getElementById('naslovTabele').innerText = 'Osebe'">
+        Osebe
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="tabela('/enotaPodatki', '/vnosEnota'); actionUrl = '/izbrisEnota'; document.getElementById('naslovTabele').innerText = 'Enote'">
+        Enote
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="tabela('/sluzbaPodatki', '/vnosSluzba'); actionUrl = '/izbrisSluzba'; document.getElementById('naslovTabele').innerText = 'Službe'">
+        Službe
+        </button>
+
+        <button class="btn btn-primary"
+        onclick="tabela('/uporabnikPodatki', '/vnosUporabnik', true); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki' ">
+        Uporabniki
+        </button>
+    </div>
+
+    <!-- RIGHT: remaining space -->
+    <div class="d-flex flex-column justify-content-center mt-1" style="overflow-x: auto;">
+        <div class="me-5">
+            <h2 class="pt-1" id="naslovTabele">Osebe</h2>
+        </div>
+        <div id="table-responsive" class="me-5"></div>
+    </div>
+
     </div>
 </body>
 
 <script>
+
+    actionUrl = '/izbrisOseba';
+
     window.addEventListener("DOMContentLoaded", () => {
         uporabnikPodatki()
             .then(data => {
@@ -47,8 +95,13 @@
             }).catch(err => {
                 console.error('Error loading user data:', err);
             });
-            tabela('/osebaPodatki', '/izbrisOseba', '/vnosOseba');
+            tabela('/osebaPodatki', '/vnosOseba', true);
         });
+
+    function izbrisiVnos(id, actionUrl){
+        console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabela('/osebaPodatki', '/vnosOseba');})
+    }
 </script>
 
 </html>

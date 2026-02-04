@@ -86,7 +86,7 @@ server.get('/delovnePostajePodatki', async (req, res) => {
 
 server.get('/osebaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT UporabniskoIme AS "ID", Ime, Priimek, UporabniskoIme AS 'Uporabnisko ime', OznakaSluzbe AS 'Sluzba' FROM osebaukm ORDER BY Priimek`);
+        const result = await SQLquery(`SELECT UporabniskoIme AS "ID", Ime, Priimek, InterniTelefoni AS 'Interni telefoni', MobilniTelefon AS 'Mobilni telefon', ElektronskaPosta AS 'Elektronska pošta', UporabniskoIme AS 'Uporabniško ime', OznakaSluzbe AS 'Služba' FROM osebaukm ORDER BY Priimek`);
         res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -104,7 +104,7 @@ server.get('/enotaPodatki', async (req, res) => {
 
 server.get('/sluzbaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT OznakaSluzbe AS 'ID', OznakaSluzbe AS 'Oznaka sluzbe', NazivSluzbe AS 'Naziv sluzbe', OznakaEnote AS 'Oznaka enote', VodjaSluzbeUporabniskoIme AS 'Vodja službe'  FROM sluzbaukm ORDER BY OznakaSluzbe`);
+        const result = await SQLquery(`SELECT s.OznakaSluzbe AS 'ID', s.OznakaSluzbe AS 'Oznaka službe', s.NazivSluzbe AS 'Naziv službe', s.OznakaEnote AS 'Oznaka enote', CONCAT(o.Ime, ' ', o.Priimek) AS 'Vodja službe'  FROM sluzbaukm s LEFT JOIN osebaukm o ON s.VodjaSluzbeUporabniskoIme = o.UporabniskoIme ORDER BY s.OznakaSluzbe`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -113,7 +113,7 @@ server.get('/sluzbaPodatki', async (req, res) => {
 
 server.get('/uporabnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT UporabniskoIme AS 'Uporabniško ime', Ime, Priimek, OznakaVloge AS 'Vloga' FROM uporabnikiukm ORDER BY Priimek`);
+        const result = await SQLquery(`SELECT u.UporabniskoIme AS 'Uporabniško ime', u.Ime, u.Priimek, v.NazivVloge AS 'Vloga' FROM uporabnikiukm u LEFT JOIN vloga v ON u.OznakaVloge = v.OznakaVloge ORDER BY Priimek`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -182,6 +182,20 @@ server.post('/izbrisOseba', async (req, res) => {
     }
 });
 
+server.post('/izbrisUporabnik', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const { ID } = req.body;
+        const result = await SQLquery(`DELETE FROM uporabnikiukm WHERE uporabniskoIme = ?`, [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Uporabnik izbrisan'});
+        }else{
+            res.status(500).json({success: false, message: 'Napaka pri brisanju uporabnika'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 // HTML routes
 server.get('/nadzornaPlosca', async (req, res) => {
 
@@ -203,8 +217,10 @@ server.get('/opremaPregled', async (req, res) => {
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         res.send(page);
-    }else{
+    }else if (!req.session.loggedIn){
         res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
     }
 });
 
@@ -215,8 +231,10 @@ server.get('/osebaPregled', async (req, res) => {
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         res.send(page);
-    }else{
+    }else if (!req.session.loggedIn){
         res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
     }
 });
 
@@ -241,8 +259,26 @@ server.get('/vnosOseba', async (req, res) => {
         page = page.replace('<!-- NAVIGATION -->', nav);
         page = page.replace('<!-- FORM -->', form);
         res.send(page);
-    }else{
+    }else if (!req.session.loggedIn){
         res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/urediOsebo', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecOseba.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediOsebo.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    }else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
     }
 });
 

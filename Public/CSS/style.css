@@ -23,6 +23,13 @@
     opacity: 1 !important;
 }
 
+.actionButton {
+    height: 16px !important;
+    padding-top: 1px !important;
+    padding-bottom: 2px !important;
+    line-height: 14px !important;
+}
+
 /* Ensure add-button in Grid.js header is visible */
 .gridjs-search .btn {
     background-color: #0d6efd !important;
@@ -31,8 +38,8 @@
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 42.3px;
-    height: 42.3px;
+    width: 30px;
+    height: 30px;
     margin-left: 10px;
     margin-bottom: 1px;
     z-index: 100 !important;
@@ -47,15 +54,12 @@
     color: #ffffff !important;
 }
 
-.gridjs-tr .gridjs-th:last-child{
-    max-width: 120px !important;
-    min-width: 120px !important;
+.gridjs-search input{
+    height: 30px !important;
 }
 
-.gridjs-tr .gridjs-td:last-child{
-    max-width: 120px !important;
-    min-width: 120px !important;
-    padding: 0px !important;
+.gridjs-th{
+    min-width: 100px !important;
 }
 
 .gridjs-th:first-child, .gridjs-td:first-child{
@@ -65,4 +69,25 @@
     padding: 0px !important;
     border: none !important;
     margin: 0px !important;
+}
+
+.gridjs-td{
+    height: 10px !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 14px !important;
+}
+
+.gridjs-th{
+    height: 10px !important;
+}
+
+tbody tr{
+    height: 10px !important;
+}
+
+thead tr{
+    height: 10px !important;
 }

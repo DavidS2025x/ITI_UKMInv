@@ -57,7 +57,7 @@ async function logout() {
     }
 };
 
-function tabela(url, deleteurl ,buttonAction) {
+function tabela(url,buttonAction, extraButtons = false) {
     console.log(`Fetching data from: ${url}`);
     fetch(url)
         .then(r => r.json())
@@ -77,15 +77,21 @@ function tabela(url, deleteurl ,buttonAction) {
                 ...datacolumns,
                     {
                         name: 'Akcije',
+                        attributes: () => ({
+                            style: 'width: 120px !important; text-align: center;'
+                        }),
                         formatter: (cell, row) => {
-                        return gridjs.h('div', { className: 'd-flex justify-content-center align-items-center'}, [
+                        return gridjs.h('div', { className: 'd-flex justify-content-center align-items-center akcije'}, [
                             gridjs.h('button', {
-                            className: 'btn btn-sm btn-primary me-1', // optional spacing
+                            className: 'btn btn-sm btn-primary me-1 actionButton', // optional spacing
                             onClick: () => alert(`Uredi: ${row.cells[0].data}`)
                             }, 'Uredi'),
                             gridjs.h('button', {
-                            className: 'btn btn-sm btn-danger',
-                            onClick: () => fetch(`${deleteurl}/`, {method: 'POST', body: JSON.stringify({"ID": row.cells[0].data}), headers: {'Content-Type': 'application/json'}}).then(() => {tabela(url, deleteurl ,buttonAction);})
+                            className: 'btn btn-sm btn-danger actionButton',
+                            onClick: () => {document.getElementById('modalID').textContent = row.cells[0].data;
+                                document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${row.cells[0].data}?`;
+                                bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                            }
                             }, 'Briši')
                         ]);
                         }
@@ -94,13 +100,24 @@ function tabela(url, deleteurl ,buttonAction) {
 
             const rows = data.map(row => datacolumns.map(col => row[col]));
 
-            window.currentGrid = new gridjs.Grid({
+            if(extraButtons){
+                window.currentGrid = new gridjs.Grid({
                 columns,
                 data: rows,
                 search: true,
                 sort: true,
-                pagination: { enabled: true, limit: 10 }
+                pagination: { enabled: true, limit: 25 }
             }).render(container);
+            } else{
+                window.currentGrid = new gridjs.Grid({
+                columns: datacolumns,
+                data: rows,
+                search: true,
+                sort: true,
+                pagination: { enabled: true, limit: 25 }
+            }).render(container);
+            }
+            
 
             const input = container.querySelector('.gridjs-input');
             if (input) {
@@ -112,7 +129,7 @@ function tabela(url, deleteurl ,buttonAction) {
             console.log(head);
             if (head) {
                 const plusIcon = document.createElement('i');
-                plusIcon.className = 'bi bi-plus-lg';
+                plusIcon.className = 'bi bi-plus';
                 const buttonAdd = document.createElement('button');
                 buttonAdd.className = 'btn btn-sm btn-primary ms-2 d-flex justify-content-center align-items-center';
                 buttonAdd.appendChild(plusIcon);
@@ -124,10 +141,46 @@ function tabela(url, deleteurl ,buttonAction) {
             if (table) {
                 table.classList.add('loaded');
             }
+
         });
     }
+
+function tabelaUporabniki() {
+
+}
+
+function createGrid(containerId, columns, data, addButtonAction) {
+  const container = document.getElementById(containerId);
+  if (window.currentGrid) window.currentGrid.destroy();
+  container.innerHTML = '';
+  window.currentGrid = new gridjs.Grid({
+    columns,
+    data,
+    search: true,
+    sort: true,
+    pagination: { enabled: true, limit: 10 }
+  }).render(container);
+
+    const input = container.querySelector('.gridjs-input');
+            if (input) {
+                input.setAttribute('placeholder', 'Išči...');
+                input.setAttribute('aria-label', 'Išči...');
+            }
+    const head = container.querySelector('.gridjs-search');
+            console.log(head);
+            if (head) {
+                const plusIcon = document.createElement('i');
+                plusIcon.className = 'bi bi-plus-lg';
+                const buttonAdd = document.createElement('button');
+                buttonAdd.className = 'btn btn-sm btn-primary ms-2 d-flex justify-content-center align-items-center';
+                buttonAdd.appendChild(plusIcon);
+                buttonAdd.onclick = () => window.location.href = addButtonAction;
+                head.appendChild(buttonAdd);
+            }
+}
 
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
 window.addNavigationLinks = addNavigationLinks;
 window.tabela = tabela;
+window.createGrid = createGrid;
