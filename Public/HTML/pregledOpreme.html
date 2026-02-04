@@ -13,7 +13,43 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
 <body>
-    <!-- NAVIGATION -->
+     <!-- NAVIGATION -->
+    <div class="container-fluid d-flex align-items-start ps-0" style="padding-top:61px;">
+
+    <!-- LEFT: buttons -->
+    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
+        
+        <button class="btn btn-primary mb-2" style = "width: 130px !important;"
+        onclick="tabela('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'">
+        Delovne postaje
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="tabela('/monitorPodatki'); document.getElementById('naslovTabele').innerText = 'Monitorji' ">
+        Monitorji
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="document.getElementById('naslovTabele').innerText = 'Tiskalniki' ">
+        Tiskalniki
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="document.getElementById('naslovTabele').innerText = 'Ročni skenerji' ">
+        ročni skenerji
+        </button>
+
+    </div>
+
+    <!-- RIGHT: remaining space -->
+    <div class="d-flex flex-column justify-content-center mt-1" style="overflow-x: auto;">
+        <div class="me-5">
+            <h2 class="pt-1" id="naslovTabele">Delovne postaje</h2>
+        </div>
+        <div id="table-responsive" class="me-5"></div>
+    </div>
+
+    </div>
 </body>
 
 <script>
@@ -33,6 +69,7 @@
                             }
                         });
                     });
+                    tabela('/delovnaPostajaPodatki')
                 }).catch(err => {
                     console.error('Error loading user data:', err);
                 });

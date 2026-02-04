@@ -36,29 +36,32 @@
     </div>
 
     <!-- NAVIGATION -->
-    <div class="container-fluid d-flex align-items-start ps-0" style="height: calc(100% - 61px);">
+    <div class="container-fluid d-flex align-items-start ps-0" style="padding-top:61px;">
 
     <!-- LEFT: buttons -->
-    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: 100% !important;">
-        <button class="btn btn-primary mb-2"
-        onclick="tabela('/osebaPodatki', '/vnosOseba', true); actionUrl = '/izbrisOseba'; document.getElementById('naslovTabele').innerText = 'Osebe'">
+    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
+        
+        <button class="btn btn-primary mb-2" style = "width: 130px !important;"
+        onclick="tabelaOsebe('/osebaPodatki', '/vnosOseba', 100); actionUrl = '/izbrisOseba'; document.getElementById('naslovTabele').innerText = 'Osebe'">
         Osebe
         </button>
 
-        <button class="btn btn-primary mb-2"
-        onclick="tabela('/enotaPodatki', '/vnosEnota'); actionUrl = '/izbrisEnota'; document.getElementById('naslovTabele').innerText = 'Enote'">
+        <button class="btn btn-primary"
+        onclick="tabelaUporabniki('/uporabnikPodatki', '/vnosUporabnik', 15); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki' ">
+        Uporabniki
+        </button>
+
+        <button class="btn btn-primary mb-2" style ="visibility: hidden;"
+        onclick="tabela('/enotaPodatki'); actionUrl = '/izbrisEnota'; document.getElementById('naslovTabele').innerText = 'Enote'">
         Enote
         </button>
 
-        <button class="btn btn-primary mb-2"
-        onclick="tabela('/sluzbaPodatki', '/vnosSluzba'); actionUrl = '/izbrisSluzba'; document.getElementById('naslovTabele').innerText = 'Službe'">
+        <button class="btn btn-primary mb-2" style ="visibility: hidden;"
+        onclick="tabela('/sluzbaPodatki'); actionUrl = '/izbrisSluzba'; document.getElementById('naslovTabele').innerText = 'Službe'">
         Službe
         </button>
 
-        <button class="btn btn-primary"
-        onclick="tabela('/uporabnikPodatki', '/vnosUporabnik', true); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki' ">
-        Uporabniki
-        </button>
+        
     </div>
 
     <!-- RIGHT: remaining space -->
@@ -95,13 +98,14 @@
             }).catch(err => {
                 console.error('Error loading user data:', err);
             });
-            tabela('/osebaPodatki', '/vnosOseba', true);
+            tabelaOsebe('/osebaPodatki', '/vnosOseba');
         });
 
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabela('/osebaPodatki', '/vnosOseba');})
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaOsebe('/osebaPodatki', '/vnosOseba');})
     }
+
 </script>
 
 </html>

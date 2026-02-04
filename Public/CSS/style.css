@@ -62,15 +62,6 @@
     min-width: 100px !important;
 }
 
-.gridjs-th:first-child, .gridjs-td:first-child{
-    visibility: hidden;
-    max-width: 0px !important;
-    display: none;
-    padding: 0px !important;
-    border: none !important;
-    margin: 0px !important;
-}
-
 .gridjs-td{
     height: 10px !important;
     padding-top: 2px !important;

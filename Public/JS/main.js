@@ -57,8 +57,49 @@ async function logout() {
     }
 };
 
-function tabela(url,buttonAction, extraButtons = false) {
+function tabela(url) {
     console.log(`Fetching data from: ${url}`);
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+            const container = document.getElementById("table-responsive");
+            
+            // Destroy previous grid instance if exists
+            if (window.currentGrid) {
+                window.currentGrid.destroy();
+            }
+            container.innerHTML = "";
+
+            const datacolumns = Object.keys(data[0]);
+            console.log(datacolumns);
+
+            const rows = data.map(row => datacolumns.map(col => row[col]));
+
+                window.currentGrid = new gridjs.Grid({
+                columns: datacolumns,
+                data: rows,
+                search: true,
+                sort: true,
+                pagination: { enabled: true, limit: 25 }
+            }).render(container);
+
+            const input = container.querySelector('.gridjs-input');
+            if (input) {
+                input.setAttribute('placeholder', 'Išči...');
+                input.setAttribute('aria-label', 'Išči...');
+            }
+
+            const table = container.querySelector('.gridjs-container');
+            if (table) {
+                table.classList.add('loaded');
+            }
+
+        });
+    }
+
+function tabelaOsebe(url,buttonAction,pagLim = 25) {
+console.log(`Fetching data from: ${url}`);
     fetch(url)
         .then(r => r.json())
         .then(data => {
@@ -100,25 +141,14 @@ function tabela(url,buttonAction, extraButtons = false) {
 
             const rows = data.map(row => datacolumns.map(col => row[col]));
 
-            if(extraButtons){
                 window.currentGrid = new gridjs.Grid({
-                columns,
+                columns: columns,
                 data: rows,
                 search: true,
                 sort: true,
-                pagination: { enabled: true, limit: 25 }
+                pagination: { enabled: true, limit: pagLim }
             }).render(container);
-            } else{
-                window.currentGrid = new gridjs.Grid({
-                columns: datacolumns,
-                data: rows,
-                search: true,
-                sort: true,
-                pagination: { enabled: true, limit: 25 }
-            }).render(container);
-            }
-            
-
+    
             const input = container.querySelector('.gridjs-input');
             if (input) {
                 input.setAttribute('placeholder', 'Išči...');
@@ -143,44 +173,88 @@ function tabela(url,buttonAction, extraButtons = false) {
             }
 
         });
-    }
-
-function tabelaUporabniki() {
-
 }
 
-function createGrid(containerId, columns, data, addButtonAction) {
-  const container = document.getElementById(containerId);
-  if (window.currentGrid) window.currentGrid.destroy();
-  container.innerHTML = '';
-  window.currentGrid = new gridjs.Grid({
-    columns,
-    data,
-    search: true,
-    sort: true,
-    pagination: { enabled: true, limit: 10 }
-  }).render(container);
+function tabelaUporabniki(url,buttonAction,pagLim = 25) {
+console.log(`Fetching data from: ${url}`);
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+            const container = document.getElementById("table-responsive");
+            
+            // Destroy previous grid instance if exists
+            if (window.currentGrid) {
+                window.currentGrid.destroy();
+            }
+            container.innerHTML = "";
 
-    const input = container.querySelector('.gridjs-input');
+            const datacolumns = Object.keys(data[0]);
+            console.log(datacolumns);
+            const columns = [
+                ...datacolumns,
+                    {
+                        name: 'Akcije',
+                        attributes: () => ({
+                            style: 'width: 120px !important; text-align: center;'
+                        }),
+                        formatter: (cell, row) => {
+                        return gridjs.h('div', { className: 'd-flex justify-content-center align-items-center akcije'}, [
+                            gridjs.h('button', {
+                            className: 'btn btn-sm btn-primary me-1 actionButton', // optional spacing
+                            onClick: () => alert(`Uredi: ${row.cells[0].data}`)
+                            }, 'Uredi'),
+                            gridjs.h('button', {
+                            className: 'btn btn-sm btn-danger actionButton',
+                            onClick: () => {document.getElementById('modalID').textContent = row.cells[0].data;
+                                document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${row.cells[0].data}?`;
+                                bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                            }
+                            }, 'Briši')
+                        ]);
+                        }
+                    }
+                ];
+
+            const rows = data.map(row => datacolumns.map(col => row[col]));
+
+                window.currentGrid = new gridjs.Grid({
+                columns: columns,
+                data: rows,
+                search: true,
+                sort: true,
+                pagination: { enabled: true, limit: pagLim }
+            }).render(container);
+    
+            const input = container.querySelector('.gridjs-input');
             if (input) {
                 input.setAttribute('placeholder', 'Išči...');
                 input.setAttribute('aria-label', 'Išči...');
             }
-    const head = container.querySelector('.gridjs-search');
+
+            const head = container.querySelector('.gridjs-search');
             console.log(head);
             if (head) {
                 const plusIcon = document.createElement('i');
-                plusIcon.className = 'bi bi-plus-lg';
+                plusIcon.className = 'bi bi-plus';
                 const buttonAdd = document.createElement('button');
                 buttonAdd.className = 'btn btn-sm btn-primary ms-2 d-flex justify-content-center align-items-center';
                 buttonAdd.appendChild(plusIcon);
-                buttonAdd.onclick = () => window.location.href = addButtonAction;
+                buttonAdd.onclick = () => window.location.href = buttonAction;
                 head.appendChild(buttonAdd);
             }
+
+            const table = container.querySelector('.gridjs-container');
+            if (table) {
+                table.classList.add('loaded');
+            }
+
+        });
 }
 
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
 window.addNavigationLinks = addNavigationLinks;
 window.tabela = tabela;
-window.createGrid = createGrid;
+window.tabelaOsebe = tabelaOsebe;
+window.tabelaUporabniki = tabelaUporabniki;
