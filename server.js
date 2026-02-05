@@ -203,7 +203,7 @@ server.get('/enotaPodatkiForm', async (req, res) => {
 
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery('SELECT * FROM delovnapostaja')
+        const result = await SQLquery('SELECT * FROM delovnapostaja');
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -213,6 +213,24 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 server.get('/monitorPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
         const result = await SQLquery('SELECT * FROM monitor')
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/tiskalnikPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery('SELECT * FROM tiskalnik');
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/rocnicitalecPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery('SELECT * FROM rocnicitalec');
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});

@@ -57,14 +57,20 @@ async function logout() {
     }
 };
 
-function tabela(url) {
+function tabela(url, pagLimit) {
     console.log(`Fetching data from: ${url}`);
+                
+    const savedLimit = localStorage.getItem('pagLimit');
+    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
+    window.currentPagLimit = pagLimit;
+
     fetch(url)
         .then(r => r.json())
         .then(data => {
             if (!data.length) return;
             const container = document.getElementById("table-responsive");
-            
+
+
             // Destroy previous grid instance if exists
             if (window.currentGrid) {
                 window.currentGrid.destroy();
@@ -73,6 +79,8 @@ function tabela(url) {
 
             const datacolumns = Object.keys(data[0]);
             console.log(datacolumns);
+
+            console.log("creating table with pagination limit: " + pagLimit);
 
             const rows = data.map(row => datacolumns.map(col => row[col]));
 
@@ -81,7 +89,7 @@ function tabela(url) {
                 data: rows,
                 search: true,
                 sort: true,
-                pagination: { enabled: true, limit: 25 }
+                pagination: { enabled: true, limit: Number(pagLimit) }
             }).render(container);
 
             const input = container.querySelector('.gridjs-input');
@@ -95,17 +103,75 @@ function tabela(url) {
                 table.classList.add('loaded');
             }
 
+            //add pagination number selector
+            const pagContainer = document.createElement('div');
+            pagContainer.classList = "d-flex flex justify-content-end w-100";
+            pagContainer.id = "pagContainer";
+
+            const pagInfo = document.createElement('span');
+            pagInfo.innerText = "Prikaži: ";
+            pagInfo.id = "pagInfo";
+
+            pagContainer.appendChild(pagInfo);
+
+            const paginationOptions = [
+                {id: '25', name:'pagLimit', value: 25},
+                {id: '50', name:'pagLimit', value: 50},
+                {id: '100', name:'pagLimit', value: 100},
+                {id: '200', name:'pagLimit', value: 200}
+            ]
+
+            paginationOptions.forEach(option => {
+                const radioContainer = document.createElement('div');
+                radioContainer.classList = "form-check form-check-inline";
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = option.id;
+                input.name = option.name;
+                input.value = option.value;
+                input.classList = "form-check-input";
+                input.style = "width: 14px !important; height: 14px !important;"
+                if(option.value == pagLimit){
+                    input.checked = true;
+                }
+                input.addEventListener('change', () => {
+                    window.currentPagLimit = option.value;
+                    localStorage.setItem('pagLimit', option.value);
+                    tabela(url, Number(option.value));
+                });
+
+                const label = document.createElement('label');
+                label.htmlFor = option.id;
+                label.innerText = option.id;
+                label.classList = "form-check-label";
+
+                radioContainer.appendChild(input);
+                radioContainer.appendChild(label);
+
+                pagContainer.appendChild(radioContainer);
+            });
+
+            const head = container.querySelector('.gridjs-search');
+            head.appendChild(pagContainer);
+
+            head.classList = ("gridjs-search d-flex w-100");
         });
     }
 
-function tabelaOsebe(url,buttonAction,pagLim = 25) {
-console.log(`Fetching data from: ${url}`);
+function tabelaOsebe(url,buttonAction,pagLimit) {
+    console.log(`Fetching data from: ${url}`);
+
+    const savedLimit = localStorage.getItem('pagLimit');
+    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
+    window.currentPagLimit = pagLimit;
+
     fetch(url)
         .then(r => r.json())
         .then(data => {
             if (!data.length) return;
             const container = document.getElementById("table-responsive");
-            
+
             // Destroy previous grid instance if exists
             if (window.currentGrid) {
                 window.currentGrid.destroy();
@@ -146,7 +212,7 @@ console.log(`Fetching data from: ${url}`);
                 data: rows,
                 search: true,
                 sort: true,
-                pagination: { enabled: true, limit: pagLim }
+                pagination: { enabled: true, limit: pagLimit }
             }).render(container);
     
             const input = container.querySelector('.gridjs-input');
@@ -171,18 +237,71 @@ console.log(`Fetching data from: ${url}`);
             if (table) {
                 table.classList.add('loaded');
             }
+ //add pagination number selector
+            const pagContainer = document.createElement('div');
+            pagContainer.classList = "d-flex flex justify-content-end w-100";
+            pagContainer.id = "pagContainer";
 
+            const pagInfo = document.createElement('span');
+            pagInfo.innerText = "Prikaži: ";
+            pagInfo.id = "pagInfo";
+
+            pagContainer.appendChild(pagInfo);
+
+            const paginationOptions = [
+                {id: '25', name:'pagLimit', value: 25},
+                {id: '50', name:'pagLimit', value: 50},
+                {id: '100', name:'pagLimit', value: 100},
+                {id: '200', name:'pagLimit', value: 200}
+            ]
+
+            paginationOptions.forEach(option => {
+                const radioContainer = document.createElement('div');
+                radioContainer.classList = "form-check form-check-inline";
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = option.id;
+                input.name = option.name;
+                input.value = option.value;
+                input.classList = "form-check-input";
+                input.style = "width: 14px !important; height: 14px !important;"
+                if(option.value == pagLimit){
+                    input.checked = true;
+                }
+                input.addEventListener('change', () => {
+                    window.currentPagLimit = option.value;
+                    localStorage.setItem('pagLimit', option.value);
+                    tabela(url, Number(option.value));
+                });
+
+                const label = document.createElement('label');
+                label.htmlFor = option.id;
+                label.innerText = option.id;
+                label.classList = "form-check-label";
+
+                radioContainer.appendChild(input);
+                radioContainer.appendChild(label);
+
+                pagContainer.appendChild(radioContainer);
+            });
+            head.appendChild(pagContainer);
+
+            head.classList = ("gridjs-search d-flex w-100");
         });
 }
 
-function tabelaUporabniki(url,buttonAction,pagLim = 25) {
-console.log(`Fetching data from: ${url}`);
+function tabelaUporabniki(url,buttonAction,pagLimit) {
+    console.log(`Fetching data from: ${url}`);
+    const savedLimit = localStorage.getItem('pagLimit');
+    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
+    window.currentPagLimit = pagLimit;
     fetch(url)
         .then(r => r.json())
         .then(data => {
             if (!data.length) return;
             const container = document.getElementById("table-responsive");
-            
+
             // Destroy previous grid instance if exists
             if (window.currentGrid) {
                 window.currentGrid.destroy();
@@ -223,7 +342,7 @@ console.log(`Fetching data from: ${url}`);
                 data: rows,
                 search: true,
                 sort: true,
-                pagination: { enabled: true, limit: pagLim }
+                pagination: { enabled: true, limit: pagLimit }
             }).render(container);
     
             const input = container.querySelector('.gridjs-input');
@@ -248,7 +367,58 @@ console.log(`Fetching data from: ${url}`);
             if (table) {
                 table.classList.add('loaded');
             }
+             //add pagination number selector
+            const pagContainer = document.createElement('div');
+            pagContainer.classList = "d-flex flex justify-content-end w-100";
+            pagContainer.id = "pagContainer";
 
+            const pagInfo = document.createElement('span');
+            pagInfo.innerText = "Prikaži: ";
+            pagInfo.id = "pagInfo";
+
+            pagContainer.appendChild(pagInfo);
+
+            const paginationOptions = [
+                {id: '25', name:'pagLimit', value: 25},
+                {id: '50', name:'pagLimit', value: 50},
+                {id: '100', name:'pagLimit', value: 100},
+                {id: '200', name:'pagLimit', value: 200}
+            ]
+
+            paginationOptions.forEach(option => {
+                const radioContainer = document.createElement('div');
+                radioContainer.classList = "form-check form-check-inline";
+
+                const input = document.createElement('input');
+                input.type = 'radio';
+                input.id = option.id;
+                input.name = option.name;
+                input.value = option.value;
+                input.classList = "form-check-input";
+                input.style = "width: 14px !important; height: 14px !important;"
+                if(option.value == pagLimit){
+                    input.checked = true;
+                }
+                input.addEventListener('change', () => {
+                    window.currentPagLimit = option.value;
+                    localStorage.setItem('pagLimit', option.value);
+                    tabela(url, Number(option.value));
+                });
+
+                const label = document.createElement('label');
+                label.htmlFor = option.id;
+                label.innerText = option.id;
+                label.classList = "form-check-label";
+
+                radioContainer.appendChild(input);
+                radioContainer.appendChild(label);
+
+                pagContainer.appendChild(radioContainer);
+            });
+
+            head.appendChild(pagContainer);
+
+            head.classList = ("gridjs-search d-flex w-100");
         });
 }
 

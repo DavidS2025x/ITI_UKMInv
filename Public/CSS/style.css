@@ -82,3 +82,7 @@ tbody tr{
 thead tr{
     height: 10px !important;
 }
+
+#pagInfo{
+    margin-right: 15px !important;
+}
