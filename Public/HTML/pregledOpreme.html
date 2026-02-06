@@ -39,7 +39,7 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
         
         <button class="btn btn-primary mb-2" style = "width: 130px !important;"
-        onclick="tabelaDelovnePostaje('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'">
+        onclick="tabelaDelovnePostaje('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'; actionUrl = '/izbrisDelovnaPostaja'">
         Delovne postaje
         </button>
 
@@ -72,6 +72,14 @@
 </body>
 
 <script>
+
+    let actionUrl = '/izbrisDelovnaPostaja';
+
+    function izbrisiVnos(id, actionUrl){
+        console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaOsebe('/osebaPodatki', '/vnosOseba');});
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
                 uporabnikPodatki()
                 .then(data => {

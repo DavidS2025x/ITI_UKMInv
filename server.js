@@ -361,6 +361,20 @@ server.post('/izbrisUporabnik', async (req, res) => {
     }
 });
 
+server.post('/izbrisDelovnaPostaja', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+        const { ID } = req.body;
+        const result = await SQLquery(`DELETE FROM delovnapostaja WHERE OznakaDP = ?`, [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Delovna postaja izbrisana'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri brisanju delovne postaje'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+})
+
 // HTML routes
 server.get('/nadzornaPlosca', async (req, res) => {
 
