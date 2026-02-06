@@ -201,6 +201,51 @@ server.get('/enotaPodatkiForm', async (req, res) => {
     }
 });
 
+server.get('/proizvajalecPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const result = await SQLquery(`SELECT * FROM proizvajalec`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/tipNapravePodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const result = await SQLquery(`SELECT * FROM tipnaprave`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.get('/lokacijaPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const result = await SQLquery(`SELECT * FROM lokacijaukm`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+})
+
+server.get('/osebaPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Ime, ' ', Priimek) AS 'Ime' FROM osebaukm`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme){
+        const result = await SQLquery(`SELECT * FROM operacijskisistem`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
         const result = await SQLquery('SELECT * FROM delovnapostaja');
@@ -247,10 +292,40 @@ server.post('/dodajOsebo', async (req, res) => {
             OznakaSluzbe = null;
         }
         const result = await SQLquery(`INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
-        if(result.affectedRows === 1){
+        if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Oseba dodana'});
-        }else{
+        }else {
             res.status(500).json({success: false, message: 'Napaka pri dodajanju osebe'});
+        }
+        
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/dodajDelovnoPostajo', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        let {OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+        if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
+            OznakaTipaNaprave = null;
+        }
+        if (OznakaEnote === undefined || OznakaEnote === '') {
+            OznakaEnote = null;
+        }
+        if (OznakaSluzbe === undefined || OznakaSluzbe === '') {
+            OznakaSluzbe = null;
+        }
+
+        if (DiskD === undefined || DiskD === '') {
+            DiskD = 0;
+        }
+
+        console.log(OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe);
+        const result = await SQLquery('INSERT INTO delovnapostaja (OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Delovna postaja dodana'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju delovne postaje'})
         }
         
     } else {
@@ -308,6 +383,22 @@ server.get('/opremaPregled', async (req, res) => {
         page = page.replace('<!-- NAVIGATION -->', nav);
         res.send(page);
     }else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/delovnaPostajaVnos', async (req,res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecDelovnaPostaja.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosDelovnaPostaja.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->',form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
         res.redirect('/login');
     } else {
         res.redirect('/nadzornaPlosca');

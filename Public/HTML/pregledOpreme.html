@@ -10,9 +10,28 @@
     <script src="JS/main.js" type="module"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
 <body>
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Izbris</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="confirmModalBody modal-body">
+            </div>
+
+            <div class="modal-footer">
+                <div id="modalID" style="visibility: hidden;"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
+            </div>
+            </div>
+        </div>
+    </div>
      <!-- NAVIGATION -->
     <div class="container-fluid d-flex align-items-start ps-0" style="padding-top:61px;">
 
@@ -20,7 +39,7 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
         
         <button class="btn btn-primary mb-2" style = "width: 130px !important;"
-        onclick="tabela('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'">
+        onclick="tabelaDelovnePostaje('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'">
         Delovne postaje
         </button>
 
@@ -69,7 +88,7 @@
                             }
                         });
                     });
-                    tabela('/delovnaPostajaPodatki')
+                    tabelaDelovnePostaje('/delovnaPostajaPodatki','/delovnaPostajaVnos');
                 }).catch(err => {
                     console.error('Error loading user data:', err);
                 });
