@@ -39,12 +39,12 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
         
         <button class="btn btn-primary mb-2" style = "width: 130px !important;"
-        onclick="tabelaDelovnePostaje('/delovnaPostajaPodatki');document.getElementById('naslovTabele').innerText = 'Delovne postaje'; actionUrl = '/izbrisDelovnaPostaja'">
+        onclick="tabelaDelovnePostaje('/delovnaPostajaPodatki','/delovnaPostajaVnos');document.getElementById('naslovTabele').innerText = 'Delovne postaje'; actionUrl = '/izbrisDelovnaPostaja'">
         Delovne postaje
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="tabela('/monitorPodatki'); document.getElementById('naslovTabele').innerText = 'Monitorji' ">
+        onclick="tabelaMonitorji('/monitorPodatki','/monitorVnos'); document.getElementById('naslovTabele').innerText = 'Monitorji' ">
         Monitorji
         </button>
 

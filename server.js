@@ -333,6 +333,10 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
     }
 });
 
+server.post('/dodajMonitor', async (req, res) => {
+
+});
+
 server.post('/izbrisOseba', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const { ID } = req.body;
@@ -411,6 +415,22 @@ server.get('/delovnaPostajaVnos', async (req,res) => {
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         page = page.replace('<!-- FORM -->',form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/monitorVnos', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecMonitor.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosMonitor.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
         res.send(page);
     } else if (!req.session.loggedIn){
         res.redirect('/login');
