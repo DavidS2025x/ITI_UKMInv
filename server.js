@@ -246,6 +246,15 @@ server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
     }
 });
 
+server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery(`SELECT OznakaDP FROM delovnapostaja`)
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
         const result = await SQLquery('SELECT * FROM delovnapostaja');
