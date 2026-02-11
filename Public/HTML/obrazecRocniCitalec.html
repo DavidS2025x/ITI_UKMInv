@@ -1,16 +1,16 @@
 <div class="card p-4 shadow w-50" style=" margin: auto; margin-top: 100px;">
-    <form action="/dodajMonitor" method="post">
+    <form action="/dodajRocniCitalec" method="post">
         <div class="d-flex justify-content-center mb-4">
-            <h1 style="font-weight: bold;">Nov Monitor</h1>
+            <h1 style="font-weight: bold;">Nov ročni čitalec</h1>
         </div>
         <hr class="mb-3">
         <div class="mb-3 d-flex flex-row">
-            <label for="OznakaMonitorja" class="form-label me-2" style="width: 200px; text-align: right;">Oznaka monitorja</label>
-            <input type="text" id="OznakaMonitorja" class="form-control" name="OznakaMonitorja" required>
+            <label for="OznakaRocnegaCitalca" class="form-label me-2" style="width: 200px; text-align: right;">Oznaka čitalca</label>
+            <input type="text" id="OznakaRocnegaCitalca" class="form-control" name="OznakaRocnegaCitalca" required>
         </div>
         <div class="mb-3 d-flex flex-row">
-            <label for="ModelMonitorja" class="form-label me-2" style="width: 200px; text-align: right;">Model monitorja</label>
-            <input type="text" id="ModelMonitorja" class="form-control" name="ModelMonitorja" required>
+            <label for="ModelRocnegaCitalca" class="form-label me-2" style="width: 200px; text-align: right;">Model čitalca</label>
+            <input type="text" id="ModelRocnegaCitalca" class="form-control" name="ModelRocnegaCitalca" required>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaProizvajalca" class="form-label me-2" style="width: 200px; text-align: right;">Proizvajalec</label>
@@ -19,7 +19,7 @@
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaDP" class="form-label me-2" style="width: 200px; text-align: right;">Delovna postaja</label>
             <select name="OznakaDP" class="form-select" id="OznakaDP">
-                <option value="">Brez delovne postaje</option>
+                <option value="">Brez</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">
@@ -28,7 +28,7 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="InventarnaStevilka" class="form-label me-2" style="width: 200px; text-align: right;">Inventarna številka</label>
-            <input type="text" name="InventarnaStevilka" class="form-control" id="InventarnaStevilka" required>
+            <input type="number" id="InventarnaStevilka" class="form-control" name="InventarnaStevilka">
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaOsebeUporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabnik</label>
@@ -39,23 +39,19 @@
             <select name="OznakaEnote" class="form-select" id="OznakaEnote"></select>
         </div>
         <div class="mb-3 d-flex flex-row">
-            <label for="OznakaSluzbe" class="form-label me-2" style="width: 200px; text-align: right;">Sluzba</label>
+            <label for="OznakaSluzbe" class="form-label me-2" style="width: 200px; text-align: right;">Služba</label>
             <select name="OznakaSluzbe" class="form-select" id="OznakaSluzbe"></select>
         </div>
         <div class="mb-3 d-flex flex-row">
-            <label for="Velikost" class="form-label me-2" style="width: 200px; text-align: right;">Diagonala</label>
-            <input type="number" id="Velikost" class="form-control" name="Velikost" required>
-        </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Kamera" class="form-label me-2" style="width: 200px; text-align: right;">Kamera</label>
-            <select name="Kamera" class="form-select" id="Kamera">
-                <option value= false>Ne</option>
-                <option value= true>Da</option>
+            <label for="Stojalo" class="form-label me-2" style="width: 200px; text-align: right;">Stojalo</label>
+            <select name="Stojalo" class="form-select" id="Stojalo" required>
+                <option value=true>Da</option>
+                <option value=false>Ne</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="SerijskaStevilka" class="form-label me-2" style="width: 200px; text-align: right;">Serijska številka</label>
-            <input type="text" id="SerijskaStevilka" class="form-control" name="SerijskaStevilka" required>
+            <input type="text" id="SerijskaStevilka" class="form-control" name="SerijskaStevilka">
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="DatumProizvodnje" class="form-label me-2" style="width: 200px; text-align: right;">Datum proizvodnje</label>
@@ -67,7 +63,7 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="Opombe" class="form-label me-2" style="width: 200px; text-align: right;">Opombe</label>
-            <input type="text" id="Opombe" class="form-control" name="Opombe" required>
+            <input type="text" id="Opombe" class="form-control" name="Opombe">
         </div>
         <hr class="mb-3">
         <div class="mb-1 d-flex flex-row justify-content-end">

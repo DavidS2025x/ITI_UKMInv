@@ -44,18 +44,23 @@
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="tabelaMonitorji('/monitorPodatki','/monitorVnos'); document.getElementById('naslovTabele').innerText = 'Monitorji' ">
+        onclick="tabelaMonitorji('/monitorPodatki','/monitorVnos'); document.getElementById('naslovTabele').innerText = 'Monitorji'; actionUrl = '/izbrisMonitor' ">
         Monitorji
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="tabela('/tiskalnikPodatki');document.getElementById('naslovTabele').innerText = 'Tiskalniki' ">
+        onclick="tabelaTiskalniki('/tiskalnikPodatki','/tiskalnikVnos');document.getElementById('naslovTabele').innerText = 'Tiskalniki'; actionUrl = '/izbrisTiskalnik' ">
         Tiskalniki
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="tabela('/rocnicitalecPodatki');document.getElementById('naslovTabele').innerText = 'Ročni skenerji' ">
+        onclick="tabelaCitalci('/rocnicitalecPodatki','/rocniCitalecVnos');document.getElementById('naslovTabele').innerText = 'Ročni skenerji'; actionUrl = '/izbrisRocniCitalec' ">
         ročni skenerji
+        </button>
+
+        <button class="btn btn-primary mb-2"
+        onclick="tabela('/virtualServerPodatki');document.getElementById('naslovTabele').innerText = 'Virtualni strežniki'; actionUrl = '/izbrisVirtualStreznik' ">
+        Virtualni strežniki
         </button>
 
     </div>
@@ -77,7 +82,7 @@
 
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaOsebe('/osebaPodatki', '/vnosOseba');});
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaDelovnePostaje('/delovnaPostajaPodatki','/delovnaPostajaVnos'); document.getElementById('naslovTabele').innerText = 'Delovne postaje'});
     }
 
     window.addEventListener("DOMContentLoaded", () => {

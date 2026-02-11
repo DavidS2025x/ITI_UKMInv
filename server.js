@@ -75,6 +75,17 @@ server.post('/logout', async (req, res) => {
 // Routes
 
 // Data routes
+server.get('/auditPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery('SELECT * FROM auditlog')
+        res.json(result);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 server.get('/delovnePostajePodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
         const result = await SQLquery(`SELECT * FROM delovnapostaja`);
@@ -113,10 +124,21 @@ server.get('/lokacijaPodatki', async (req, res) => {
 
 server.get('/osPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT OznakaOS AS 'Operacijski sistem' FROM operacijskisistem`);
+        const result = await SQLquery(`SELECT OznakaOS AS 'Operacijski sistem', KategorijaOS AS 'Kategorija' FROM operacijskisistem`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/virtualServerPodatki', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery(`SELECT v.ServerName AS 'Naziv strežnika', v.ClusterNode AS 'Cluster', v.OwnerNode AS 'Lastnik', v.Environment AS 'Okolje', v.Criticality AS 'Kritičnost', v.KeySoftware AS 'Ključna programska oprema', v.OSName AS 'Operacijski sistem', v.IP, v.DynamicMemory AS 'Dinamičen spomin', v.RAMStartupGB, v.RAMMinGB, v.RAMMaxGB, v.MemoryBufferPct, v.DiskCVHDMaxGB, v.DiskCVHDFileGB, v.DiskUsagePct, v.DiskCVHDPath, v.Notes, v.CreatedAt, v.UpdatedAt FROM virtualserver v LEFT JOIN operacijskisistem o ON v.OSName = o.OznakaOS`);
+        res.json(result);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
     }
 });
 
@@ -218,6 +240,15 @@ server.get('/tipNapravePodatkiForm', async (req, res) => {
         req.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
+
+server.get('/tipTiskalnikaForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const result = await SQLquery(`SELECT * FROM tiptiskalnika`);
+        return res.json(result);
+    } else {
+        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+})
 
 server.get('/lokacijaPodatkiForm', async (req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
@@ -343,7 +374,111 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
 });
 
 server.post('/dodajMonitor', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
+        if(OznakaDP == undefined || OznakaDP == ''){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery('INSERT INTO monitor(OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Monitor uspešno dodan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju monitorja'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/dodajTiskalnik', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+
+        if(OznakaDP == undefined || OznakaDP == ''){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(IP == undefined || IP == ''){
+            IP = null;
+        }
+        if(TiskalniskaVrsta == undefined || TiskalniskaVrsta == ''){
+            TiskalniskaVrsta = null;
+        }
+        if(SerijskaStevilka == undefined || SerijskaStevilka == ''){
+            SerijskaStevilka = null;
+        }
+        if(ProduktnaStevilka == undefined || ProduktnaStevilka == ''){
+            ProduktnaStevilka = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery(`INSERT INTO tiskalnik(OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Tiskalnik dodan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju tiskalnika'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/dodajRocniCitalec', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+        
+        if(OznakaDP == undefined || OznakaDP == ''){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(SerijskaStevilka == undefined || SerijskaStevilka == ''){
+            SerijskaStevilka = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery(`INSERT INTO rocnicitalec(OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        if(result.affectedRows === 1) {
+                res.status(200).json({success: true, message: 'Ročni čitalec dodan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju ročnega čitalca'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
 });
 
 server.post('/izbrisOseba', async (req, res) => {
@@ -388,7 +523,63 @@ server.post('/izbrisDelovnaPostaja', async (req, res) => {
     }
 })
 
+server.post('/izbrisMonitor', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+        const { ID } = req.body;
+        const result = await SQLquery('DELETE FROM monitor WHERE OznakaMonitorja = ?', [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Monitor izbrisan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri brisanju monitorja'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.post('/izbrisTiskalnik', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+        const { ID } = req.body;
+        const result = await SQLquery('DELETE FROM tiskalnik WHERE OznakaTiskalnika = ?', [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Tiskalnik izbrisan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri brisanju tiskalnika'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.post('/izbrisRocniCitalec', async (req, res) =>{
+    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+        const { ID } = req.body;
+        const result = await SQLquery('DELETE FROM rocnicitalec WHERE OznakaRocnegaCitalca = ?', [ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Ročni čitalec izbrisan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri brisanju ročnega čitalca'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
 // HTML routes
+server.get('/auditPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledAudit.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 server.get('/nadzornaPlosca', async (req, res) => {
 
     if(req.session.loggedIn && req.session.D_OgledNadzornePlosce == 1){
@@ -437,6 +628,38 @@ server.get('/monitorVnos', async(req, res) => {
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecMonitor.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosMonitor.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/tiskalnikVnos', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecTiskalnik.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosTiskalnik.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/rocniCitalecVnos', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecRocniCitalec.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosRocniCitalec.html"), 'utf8');
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         page = page.replace('<!-- FORM -->', form);

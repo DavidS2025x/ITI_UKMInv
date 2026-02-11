@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100% !important;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
+    <title>Revizijska sled</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="CSS\style.css">
+    <script src="https://cdn.jsdelivr.net/npm/gridjs/dist/gridjs.umd.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/gridjs/dist/theme/mermaid.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="JS/main.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>let grid = null;</script>
+</head>
+<body style="height: 100%;">
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Izbris</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="confirmModalBody modal-body">
+            </div>
+
+            <div class="modal-footer">
+                <div id="modalID" style="visibility: hidden;"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="container-fluid d-flex align-items-start ps-0" style="padding-top:61px;">
+
+    <!-- RIGHT: remaining space -->
+    <div class="d-flex flex-column justify-content-center mt-1" style="overflow-x: auto;">
+        <div class="me-5">
+            <h2 class="pt-1" id="naslovTabele">Revizijska Sled</h2>
+        </div>
+        <div id="table-responsive" class="me-5"></div>
+    </div>
+
+    </div>
+</body>
+
+<script>
+
+    window.addEventListener("DOMContentLoaded", () => {
+        uporabnikPodatki()
+            .then(data => {
+                // Update navbar with user info
+                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                // Generate action buttons based on permissions
+                addNavigationLinks(data)
+                .then(() => {
+                        const currentWindow = window.location.pathname.split('/').pop();
+                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
+                        links.forEach(link => {
+                            if (link.getAttribute('href').includes(currentWindow)) {
+                                link.classList.add('active');
+                            }
+                        });
+                    });
+            }).catch(err => {
+                console.error('Error loading user data:', err);
+            });
+            tabela('/auditPodatki');
+        });
+</script>
+
+</html>
