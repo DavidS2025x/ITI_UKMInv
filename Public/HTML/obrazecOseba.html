@@ -1,7 +1,7 @@
 <div class="card p-4 shadow" style="width: 550px; margin: auto; margin-top: 100px;">
     <form action="/dodajOsebo" method="post">
         <div class="d-flex justify-content-center mb-4">
-            <h1 style="font-weight: bold;">Nova oseba</h1>
+            <h1 style="font-weight: bold;" id="naslov">Nova oseba</h1>
         </div>
         <hr class="mb-3">
         <div class="mb-3 d-flex flex-row">
@@ -18,11 +18,11 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="InterniTelefoni" class="form-label me-2" style="width: 200px; text-align: right;">Interni telefon</label>
-            <input type="text" id="InterniTelefoni" class="form-control" name="InterniTelefoni" required>
+            <input type="text" id="InterniTelefoni" class="form-control" name="InterniTelefoni">
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="MobilniTelefon" class="form-label me-2" style="width: 200px; text-align: right;">Zunanja številka</label>
-            <input type="text" id="MobilniTelefon" class="form-control" name="MobilniTelefon" required>
+            <input type="text" id="MobilniTelefon" class="form-control" name="MobilniTelefon">
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="ElektronskaPosta" class="form-label me-2" style="width: 200px; text-align: right;">Email</label>
@@ -31,13 +31,13 @@
         <div class="mb-3 d-flex flex-row">
             <label for="Sluzba" class="form-label me-2" style="width: 200px; text-align: right;">Sluzba</label>
             <select id="Sluzba" name="OznakaSluzbe" class="form-select">
-                <option value="">Brez</option>
+                <option value="" disabled selected hidden>Izberi službo</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="Enota" class="form-label me-2" style="width: 200px; text-align: right;">Enota</label>
             <select id="Enota" name="OznakaEnote" class="form-select">
-                <option value="">Brez</option>
+                <option value="" disabled selected hidden>Izberi enoto</option>
             </select>
         </div>
         <hr class="mb-3">

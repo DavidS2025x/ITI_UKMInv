@@ -86,3 +86,10 @@ thead tr{
 #pagInfo{
     margin-right: 15px !important;
 }
+
+label{
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    margin-bottom: 0px !important;
+}

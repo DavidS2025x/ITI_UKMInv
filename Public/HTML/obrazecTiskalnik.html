@@ -1,7 +1,7 @@
 <div class="card p-4 shadow w-50" style=" margin: auto; margin-top: 100px;">
     <form action="/dodajTiskalnik" method="post">
         <div class="d-flex justify-content-center mb-4">
-            <h1 style="font-weight: bold;">Nov Tiskalnik</h1>
+            <h1 style="font-weight: bold;">Nov tiskalnik</h1>
         </div>
         <hr class="mb-3">
         <div class="mb-3 d-flex flex-row">
@@ -14,21 +14,27 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaProizvajalca" class="form-label me-2" style="width: 200px; text-align: right;">Proizvajalec</label>
-            <select name="OznakaProizvajalca" class="form-select" id="OznakaProizvajalca" required></select>
+            <select name="OznakaProizvajalca" class="form-select" id="OznakaProizvajalca" required>
+                <option value="" disabled selected hidden>Izberi proizvajalca</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaTipaTiskalnika" class="form-label me-2" style="width: 200px; text-align: right;">Tip tiskalnika</label>
-            <select name="OznakaTipaTiskalnika" class="form-select" id="OznakaTipaTiskalnika" required></select>
+            <select name="OznakaTipaTiskalnika" class="form-select" id="OznakaTipaTiskalnika" required>
+                <option value="" disabled selected hidden>Izberi tip tiskalnika</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaDP" class="form-label me-2" style="width: 200px; text-align: right;">Delovna postaja</label>
             <select name="OznakaDP" class="form-select" id="OznakaDP">
-                <option value="">Brez</option>
+                <option value="" disabled selected hidden>Izberi delovno postajo</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">   
             <label for="OznakaLokacije" class="form-label me-2" style="width: 200px; text-align: right;">Lokacija</label>
-            <select name="OznakaLokacije" class="form-select" id="OznakaLokacije" required></select>
+            <select name="OznakaLokacije" class="form-select" id="OznakaLokacije" required>
+                <option value="" disabled selected hidden>Izberi lokacijo</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="InventarnaStevilka" class="form-label me-2" style="width: 200px; text-align: right;">Inventarna številka</label>
@@ -36,15 +42,21 @@
         </div>
         <div class="mb-3 d-flex flex-row">   
             <label for="OznakaOsebeUporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabnik</label>
-            <select name="OznakaOsebeUporabniskoIme" class="form-select" id="OznakaOsebeUporabniskoIme" required></select>
+            <select name="OznakaOsebeUporabniskoIme" class="form-select" id="OznakaOsebeUporabniskoIme" required>
+                <option value="" disabled selected hidden>Izberi uporabnika</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaEnote" class="form-label me-2" style="width: 200px; text-align: right;">Enota</label>
-            <select name="OznakaEnote" class="form-select" id="OznakaEnote" required></select>
+            <select name="OznakaEnote" class="form-select" id="OznakaEnote" required>
+                <option value="" disabled selected hidden>Izberi enoto</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaSluzbe" class="form-label me-2" style="width: 200px; text-align: right;">Služba</label>
-            <select name="OznakaSluzbe" class="form-select" id="OznakaSluzbe" required></select>
+            <select name="OznakaSluzbe" class="form-select" id="OznakaSluzbe" required>
+                <option value="" disabled selected hidden>Izberi službo</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="IP" class="form-label me-2" style="width: 200px; text-align: right;">IP naslov</label>

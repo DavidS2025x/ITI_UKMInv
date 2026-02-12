@@ -5,24 +5,30 @@
         </div>
         <hr class="mb-3">
         <div class="mb-3 d-flex flex-row">
-            <label for="OznakaDP" class="form-label me-2" style="width: 200px; text-align: right;">OznakaDP</label>
+            <label for="OznakaDP" class="form-label me-2" style="width: 200px; text-align: right;">Oznaka DP</label>
             <input type="text" id="OznakaDP" class="form-control" name="OznakaDP" required>
         </div>
         <div class="mb-3 d-flex flex-row">
-            <label for="ModelDP" class="form-label me-2" style="width: 200px; text-align: right;">ModelDP</label>
+            <label for="ModelDP" class="form-label me-2" style="width: 200px; text-align: right;">Model DP</label>
             <input type="text" id="ModelDP" class="form-control" name="ModelDP" required>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaProizvajalca" class="form-label me-2" style="width: 200px; text-align: right;">Proizvajalec</label>
-            <select name="OznakaProizvajalca" id="OznakaProizvajalca" class="form-select" required></select>
+            <select name="OznakaProizvajalca" id="OznakaProizvajalca" class="form-select" required>
+                <option value="" disabled selected hidden>Izberi proizvajalca</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaTipaNaprave" class="form-label me-2" style="width: 200px; text-align: right;">Tip naprave</label>
-            <select name="OznakaTipaNaprave" id="OznakaTipaNaprave" class="form-select"></select>
+            <select name="OznakaTipaNaprave" id="OznakaTipaNaprave" class="form-select" required>
+                <option value="" disabled selected hidden>Izberi tip naprave</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaLokacije" class="form-label me-2" style="width: 200px; text-align: right;">Lokacija</label>
-            <select name="OznakaLokacije" id="OznakaLokacije" class="form-select" required></select>
+            <select name="OznakaLokacije" id="OznakaLokacije" class="form-select" required>
+                <option value="" disabled selected hidden>Izberi lokacijo</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="InventarnaStevilka" class="form-label me-2" style="width: 200px; text-align: right;">Inv. Številka</label>
@@ -30,19 +36,27 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaOsebeUporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabnik</label>
-            <select name="OznakaOsebeUporabniskoIme" id="OznakaOsebeUporabniskoIme" class="form-select" required></select>
+            <select name="OznakaOsebeUporabniskoIme" id="OznakaOsebeUporabniskoIme" class="form-select" required>
+                <option value="" disabled selected hidden>Izberi uporabnika</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaEnote" class="form-label me-2" style="width: 200px; text-align: right;">Enota</label>
-            <select name="OznakaEnote" id="OznakaEnote" class="form-select" ></select>
+            <select name="OznakaEnote" id="OznakaEnote" class="form-select" >
+                <option value="" disabled selected hidden>Izberi enoto</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaSluzbe" class="form-label me-2" style="width: 200px; text-align: right;">Služba</label>
-            <select name="OznakaSluzbe" id="OznakaSluzbe" class="form-select"></select>
+            <select name="OznakaSluzbe" id="OznakaSluzbe" class="form-select">
+                <option value="" disabled selected hidden>Izberi službo</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaOS" class="form-label me-2" style="width: 200px; text-align: right;">Operacijski sistem</label>
-            <select name="OznakaOS" id="OznakaOS" class="form-select" required></select>
+            <select name="OznakaOS" id="OznakaOS" class="form-select" required>
+                <option value="" disabled selected hidden>Izberi operacijski sistem</option>
+            </select>
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="CPU" class="form-label me-2" style="width: 200px; text-align: right;">CPU</label>

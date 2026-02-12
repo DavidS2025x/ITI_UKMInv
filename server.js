@@ -74,7 +74,44 @@ server.post('/logout', async (req, res) => {
 
 // Routes
 
+// Edit helper routes
+server.post('/nastaviEditID', async (req, res) => {
+    if(req.session.loggedIn){
+        console.log('EditID je: ');
+        console.log(req.body);
+        console.log(req.body.EditID);
+        const id = req.body.EditID;
+        req.session.editID = id;
+        return res.sendStatus(200);
+    } else {
+        res.redirect('login')
+    }
+});
+
+server.get('/osebaPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID was not set'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM osebaukm WHERE UporabniskoIme = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'No entry with this ID'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 // Data routes
+
 server.get('/auditPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const result = await SQLquery('SELECT * FROM auditlog')
@@ -474,10 +511,26 @@ server.post('/dodajRocniCitalec', async (req, res) => {
         if(result.affectedRows === 1) {
                 res.status(200).json({success: true, message: 'Ročni čitalec dodan'});
         } else {
-            res.status(500).json({success: false, message: 'Napaka pri dodajanju ročnega čitalca'})
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju ročnega čitalca'});
         }
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/dodajUporabnik', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge} = req.body;
+        const result = await SQLquery('INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, OznakaVloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge]);
+        if(result.affectedRows === 1) {
+                res.status(200).json({success: true, message: 'Uporabnik uspešno dodan'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri dodajanju uporabnika'});
+        }
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
     }
 });
 
@@ -565,6 +618,32 @@ server.post('/izbrisRocniCitalec', async (req, res) =>{
     }
 });
 
+server.post('/urediOsebo', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        let {UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID} = req.body;
+        if(InterniTelefoni == undefined || InterniTelefoni == ''){
+            InterniTelefoni = null;
+        }
+        if(MobilniTelefon == undefined || MobilniTelefon == ''){
+            MobilniTelefon = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        const result = await SQLquery('UPDATE osebaukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, InterniTelefoni = ?, MobilniTelefon = ?, ElektronskaPosta = ?, OznakaSluzbe = ?, OznakaEnote = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Vnos uspešno spremenjen'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju vnosa'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
 // HTML routes
 server.get('/auditPregled', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
@@ -606,6 +685,23 @@ server.get('/opremaPregled', async (req, res) => {
         res.redirect('/nadzornaPlosca');
     }
 });
+
+server.get('/uporabnikVnos', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecUporabnik.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosUporabnik.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+})
 
 server.get('/delovnaPostajaVnos', async (req,res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){

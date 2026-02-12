@@ -47,18 +47,8 @@
         </button>
 
         <button class="btn btn-primary"
-        onclick="tabelaUporabniki('/uporabnikPodatki', '/vnosUporabnik'); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki' ">
+        onclick="tabelaUporabniki('/uporabnikPodatki', '/uporabnikVnos'); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki' ">
         Uporabniki
-        </button>
-
-        <button class="btn btn-primary mb-2" style ="visibility: hidden;"
-        onclick="tabela('/enotaPodatki'); actionUrl = '/izbrisEnota'; document.getElementById('naslovTabele').innerText = 'Enote'">
-        Enote
-        </button>
-
-        <button class="btn btn-primary mb-2" style ="visibility: hidden;"
-        onclick="tabela('/sluzbaPodatki'); actionUrl = '/izbrisSluzba'; document.getElementById('naslovTabele').innerText = 'Službe'">
-        Službe
         </button>
 
         
@@ -103,7 +93,7 @@
 
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaOsebe('/osebaPodatki', '/vnosOseba');})
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {tabelaOsebe('/osebaPodatki', '/vnosOseba'); document.getElementById('naslovTabele').innerText = 'Osebe'})
     }
 </script>
 
