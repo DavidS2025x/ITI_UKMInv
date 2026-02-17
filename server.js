@@ -93,12 +93,34 @@ server.get('/osebaPodatkiEdit', async (req, res) => {
         const id = req.session.editID;
         console.log(id);
         if(!id){
-            res.status(400).json({error: 'EditID was not set'});
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
         } else {
             const result = await SQLquery(`SELECT * FROM osebaukm WHERE UporabniskoIme = ? LIMIT 1`, [id]);
             console.log(result);
             if(!result || result.length === 0){
-                res.status(400).json({error: 'No entry with this ID'});
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/uporabnikPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM uporabnikiukm WHERE UporabniskoIme = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
             } else {
                 res.json(result[0])
             }
@@ -644,6 +666,20 @@ server.post('/urediOsebo', async (req, res) => {
     }
 });
 
+server.post('/urediUporabnika', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID} = req.body;
+        const result = await SQLquery('UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, OznakaVloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Uporabnik uspešno urejen'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju uporabnika'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
 // HTML routes
 server.get('/auditPregled', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
@@ -814,6 +850,22 @@ server.get('/urediOsebo', async (req, res) => {
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecOseba.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediOsebo.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    }else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/urediUporabnika', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecUporabnik.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediUporabnika.html"), 'utf8');
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         page = page.replace('<!-- FORM -->', form);

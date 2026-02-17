@@ -322,7 +322,7 @@ function tabelaUporabniki(url,buttonAction,pagLimit) {
                         return gridjs.h('div', { className: 'd-flex justify-content-center align-items-center akcije'}, [
                             gridjs.h('button', {
                             className: 'btn btn-sm btn-primary me-1 actionButton', // optional spacing
-                            onClick: () => async () => {console.log(row.cells[0].data); await fetch('/nastaviEditID', {method: 'POST',headers: {'Content-Type': 'application/json'}, body: JSON.stringify({EditID: row.cells[0].data}) }); window.location.href = '/urediUporabnika'}
+                            onClick: async () => {console.log(row.cells[0].data); await fetch('/nastaviEditID', {method: 'POST',headers: {'Content-Type': 'application/json'}, body: JSON.stringify({EditID: row.cells[0].data}) }); window.location.href = '/urediUporabnika'}
                             }, 'Uredi'),
                             gridjs.h('button', {
                             className: 'btn btn-sm btn-danger actionButton',
