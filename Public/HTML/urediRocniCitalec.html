@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
+    <title>Uredi ročni čitalec</title>
+    <script src="JS/main.js" type="module"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="CSS\style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+</head>
+<body>
+    <!-- NAVIGATION -->
+    <!-- FORM -->
+</body>
+<script>
+    window.addEventListener("DOMContentLoaded", () => {
+                uporabnikPodatki()
+                .then(data => {
+                    // Update navbar with user info
+                    document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                    // Generate action buttons based on permissions
+                    addNavigationLinks(data)
+                    .then(() => {
+                        const currentWindow = window.location.pathname.split('/').pop();
+                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
+                        links.forEach(link => {
+                            if (link.getAttribute('href').includes(currentWindow)) {
+                                link.classList.add('active');
+                            }
+                        });
+                    });
+                }).catch(err => {
+                    console.error('Error loading user data:', err);
+                });
+
+                fetch('/proizvajalecPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaProizvajalca');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaProizvajalca;
+                        option.textContent = data.NazivProizvajalca;
+                        input.appendChild(option);
+                    });
+                });
+
+                fetch('/lokacijaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaLokacije');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaLokacije;
+                        option.textContent = data.NazivLokacije;
+                        input.appendChild(option);
+                    });
+                });
+
+                fetch('/osebaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaOsebeUporabniskoIme');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.UporabniskoIme;
+                        option.textContent = data.Ime;
+                        input.appendChild(option);
+                    });
+                });
+
+                fetch('/sluzbaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaSluzbe');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaSluzbe;
+                        option.textContent = data.NazivSluzbe;
+                        input.appendChild(option);
+                    });
+                });
+                
+                fetch('/enotaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaEnote');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaEnote;
+                        option.textContent = data.NazivEnote;
+                        input.appendChild(option);
+                    });
+                });
+
+                fetch('/delovnaPostajaPodatkiForm')
+                .then(response => response.json())
+                .then(data => {
+                    const input = document.getElementById('OznakaDP');
+                    data.forEach(data => {
+                        const option = document.createElement('option');
+                        option.value = data.OznakaDP;
+                        option.textContent = data.OznakaDP;
+                        input.appendChild(option);
+                    })
+                })
+
+                const naslov = document.querySelector('h1')
+                naslov.innerText = "Uredi ročni čitalec";
+
+                function formatDateForInput(dateString) {
+                    if (!dateString) return '';
+                    // Handle both "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DD" formats
+                    const dateOnly = dateString.split('T')[0] || dateString.split(' ')[0];
+                    return dateOnly;
+                }
+
+                fetch('/rocniCitalecPodatkiEdit')
+                .then(response => response.json())
+                .then( data => {
+                    console.log('Raw data from server:', data);
+                    console.log('DatumProizvodnje before format:', data.DatumProizvodnje);
+                    console.log('DatumNakupa before format:', data.DatumNakupa);
+                    
+                    window.OznakaRocnegaCitalca = data.OznakaRocnegaCitalca;
+                    window.ModelRocnegaCitalca = data.ModelRocnegaCitalca;
+                    window.OznakaProizvajalca = data.OznakaProizvajalca;
+                    window.OznakaDP = data.OznakaDP;
+                    window.OznakaLokacije = data.OznakaLokacije;
+                    window.InventarnaStevilka = data.InventarnaStevilka;
+                    window.OznakaOsebeUporabniskoIme = data.OznakaOsebeUporabniskoIme;
+                    window.OznakaEnote = data.OznakaEnote;
+                    window.OznakaSluzbe = data.OznakaSluzbe;
+                    window.Stojalo = data.Stojalo;
+                    window.SerijskaStevilka = data.SerijskaStevilka;
+                    window.DatumProizvodnje = formatDateForInput(data.DatumProizvodnje);
+                    window.DatumNakupa = formatDateForInput(data.DatumNakupa);
+                    window.Opombe = data.Opombe;
+                    
+                    console.log('DatumProizvodnje after format:', window.DatumProizvodnje);
+                    console.log('DatumNakupa after format:', window.DatumNakupa);
+
+                    document.getElementById('OznakaRocnegaCitalca').value = window.OznakaRocnegaCitalca;
+                    document.getElementById('ModelRocnegaCitalca').value = window.ModelRocnegaCitalca;
+                    document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
+                    document.getElementById('OznakaDP').value = window.OznakaDP;
+                    document.getElementById('OznakaLokacije').value = window.OznakaLokacije;
+                    document.getElementById('InventarnaStevilka').value = window.InventarnaStevilka;
+                    document.getElementById('OznakaOsebeUporabniskoIme').value = window.OznakaOsebeUporabniskoIme;
+                    document.getElementById('OznakaEnote').value = window.OznakaEnote;
+                    document.getElementById('OznakaSluzbe').value = window.OznakaSluzbe;
+                    document.getElementById('Stojalo').value = window.Stojalo ? '1' : '0';
+                    document.getElementById('SerijskaStevilka').value = window.SerijskaStevilka;
+                    document.getElementById('DatumProizvodnje').value = window.DatumProizvodnje;
+                    document.getElementById('DatumNakupa').value = window.DatumNakupa;
+                    document.getElementById('Opombe').value = window.Opombe;
+                })
+
+                document.addEventListener('submit', (event) => {
+                    event.preventDefault();
+                    const form = event.target;
+                    const payload = {
+                        OznakaRocnegaCitalca: form.OznakaRocnegaCitalca.value,
+                        ModelRocnegaCitalca: form.ModelRocnegaCitalca.value,
+                        OznakaProizvajalca: form.OznakaProizvajalca.value,
+                        OznakaDP: form.OznakaDP.value,
+                        OznakaLokacije: form.OznakaLokacije.value,
+                        InventarnaStevilka: form.InventarnaStevilka.value,
+                        OznakaOsebeUporabniskoIme: form.OznakaOsebeUporabniskoIme.value,
+                        OznakaEnote: form.OznakaEnote.value,
+                        OznakaSluzbe: form.OznakaSluzbe.value,
+                        Stojalo: form.Stojalo.value,
+                        SerijskaStevilka: form.SerijskaStevilka.value,
+                        DatumProizvodnje: form.DatumProizvodnje.value,
+                        DatumNakupa: form.DatumNakupa.value,
+                        Opombe: form.Opombe.value,
+                        ID: window.OznakaRocnegaCitalca
+                    };
+                    console.log(payload);
+                    fetch('/urediRocniCitalec', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    }).then(response => response.json())
+                    .then(data => {
+                        if(data.success) {
+                            alert(data.message);
+                            window.location.href = '/opremaPregled';
+                        } else {
+                            alert(data.message);
+                        }
+                    });
+                });
+
+                document.addEventListener('reset', (event) => {
+                    setTimeout(() => {
+                        document.getElementById('OznakaRocnegaCitalca').value = window.OznakaRocnegaCitalca;
+                        document.getElementById('ModelRocnegaCitalca').value = window.ModelRocnegaCitalca;
+                        document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
+                        document.getElementById('OznakaDP').value = window.OznakaDP;
+                        document.getElementById('OznakaLokacije').value = window.OznakaLokacije;
+                        document.getElementById('InventarnaStevilka').value = window.InventarnaStevilka;
+                        document.getElementById('OznakaOsebeUporabniskoIme').value = window.OznakaOsebeUporabniskoIme;
+                        document.getElementById('OznakaEnote').value = window.OznakaEnote;
+                        document.getElementById('OznakaSluzbe').value = window.OznakaSluzbe;
+                        document.getElementById('Stojalo').value = window.Stojalo ? '1' : '0';
+                        document.getElementById('SerijskaStevilka').value = window.SerijskaStevilka;
+                        document.getElementById('DatumProizvodnje').value = window.DatumProizvodnje;
+                        document.getElementById('DatumNakupa').value = window.DatumNakupa;
+                        document.getElementById('Opombe').value = window.Opombe;
+                    }, 0);
+                });
+    });
+</script>
+</html>

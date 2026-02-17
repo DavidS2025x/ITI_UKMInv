@@ -432,11 +432,40 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
     }
 });
 
+server.post('/urediDelovnaPostaja', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        let {OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+        if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
+            OznakaTipaNaprave = null;
+        }
+        if (OznakaEnote === undefined || OznakaEnote === '') {
+            OznakaEnote = null;
+        }
+        if (OznakaSluzbe === undefined || OznakaSluzbe === '') {
+            OznakaSluzbe = null;
+        }
+        if (DiskD === undefined || DiskD === '') {
+            DiskD = null;
+        }
+        if (Opombe === undefined || Opombe === '') {
+            Opombe = null;
+        }
+        const result = await SQLquery('UPDATE delovnapostaja SET OznakaDP = ?, ModelDP = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, OznakaOS = ?, CPU = ?, RAM = ?, DiskC = ?, DiskD = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaDP = ?', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Delovna postaja uspešno urejena'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju delovne postaje'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 server.post('/dodajMonitor', async (req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
         let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
-        if(OznakaDP == undefined || OznakaDP == ''){
+        if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
@@ -463,11 +492,85 @@ server.post('/dodajMonitor', async (req, res) => {
     }
 });
 
+server.post('/urediMonitor', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+
+        if(OznakaDP == undefined || OznakaDP == ' '){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery('UPDATE monitor SET OznakaMonitorja = ?, ModelMonitorja = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Velikost = ?, Kamera = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaMonitorja = ?', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Monitor uspešno urejen'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju monitorja'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/urediTiskalnik', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+
+        if(OznakaDP == undefined || OznakaDP == ' '){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(IP == undefined || IP == ''){
+            IP = null;
+        }
+        if(TiskalniskaVrsta == undefined || TiskalniskaVrsta == ''){
+            TiskalniskaVrsta = null;
+        }
+        if(SerijskaStevilka == undefined || SerijskaStevilka == ''){
+            SerijskaStevilka = null;
+        }
+        if(ProduktnaStevilka == undefined || ProduktnaStevilka == ''){
+            ProduktnaStevilka = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery('UPDATE tiskalnik SET OznakaTiskalnika = ?, ModelTiskalnika = ?, OznakaProizvajalca = ?, OznakaTipaTiskalnika = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, IP = ?, TiskalniskaVrsta = ?, SerijskaStevilka = ?, ProduktnaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaTiskalnika = ?', [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Tiskalnik uspešno urejen'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju tiskalnika'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 server.post('/dodajTiskalnik', async(req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
         let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
-        if(OznakaDP == undefined || OznakaDP == ''){
+        if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
@@ -506,11 +609,45 @@ server.post('/dodajTiskalnik', async(req, res) => {
     }
 });
 
+server.post('/urediRocniCitalec', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+
+        if(OznakaDP == undefined || OznakaDP == ' '){
+            OznakaDP = null;
+        }
+        if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
+            InventarnaStevilka = null;
+        }
+        if(OznakaEnote == undefined || OznakaEnote == ''){
+            OznakaEnote = null;
+        }
+        if(OznakaSluzbe == undefined || OznakaSluzbe == ''){
+            OznakaSluzbe = null;
+        }
+        if(SerijskaStevilka == undefined || SerijskaStevilka == ''){
+            SerijskaStevilka = null;
+        }
+        if(Opombe == undefined || Opombe == ''){
+            Opombe = null;
+        }
+
+        const result = await SQLquery('UPDATE rocnicitalec SET OznakaRocnegaCitalca = ?, ModelRocnegaCitalca = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Stojalo = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaRocnegaCitalca = ?', [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        if(result.affectedRows === 1) {
+            res.status(200).json({success: true, message: 'Ročni čitalec uspešno urejen'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri urejanju ročnega čitalca'})
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 server.post('/dodajRocniCitalec', async (req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
         let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
         
-        if(OznakaDP == undefined || OznakaDP == ''){
+        if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
@@ -737,7 +874,7 @@ server.get('/uporabnikVnos', async (req, res) => {
     } else {
         res.redirect('/nadzornaPlosca');
     }
-})
+});
 
 server.get('/delovnaPostajaVnos', async (req,res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
@@ -749,6 +886,88 @@ server.get('/delovnaPostajaVnos', async (req,res) => {
         page = page.replace('<!-- FORM -->',form);
         res.send(page);
     } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/urediDelovnaPostaja', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecDelovnaPostaja.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediDelovnaPostaja.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    }else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/delovnaPostajaPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM delovnapostaja WHERE OznakaDP = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/monitorPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM monitor WHERE OznakaMonitorja = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/tiskalnikPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM tiskalnik WHERE OznakaTiskalnika = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
         res.redirect('/login');
     } else {
         res.redirect('/nadzornaPlosca');
@@ -771,11 +990,81 @@ server.get('/monitorVnos', async(req, res) => {
     }
 });
 
+server.get('/urediMonitor', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecMonitor.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediMonitor.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/urediTiskalnik', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecTiskalnik.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediTiskalnik.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 server.get('/tiskalnikVnos', async(req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecTiskalnik.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosTiskalnik.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        page = page.replace('<!-- FORM -->', form);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/rocniCitalecPodatkiEdit', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const id = req.session.editID;
+        console.log(id);
+        if(!id){
+            res.status(400).json({error: 'EditID ni bil nastavljen!'});
+        } else {
+            const result = await SQLquery(`SELECT * FROM rocnicitalec WHERE OznakaRocnegaCitalca = ? LIMIT 1`, [id]);
+            console.log(result);
+            if(!result || result.length === 0){
+                res.status(400).json({error: 'Ni vnosa s tem ID-jem'});
+            } else {
+                res.json(result[0])
+            }
+        }
+    } else if (!req.session.loggedIn) {
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/urediRocniCitalec', async(req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecRocniCitalec.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediRocniCitalec.html"), 'utf8');
 
         page = page.replace('<!-- NAVIGATION -->', nav);
         page = page.replace('<!-- FORM -->', form);

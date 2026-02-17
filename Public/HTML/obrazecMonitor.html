@@ -20,8 +20,9 @@
         </div>
         <div class="mb-3 d-flex flex-row">
             <label for="OznakaDP" class="form-label me-2" style="width: 200px; text-align: right;">Delovna postaja</label>
-            <select name="OznakaDP" class="form-select" id="OznakaDP">
+            <select name="OznakaDP" class="form-select" id="OznakaDP" required>
                 <option value="" disabled selected hidden>Izberi delovno postajo</option>
+                <option value=" ">Brez delovne postaje</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">
@@ -60,8 +61,8 @@
             <label for="Kamera" class="form-label me-2" style="width: 200px; text-align: right;">Kamera</label>
             <select name="Kamera" class="form-select" id="Kamera" required>
                 <option value="" disabled selected hidden>Izberi kamero</option>
-                <option value= false>Ne</option>
-                <option value= true>Da</option>
+                <option value="0">Ne</option>
+                <option value="1">Da</option>
             </select>
         </div>
         <div class="mb-3 d-flex flex-row">
