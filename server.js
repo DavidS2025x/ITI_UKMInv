@@ -136,7 +136,7 @@ server.get('/uporabnikPodatkiEdit', async (req, res) => {
 
 server.get('/auditPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery('SELECT * FROM auditlog')
+        const result = await SQLquery('SELECT * FROM auditlog ORDER BY Timestamp DESC');
         res.json(result);
     } else if (!req.session.loggedIn){
         res.redirect('/login');

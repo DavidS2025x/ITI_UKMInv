@@ -15,81 +15,146 @@
     font-weight: 600;
 }
 
-.gridjs-container {
-    opacity: 0 !important;
-    transition: opacity 0.5s !important;   
-}
-.loaded {
-    opacity: 1 !important;
-}
-
-.actionButton {
-    height: 16px !important;
-    padding-top: 1px !important;
-    padding-bottom: 2px !important;
-    line-height: 14px !important;
-}
-
-/* Ensure add-button in Grid.js header is visible */
-.gridjs-search .btn {
-    background-color: #0d6efd !important;
-    color: #ffffff !important;
-    opacity: 1 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 30px;
-    height: 30px;
-    margin-left: 10px;
-    margin-bottom: 1px;
-    z-index: 100 !important;
-    font-size: 30px !important;
-    font-weight: bolder !important;
-    line-height: 1 !important;
-    padding: 4px 8px !important;
-}
-
-.gridjs-search .btn:hover {
-    background-color: #0b5ed7 !important;
-    color: #ffffff !important;
-}
-
-.gridjs-search input{
-    height: 30px !important;
-}
-
-.gridjs-th{
-    min-width: 100px !important;
-}
-
-.gridjs-td{
-    height: 10px !important;
-    padding-top: 2px !important;
-    padding-bottom: 2px !important;
-    padding-left: 6px !important;
-    padding-right: 6px !important;
-    font-size: 14px !important;
-}
-
-.gridjs-th{
-    height: 10px !important;
-}
-
-tbody tr{
-    height: 10px !important;
-}
-
-thead tr{
-    height: 10px !important;
-}
-
-#pagInfo{
-    margin-right: 15px !important;
-}
-
 label{
     display: flex;
     align-items: center;
     justify-content: end;
     margin-bottom: 0px !important;
+}
+
+#datatbl {
+    width: 100% !important;
+}
+
+table {
+    margin-top: 0px !important;
+}
+
+#datatbl thead {
+    position: sticky;
+    background-color: white;
+    top: 0;
+    z-index: 10;
+}
+
+#datatbl thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#datatbl th,
+#datatbl td {
+    white-space: nowrap;
+}
+
+#datatbl th:first-child,
+#datatbl td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    background-color: #ffffff;
+}
+
+#table-responsive {
+    max-height: calc(100vh - 350px);
+    overflow: auto;
+    border: none !important;
+    overflow: overlay;
+    scrollbar-gutter: stable both-edges;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+#table-responsive .dataTables_wrapper,
+#table-responsive .dataTables_wrapper > .row,
+#table-responsive .table {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+}
+
+/* Subtle scrollbar styling (Chrome/Edge/Safari) */
+#table-responsive::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+#table-responsive::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#table-responsive::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+#table-responsive::-webkit-scrollbar-button:single-button,
+#table-responsive::-webkit-scrollbar-button:horizontal:decrement,
+#table-responsive::-webkit-scrollbar-button:horizontal:increment,
+#table-responsive::-webkit-scrollbar-button:vertical:decrement,
+#table-responsive::-webkit-scrollbar-button:vertical:increment {
+    width: 0;
+    height: 0;
+    display: none;
+    background: transparent;
+}
+
+#table-responsive::-webkit-scrollbar-thumb {
+    background: #c2c7cf;
+    border-radius: 8px;
+    border: 2px solid #f2f3f5;
+}
+
+#table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #aeb4bd;
+}
+
+/* Firefox scrollbar styling */
+#table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #c2c7cf transparent;
+}
+
+#paginationContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+
+.dataTables_wrapper .row {
+    --bs-gutter-x: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.dataTables_wrapper .col-sm-12,
+.dataTables_wrapper .col-sm-6 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.dataTables_paginate {
+    float: right;
+    margin-top: 10px;
+}
+
+/* Hide native DataTables length/search without leaving empty space */
+.dataTables_wrapper .row:first-child {
+    display: none;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    display: none;
+    margin: 0;
+    height: 0;
+}
+
+.audit-container {
+    width: 100%;
+    max-width: 1400px;
 }
