@@ -136,21 +136,12 @@ server.get('/uporabnikPodatkiEdit', async (req, res) => {
 
 server.get('/auditPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery('SELECT * FROM auditlog ORDER BY Timestamp DESC');
+        const result = await SQLquery('SELECT AuditID AS "ID", EventTime AS "Čas dogodka", TableName AS "Tabela", Action AS "Dejanje", RecordPK AS "Primarni ključ", DbUser AS "Uporabnik DB", AppUser AS "Uporabnik aplikacije", ChangedColumns AS "Spremenjeni stolpci", OldRow AS "Stari zapis", NewRow AS "Novi zapis" FROM auditlog ORDER BY EventTime ASC');
         res.json(result);
     } else if (!req.session.loggedIn){
         res.redirect('/login');
     } else {
         res.redirect('/nadzornaPlosca');
-    }
-});
-
-server.get('/delovnePostajePodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery(`SELECT * FROM delovnapostaja`);
-        res.json(result);
-    } else {
-        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 });
 
@@ -347,7 +338,7 @@ server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
 
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery('SELECT * FROM delovnapostaja');
+        const result = await SQLquery(`SELECT OznakaDP AS 'Oznaka DP', ModelDP AS 'Model DP', OznakaProizvajalca AS 'Proizvajalec', OznakaTipaNaprave AS 'Tip naprave', OznakaLokacije AS 'Lokacija', InventarnaStevilka AS 'Inventarna številka', OznakaOsebeUporabniskoIme AS 'Uporabnik', OznakaEnote AS 'Enota', OznakaSluzbe AS 'Služba', OznakaOS AS 'Operacijski sistem', CPU, RAM, DiskC AS 'Disk C', DiskD AS 'Disk D', SerijskaStevilka AS 'Serijska številka', DatumProizvodnje AS 'Datum proizvodnje', DatumNakupa AS 'Datum nakupa', DatumVnosa AS 'Datum vnosa', DatumPosodobitve AS 'Datum posodobitve', Opombe FROM delovnapostaja ORDER BY OznakaDP`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
