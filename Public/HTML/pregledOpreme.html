@@ -43,22 +43,22 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
         
         <button class="btn btn-primary mb-2" style = "width: 130px !important;"
-        onclick="currentButtonAction='/delovnaPostajaVnos'; tabelaDelovnePostaje('/delovnaPostajaPodatki','/delovnaPostajaVnos'); document.getElementById('naslovTabele').innerText = 'Delovne postaje'; actionUrl = '/izbrisDelovnaPostaja'; setUpAddButton();">
+        onclick="currentButtonAction='/delovnaPostajaVnos'; tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje'); actionUrl = '/izbrisDelovnaPostaja'; setUpAddButton();">
         DP
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="currentButtonAction='/monitorVnos'; tabelaMonitorji('/monitorPodatki','/monitorVnos'); document.getElementById('naslovTabele').innerText = 'Monitorji'; actionUrl = '/izbrisMonitor'; setUpAddButton(); ">
+        onclick="currentButtonAction='/monitorVnos'; tabelaMonitorji('/monitorPodatki', 'Monitorji'); actionUrl = '/izbrisMonitor'; setUpAddButton(); ">
         Monitorji
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="currentButtonAction='/tiskalnikVnos'; tabelaTiskalniki('/tiskalnikPodatki','/tiskalnikVnos'); document.getElementById('naslovTabele').innerText = 'Tiskalniki'; actionUrl = '/izbrisTiskalnik'; setUpAddButton(); ">
+        onclick="currentButtonAction='/tiskalnikVnos'; tabelaTiskalniki('/tiskalnikPodatki', 'Tiskalniki'); actionUrl = '/izbrisTiskalnik'; setUpAddButton(); ">
         Tiskalniki
         </button>
 
         <button class="btn btn-primary mb-2"
-        onclick="currentButtonAction='/rocniCitalecVnos'; tabelaCitalci('/rocnicitalecPodatki','/rocniCitalecVnos'); document.getElementById('naslovTabele').innerText = 'Ročni čitalci'; actionUrl = '/izbrisRocniCitalec'; setUpAddButton(); ">
+        onclick="currentButtonAction='/rocniCitalecVnos'; tabelaCitalci('/rocnicitalecPodatki', 'Ročni čitalci'); actionUrl = '/izbrisRocniCitalec'; setUpAddButton(); ">
         Ročni čitalci
         </button>
 
@@ -96,7 +96,7 @@
                         <label class="form-check-label" for="200">200</label>
                     </div>
                 </div>
-                <button id="addBtn" class="btn btn-sm btn-primary" style="white-space: nowrap;">+ Dodaj</button>
+                <button id="addBtn" class="btn btn-sm btn-primary" style="white-space: nowrap; display: none;">+ Dodaj</button>
             </div>
         </div>
         <div id="table-responsive" class="me-5" style="flex: 1; display: flex; flex-direction: column;">
@@ -122,32 +122,23 @@
     let actionUrl = '/izbrisDelovnaPostaja';
     let currentButtonAction = '/delovnaPostajaVnos';
 
-    function setUpAddButton() {
-        setTimeout(() => {
-            const controls = document.getElementById('tableControls');
-            let addBtn = document.getElementById('addBtn');
-            if (!addBtn && controls) {
-                addBtn = document.createElement('button');
-                addBtn.id = 'addBtn';
-                addBtn.className = 'btn btn-sm btn-primary';
-                addBtn.style.whiteSpace = 'nowrap';
-                addBtn.textContent = '+ Dodaj';
-                controls.appendChild(addBtn);
-            }
+    function setUpAddButton(permissionFlag = 'D_DodajanjeOpreme') {
+        const addBtn = document.getElementById('addBtn');
+        
+        // Show add button only if user has permission to add
+        if (globalUserData && globalUserData[permissionFlag] === 1) {
             if (addBtn) {
                 addBtn.style.display = 'inline-flex';
                 addBtn.onclick = () => window.location.href = currentButtonAction;
                 console.log('Add button set up with action:', currentButtonAction);
-            } else {
-                console.log('Add button not found');
             }
-        }, 100);
+        }
     }
 
     function removeAddButton() {
         const addBtn = document.getElementById('addBtn');
         if (addBtn) {
-            addBtn.remove();
+            addBtn.style.display = 'none';
         }
     }
 
@@ -181,8 +172,7 @@
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
         fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
-            tabelaDelovnePostaje('/delovnaPostajaPodatki', currentButtonAction); 
-            document.getElementById('naslovTabele').innerText = 'Delovne postaje';
+            tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
         });
     }
 
@@ -203,7 +193,7 @@
                         });
                     });
                     currentButtonAction = '/delovnaPostajaVnos';
-                    tabelaDelovnePostaje('/delovnaPostajaPodatki','/delovnaPostajaVnos');
+                    tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
                 }).catch(err => {
                     console.error('Error loading user data:', err);
                 });

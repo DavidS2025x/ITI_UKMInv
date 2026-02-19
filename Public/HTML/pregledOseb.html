@@ -14,7 +14,7 @@
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="JS/main.js" type="module"></script>
+    <script src="JS/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>let grid = null;</script>
 </head>
@@ -46,12 +46,12 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
         
         <button class="btn btn-primary mb-2" style = "width: 130px !important;"
-        onclick="currentButtonAction='/vnosOseba'; tabelaOsebe('/osebaPodatki'); actionUrl = '/izbrisOseba'; document.getElementById('naslovTabele').innerText = 'Osebe'; setUpAddButton();">
+        onclick="currentButtonAction='/vnosOseba'; tabelaOsebe('/osebaPodatki', 'Osebe'); actionUrl = '/izbrisOseba'; setUpAddButton();">
         Osebe
         </button>
 
         <button class="btn btn-primary"
-        onclick="currentButtonAction='/uporabnikVnos'; tabelaUporabniki('/uporabnikPodatki'); actionUrl = '/izbrisUporabnik'; document.getElementById('naslovTabele').innerText = 'Uporabniki'; setUpAddButton(); ">
+        onclick="currentButtonAction='/uporabnikVnos'; tabelaUporabniki('/uporabnikPodatki', 'Uporabniki'); actionUrl = '/izbrisUporabnik'; setUpAddButton(); ">
         Uporabniki
         </button>
 
@@ -85,7 +85,7 @@
                         <label class="form-check-label" for="200">200</label>
                     </div>
                 </div>
-                <button id="addBtn" class="btn btn-sm btn-primary" style="white-space: nowrap;">+ Dodaj</button>
+                <button id="addBtn" class="btn btn-sm btn-primary" style="white-space: nowrap; display: none;">+ Dodaj</button>
             </div>
         </div>
         <div id="table-responsive" class="me-5" style="flex: 1; display: flex; flex-direction: column;">
@@ -111,16 +111,16 @@
     let actionUrl = '/izbrisOseba';
     let currentButtonAction = '/vnosOseba';
 
-    function setUpAddButton() {
-        setTimeout(() => {
-            const addBtn = document.getElementById('addBtn');
+    function setUpAddButton(permissionFlag = 'D_UrejanjeUporabnikov') {
+        const addBtn = document.getElementById('addBtn');
+        // Show add button only if user has permission to add
+        if (globalUserData && globalUserData[permissionFlag] === 1) {
             if (addBtn) {
+                addBtn.style.display = 'inline-flex';
                 addBtn.onclick = () => window.location.href = currentButtonAction;
                 console.log('Add button set up with action:', currentButtonAction);
-            } else {
-                console.log('Add button not found');
             }
-        }, 100);
+        }
     }
 
     function setUpSearch() {
@@ -165,16 +165,20 @@
                             }
                         });
                     });
+                // Load initial table after user data is available
+                currentButtonAction = '/vnosOseba';
+                tabelaOsebe('/osebaPodatki', 'Osebe');
             }).catch(err => {
                 console.error('Error loading user data:', err);
             });
-            currentButtonAction = '/vnosOseba';
-            tabelaOsebe('/osebaPodatki');
         });
 
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {currentButtonAction = '/vnosOseba'; tabelaOsebe('/osebaPodatki'); document.getElementById('naslovTabele').innerText = 'Osebe'})
+        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
+            currentButtonAction = '/vnosOseba';
+            tabelaOsebe('/osebaPodatki', 'Osebe');
+        });
     }
 </script>
 

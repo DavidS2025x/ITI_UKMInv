@@ -160,6 +160,154 @@ function syncPagLimitRadios(pagLimit) {
     });
 }
 
+function renderTable(dataUrl, config = {}) {
+    const {
+        editPath = null,
+        deleteUrl = null,
+        pageLimit = null,
+        editPermission = 'D_UrejanjeOpreme',
+        deletePermission = 'D_BrisanjeOpreme',
+        title = null
+    } = config;
+
+    // Determine if user has permissions for any actions
+    const canEdit = editPath !== null && globalUserData && globalUserData[editPermission] === 1;
+    const canDelete = deleteUrl !== null && globalUserData && globalUserData[deletePermission] === 1;
+    const withActions = canEdit || canDelete;
+
+    const savedLimit = localStorage.getItem('pagLimit');
+    const limit = pageLimit !== undefined && pageLimit !== null ? Number(pageLimit) : (savedLimit ? Number(savedLimit) : 25);
+    window.currentPagLimit = limit;
+    syncPagLimitRadios(limit);
+
+    fetch(dataUrl)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+
+            if ($.fn.dataTable.isDataTable('#datatbl')) {
+                $('#datatbl').DataTable().destroy();
+            }
+
+            const datacolumns = Object.keys(data[0]);
+            const idColumn = datacolumns[0];
+
+            const thead = document.querySelector('#datatbl thead tr');
+            thead.innerHTML = '';
+
+            datacolumns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                thead.appendChild(th);
+            });
+
+            if (withActions) {
+                const akciiHeader = document.createElement('th');
+                akciiHeader.className = 'akcije-col';
+                akciiHeader.textContent = 'Akcije';
+                akciiHeader.style.width = '120px';
+                thead.appendChild(akciiHeader);
+            }
+
+            const tbody = document.querySelector('#datatbl tbody');
+            tbody.innerHTML = '';
+
+            const fragment = document.createDocumentFragment();
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const rowId = row[idColumn];
+
+                datacolumns.forEach(col => {
+                    const td = document.createElement('td');
+                    applyCellFormatting(td, row[col], col);
+                    tr.appendChild(td);
+                });
+
+                if (withActions) {
+                    const actionCell = document.createElement('td');
+                    actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
+
+                    if (canEdit) {
+                        const editBtn = document.createElement('button');
+                        editBtn.className = 'btn btn-primary edit-btn';
+                        editBtn.textContent = 'Uredi';
+                        editBtn.onclick = async () => {
+                            console.log('Edit ID:', rowId);
+                            await fetch('/nastaviEditID', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({EditID: rowId})
+                            });
+                            window.location.href = editPath;
+                        };
+                        actionCell.appendChild(editBtn);
+                    }
+
+                    if (canDelete) {
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = 'btn btn-danger delete-btn';
+                        deleteBtn.textContent = 'Briši';
+                        deleteBtn.onclick = () => {
+                            document.getElementById('modalID').textContent = rowId;
+                            document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                            bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                        };
+                        actionCell.appendChild(deleteBtn);
+                    }
+
+                    tr.appendChild(actionCell);
+                }
+
+                fragment.appendChild(tr);
+            });
+            tbody.appendChild(fragment);
+
+            window.currentDataTable = $('#datatbl').DataTable({
+                pageLength: limit,
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: true,
+                lengthChange: false,
+                deferRender: true,
+                language: {
+                    search: 'Išči:',
+                    paginate: {
+                        first: 'Prva',
+                        last: 'Zadnja',
+                        next: 'Naslednja',
+                        previous: 'Prejšnja'
+                    },
+                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
+                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
+                    infoEmpty: 'Ni rezultatov',
+                    zeroRecords: 'Ni najdenih zapisov',
+                    emptyTable: 'Ni podatkov v tabeli'
+                }
+            });
+
+            window.currentDataTable.search('').draw();
+            movePaginationControls();
+            resetTableScroll();
+            setUpSearch();
+            setUpAddButton();
+
+            // Set title after table is fully rendered
+            if (title) {
+                document.getElementById('naslovTabele').innerText = title;
+            }
+
+            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
+                    localStorage.setItem('pagLimit', e.target.value);
+                    window.currentPagLimit = parseInt(e.target.value);
+                });
+            });
+        });
+}
+
 function tabela(url, pagLimit) {
     console.log(`Fetching data from: ${url}`);
     const savedLimit = localStorage.getItem('pagLimit');
@@ -258,831 +406,63 @@ function tabela(url, pagLimit) {
         });
 }
 
-function tabelaOsebe(url, pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.className = 'akcije-col';
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-primary edit-btn';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediOsebo';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn btn-danger delete-btn';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaOsebe(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediOsebo',
+        deleteUrl: '/izbrisOseba',
+        editPermission: 'D_UrejanjeUporabnikov',
+        deletePermission: 'D_UrejanjeUporabnikov',
+        title: title
+    });
 }
 
-function tabelaUporabniki(url, pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.className = 'akcije-col';
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn edit-btn btn-primary';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediUporabnika';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn delete-btn btn-danger';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaUporabniki(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediUporabnika',
+        deleteUrl: '/izbrisUporabnik',
+        editPermission: 'D_UrejanjeUporabnikov',
+        deletePermission: 'D_UrejanjeUporabnikov',
+        title: title
+    });
 }
 
-function tabelaDelovnePostaje(url,buttonAction,pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.className = 'akcije-col';
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn edit-btn btn-primary';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediDelovnaPostaja';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn delete-btn btn-danger';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            console.log('Initializing DataTable with', data.length, 'rows');
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                retrieve: false,
-                destroy: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            console.log('DataTable initialized:', window.currentDataTable);
-            console.log('DataTable rows:', window.currentDataTable.rows().count());
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaDelovnePostaje(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediDelovnaPostaja',
+        deleteUrl: '/izbrisDelovnaPostaja',
+        title: title
+    });
 }
 
-function tabelaMonitorji(url,buttonAction,pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.className = 'akcije-col';
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn edit-btn btn-primary';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediMonitor';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn delete-btn btn-danger';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaMonitorji(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediMonitor',
+        deleteUrl: '/izbrisMonitor',
+        title: title
+    });
 }
 
-function tabelaTiskalniki(url,buttonAction,pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.className = 'akcije-col';
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn edit-btn btn-primary';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediTiskalnik';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn delete-btn btn-danger';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaTiskalniki(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediTiskalnik',
+        deleteUrl: '/izbrisTiskalnik',
+        title: title
+    });
 }
 
-function tabelaCitalci(url,buttonAction,pagLimit) {
-    console.log(`Fetching data from: ${url}`);
-    const savedLimit = localStorage.getItem('pagLimit');
-    pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
-    window.currentPagLimit = pagLimit;
-    syncPagLimitRadios(pagLimit);
-    
-    fetch(url)
-        .then(r => r.json())
-        .then(data => {
-            if (!data.length) return;
-            
-            // Destroy previous DataTable instance if exists
-            if ($.fn.dataTable.isDataTable('#datatbl')) {
-                $('#datatbl').DataTable().destroy();
-            }
-            
-            const datacolumns = Object.keys(data[0]);
-            const idColumn = datacolumns[0]; // First column is always the ID
-            console.log('Columns:', datacolumns, 'ID Column:', idColumn);
-            
-            // Rebuild table header
-            const thead = document.querySelector('#datatbl thead tr');
-            thead.innerHTML = '';
-            
-            datacolumns.forEach(col => {
-                const th = document.createElement('th');
-                th.textContent = col;
-                thead.appendChild(th);
-            });
-            
-            const akciiHeader = document.createElement('th');
-            akciiHeader.textContent = 'Akcije';
-            akciiHeader.style.width = '120px';
-            thead.appendChild(akciiHeader);
-            
-            // Clear tbody
-            const tbody = document.querySelector('#datatbl tbody');
-            tbody.innerHTML = '';
-
-            // Add rows to tbody using a fragment to reduce reflows
-            const fragment = document.createDocumentFragment();
-            data.forEach(row => {
-                const tr = document.createElement('tr');
-                const rowId = row[idColumn];
-
-                datacolumns.forEach(col => {
-                    const td = document.createElement('td');
-                    applyCellFormatting(td, row[col], col);
-                    tr.appendChild(td);
-                });
-
-                // Action buttons column
-                const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
-
-                const editBtn = document.createElement('button');
-                editBtn.className = 'btn edit-btn btn-primary';
-                editBtn.textContent = 'Uredi';
-                editBtn.onclick = async () => {
-                    console.log('Edit ID:', rowId);
-                    await fetch('/nastaviEditID', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({EditID: rowId})
-                    });
-                    window.location.href = '/urediRocniCitalec';
-                };
-
-                actionCell.appendChild(editBtn);
-
-                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn delete-btn btn-danger';
-                    deleteBtn.textContent = 'Briši';
-                    deleteBtn.onclick = () => {
-                        document.getElementById('modalID').textContent = rowId;
-                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                    };
-                    actionCell.appendChild(deleteBtn);
-                }
-                tr.appendChild(actionCell);
-
-                fragment.appendChild(tr);
-            });
-            tbody.appendChild(fragment);
-
-            // Initialize DataTable
-            window.currentDataTable = $('#datatbl').DataTable({
-                pageLength: pagLimit,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: true,
-                lengthChange: false,
-                deferRender: true,
-                language: {
-                    search: 'Išči:',
-                    paginate: {
-                        first: 'Prva',
-                        last: 'Zadnja',
-                        next: 'Naslednja',
-                        previous: 'Prejšnja'
-                    },
-                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
-                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
-                    infoEmpty: 'Ni rezultatov',
-                    zeroRecords: 'Ni najdenih zapisov',
-                    emptyTable: 'Ni podatkov v tabeli'
-                }
-            });
-            
-            // Rebuild search index
-            window.currentDataTable.search('').draw();
-
-            movePaginationControls();
-            resetTableScroll();
-            
-            // Call setup functions after DataTable is ready
-            setUpAddButton();
-            setUpSearch();
-            
-            // Update pagination buttons when page length changes
-            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
-                    localStorage.setItem('pagLimit', e.target.value);
-                    window.currentPagLimit = parseInt(e.target.value);
-                });
-            });
-        });
+function tabelaCitalci(url, title, pagLimit) {
+    renderTable(url, {
+        editPath: '/urediRocniCitalec',
+        deleteUrl: '/izbrisRocniCitalec',
+        title: title
+    });
 }
 
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
 window.addNavigationLinks = addNavigationLinks;
 window.tabela = tabela;
+window.renderTable = renderTable;
 window.tabelaOsebe = tabelaOsebe;
 window.tabelaUporabniki = tabelaUporabniki;
 window.tabelaDelovnePostaje = tabelaDelovnePostaje;
