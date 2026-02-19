@@ -1,3 +1,5 @@
+let globalUserData = null;
+
 async function uporabnikPodatki() {
     const response = await fetch('/uporabnikPodatki', {
         method: 'POST',
@@ -13,6 +15,7 @@ async function uporabnikPodatki() {
     };
     
     const userData = await response.json();
+    globalUserData = userData;
     return userData;
 };
 
@@ -325,17 +328,19 @@ function tabelaOsebe(url, pagLimit) {
                     window.location.href = '/urediOsebo';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-danger delete-btn';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn btn-danger delete-btn';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);
@@ -459,17 +464,19 @@ function tabelaUporabniki(url, pagLimit) {
                     window.location.href = '/urediUporabnika';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn delete-btn btn-danger';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn delete-btn btn-danger';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);
@@ -593,17 +600,19 @@ function tabelaDelovnePostaje(url,buttonAction,pagLimit) {
                     window.location.href = '/urediDelovnaPostaja';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn delete-btn btn-danger';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn delete-btn btn-danger';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);
@@ -733,17 +742,19 @@ function tabelaMonitorji(url,buttonAction,pagLimit) {
                     window.location.href = '/urediMonitor';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn delete-btn btn-danger';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn delete-btn btn-danger';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);
@@ -867,17 +878,19 @@ function tabelaTiskalniki(url,buttonAction,pagLimit) {
                     window.location.href = '/urediTiskalnik';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn delete-btn btn-danger';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn delete-btn btn-danger';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);
@@ -1000,17 +1013,19 @@ function tabelaCitalci(url,buttonAction,pagLimit) {
                     window.location.href = '/urediRocniCitalec';
                 };
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn delete-btn btn-danger';
-                deleteBtn.textContent = 'Briši';
-                deleteBtn.onclick = () => {
-                    document.getElementById('modalID').textContent = rowId;
-                    document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
-                    bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
-                };
-
                 actionCell.appendChild(editBtn);
-                actionCell.appendChild(deleteBtn);
+
+                if (globalUserData && globalUserData.D_BrisanjeOpreme === 1) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn delete-btn btn-danger';
+                    deleteBtn.textContent = 'Briši';
+                    deleteBtn.onclick = () => {
+                        document.getElementById('modalID').textContent = rowId;
+                        document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
+                        bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
+                    };
+                    actionCell.appendChild(deleteBtn);
+                }
                 tr.appendChild(actionCell);
 
                 fragment.appendChild(tr);

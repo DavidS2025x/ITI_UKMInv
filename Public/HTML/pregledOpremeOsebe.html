@@ -17,16 +17,6 @@
     <script src="JS/main.js" type="module"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>let grid = null;</script>
-    <style>
-        .card {
-            min-width: 267px;
-            max-width: 267px;
-        }
-        .card-body {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-    </style>
 </head>
 <body style="height: 100%;">
 
@@ -49,11 +39,10 @@
     </div>
 
     <!-- Equipment Cards Grid -->
-    <div style="display: flex; justify-content: center;">
-        <div class="row g-4 mb-5">
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; width: fit-content; margin: 0 auto;">
             <!-- Delovne postaje Card -->
-            <div class="col-lg-6 col-xl-3">
-                <div class="card h-100 shadow-sm border-0">
+            <div style="margin: auto;">
+                <div class="card shadow-sm border-0">
                     <div class="card-header bg-primary text-white" style="border-bottom: none;">
                         <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-laptop"></i> Delovne postaje <span id="countDelovnePostaje">[0]</span></h5>
                     </div>
@@ -64,8 +53,8 @@
             </div>
 
             <!-- Monitorji Card -->
-            <div class="col-lg-6 col-xl-3">
-                <div class="card h-100 shadow-sm border-0">
+            <div style="margin: auto;">
+                <div class="card shadow-sm border-0">
                     <div class="card-header bg-info text-white" style="border-bottom: none;">
                         <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-display"></i> Monitorji <span id="countMonitorji">[0]</span></h5>
                     </div>
@@ -76,8 +65,8 @@
             </div>
 
             <!-- Tiskalniki Card -->
-            <div class="col-lg-6 col-xl-3">
-                <div class="card h-100 shadow-sm border-0">
+            <div style="margin: auto;">
+                <div class="card shadow-sm border-0">
                     <div class="card-header bg-success text-white" style="border-bottom: none;">
                         <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-printer"></i> Tiskalniki <span id="countTiskalniki">[0]</span></h5>
                     </div>
@@ -88,8 +77,8 @@
             </div>
 
             <!-- Ročni čitalci Card -->
-            <div class="col-lg-6 col-xl-3">
-                <div class="card h-100 shadow-sm border-0">
+            <div style="margin: auto;">
+                <div class="card shadow-sm border-0">
                     <div class="card-header bg-warning text-dark" style="border-bottom: none;">
                         <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-qr-code"></i> Ročni čitalci <span id="countRocniCitalci">[0]</span></h5>
                     </div>
@@ -101,7 +90,6 @@
         </div>
     </div>
 
-    </div>
 </body>
 
 <script>

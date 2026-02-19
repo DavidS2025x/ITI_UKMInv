@@ -196,3 +196,21 @@ table {
     width: 100%;
     max-width: 1400px;
 }
+.card {
+    min-width: 267px;
+    min-height: 300px;
+    max-height: 300px;
+}
+
+.card-body {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.card-header h5 {
+    font-size: 1.25rem !important;
+}
+
+#naslovTabele {
+    font-size: 2rem !important;
+}
