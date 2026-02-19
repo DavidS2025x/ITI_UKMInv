@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100% !important;">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
+    <title>Oprema osebe</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="CSS\style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="JS/main.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>let grid = null;</script>
+    <style>
+        .card {
+            min-width: 267px;
+            max-width: 267px;
+        }
+        .card-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body style="height: 100%;">
+
+    <!-- NAVIGATION -->
+    <div class="container-fluid d-flex flex-column" style="padding-top:61px; padding-left: 1rem; padding-right: 1rem;">
+
+    <!-- Header Section -->
+    <div class="mt-5 mb-4 ms-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0" id="naslovTabele">Pregled opreme osebe</h2>
+        </div>
+        
+        <!-- Person Selector -->
+        <div class="d-flex gap-3 align-items-center">
+            <label for="osebaSelect" class="form-label mb-0" style="min-width: 100px;">Izberite osebo:</label>
+            <select id="osebaSelect" class="form-select" style="max-width: 300px;">
+                <option value="" disabled selected hidden>-- Izberite osebo --</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Equipment Cards Grid -->
+    <div style="display: flex; justify-content: center;">
+        <div class="row g-4 mb-5">
+            <!-- Delovne postaje Card -->
+            <div class="col-lg-6 col-xl-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-primary text-white" style="border-bottom: none;">
+                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-laptop"></i> Delovne postaje <span id="countDelovnePostaje">[0]</span></h5>
+                    </div>
+                    <div class="card-body" id="delovnePostajeContainer">
+                        <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitorji Card -->
+            <div class="col-lg-6 col-xl-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-info text-white" style="border-bottom: none;">
+                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-display"></i> Monitorji <span id="countMonitorji">[0]</span></h5>
+                    </div>
+                    <div class="card-body" id="monitorjiContainer">
+                        <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tiskalniki Card -->
+            <div class="col-lg-6 col-xl-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-success text-white" style="border-bottom: none;">
+                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-printer"></i> Tiskalniki <span id="countTiskalniki">[0]</span></h5>
+                    </div>
+                    <div class="card-body" id="tiskalnikContainer">
+                        <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ročni čitalci Card -->
+            <div class="col-lg-6 col-xl-3">
+                <div class="card h-100 shadow-sm border-0">
+                    <div class="card-header bg-warning text-dark" style="border-bottom: none;">
+                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-qr-code"></i> Ročni čitalci <span id="countRocniCitalci">[0]</span></h5>
+                    </div>
+                    <div class="card-body" id="rocniCitalecContainer">
+                        <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+</body>
+
+<script>
+    async function loadOsebeDropdown() {
+        try {
+            const response = await fetch('/osebaPodatkiPregled');
+            const osebe = await response.json();
+            const select = document.getElementById('osebaSelect');
+            
+            osebe.forEach(oseba => {
+                const option = document.createElement('option');
+                option.value = oseba['Uporabniško ime'];
+                option.textContent = `${oseba['Ime']} ${oseba['Priimek']}`;
+                select.appendChild(option);
+            });
+            
+            select.addEventListener('change', loadOsebaOprema);
+        } catch (err) {
+            console.error('Error loading osebe:', err);
+        }
+    }
+
+    async function loadOsebaOprema() {
+        const osebaSelect = document.getElementById('osebaSelect');
+        const uporabniskoIme = osebaSelect.value;
+        
+        // Clear all containers
+        document.getElementById('delovnePostajeContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
+        document.getElementById('monitorjiContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
+        document.getElementById('tiskalnikContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
+        document.getElementById('rocniCitalecContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
+        
+        if (!uporabniskoIme) {
+            document.getElementById('delovnePostajeContainer').innerHTML = '<p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>';
+            document.getElementById('monitorjiContainer').innerHTML = '<p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>';
+            document.getElementById('tiskalnikContainer').innerHTML = '<p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>';
+            document.getElementById('rocniCitalecContainer').innerHTML = '<p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>';
+            document.getElementById('countDelovnePostaje').textContent = '[0]';
+            document.getElementById('countMonitorji').textContent = '[0]';
+            document.getElementById('countTiskalniki').textContent = '[0]';
+            document.getElementById('countRocniCitalci').textContent = '[0]';
+            return;
+        }
+        
+        try {
+            // Fetch delovne postaje
+            const dpResponse = await fetch(`/osebDelovnePostaje?username=${encodeURIComponent(uporabniskoIme)}`);
+            const delovnePostaje = dpResponse.ok ? await dpResponse.json() : [];
+            
+            // Fetch monitorji
+            const mResponse = await fetch(`/osebMonitorji?username=${encodeURIComponent(uporabniskoIme)}`);
+            const monitorji = mResponse.ok ? await mResponse.json() : [];
+            
+            // Fetch tiskalniki
+            const tResponse = await fetch(`/osebTiskalniki?username=${encodeURIComponent(uporabniskoIme)}`);
+            const tiskalniki = tResponse.ok ? await tResponse.json() : [];
+            
+            // Fetch ročni čitalci
+            const rcResponse = await fetch(`/osebRocniCitalci?username=${encodeURIComponent(uporabniskoIme)}`);
+            const rocniCitalci = rcResponse.ok ? await rcResponse.json() : [];
+            
+            // Render data
+            renderEquipmentList(delovnePostaje, 'delovnePostajeContainer', 'countDelovnePostaje');
+            renderEquipmentList(monitorji, 'monitorjiContainer', 'countMonitorji');
+            renderEquipmentList(tiskalniki, 'tiskalnikContainer', 'countTiskalniki');
+            renderEquipmentList(rocniCitalci, 'rocniCitalecContainer', 'countRocniCitalci');
+        } catch (err) {
+            console.error('Error loading equipment data:', err);
+            document.getElementById('delovnePostajeContainer').innerHTML = '<p class="text-danger text-center">Napaka pri nalaganju podatkov</p>';
+            document.getElementById('monitorjiContainer').innerHTML = '<p class="text-danger text-center">Napaka pri nalaganju podatkov</p>';
+            document.getElementById('tiskalnikContainer').innerHTML = '<p class="text-danger text-center">Napaka pri nalaganju podatkov</p>';
+            document.getElementById('rocniCitalecContainer').innerHTML = '<p class="text-danger text-center">Napaka pri nalaganju podatkov</p>';
+            document.getElementById('countDelovnePostaje').textContent = '[0]';
+            document.getElementById('countMonitorji').textContent = '[0]';
+            document.getElementById('countTiskalniki').textContent = '[0]';
+            document.getElementById('countRocniCitalci').textContent = '[0]';
+        }
+    }
+
+    function renderEquipmentList(data, containerId, countSpanId) {
+        const container = document.getElementById(containerId);
+        const countSpan = document.getElementById(countSpanId);
+        
+        // Update count in header
+        if (countSpan) {
+            countSpan.textContent = `[${data ? data.length : 0}]`;
+        }
+        
+        if (!data || data.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center">Ni naprav</p>';
+            return;
+        }
+        
+        const list = document.createElement('ul');
+        list.className = 'list-unstyled';
+        
+        data.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'mb-2 pb-2 border-bottom';
+            
+            // Get first key-value pair for display
+            const keys = Object.keys(item).slice(0, 1);
+            const displayText = keys.map(key => item[key]).join(' - ');
+            
+            li.innerHTML = `<small class="text-dark fw-500">${displayText}</small>`;
+            list.appendChild(li);
+        });
+        
+        container.innerHTML = '';
+        container.appendChild(list);
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        uporabnikPodatki()
+            .then(data => {
+                // Update navbar with user info
+                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                // Generate action buttons based on permissions
+                addNavigationLinks(data)
+                    .then(() => {
+                        const currentWindow = window.location.pathname.split('/').pop();
+                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
+                        links.forEach(link => {
+                            if (link.getAttribute('href').includes(currentWindow)) {
+                                link.classList.add('active');
+                            }
+                        });
+                    });
+            })
+            .then(() => loadOsebeDropdown())
+            .catch(err => {
+                console.error('Error loading user data:', err);
+            });
+    });
+</script>
+
+</html>

@@ -23,6 +23,7 @@ async function addNavigationLinks(userData) {
     const links = [
         { label: 'Nadzorna plošča', href: '/nadzornaPlosca', permission: 'D_OgledNadzornePlosce'},
         { label: 'Oprema', href: '/opremaPregled', permission: 'D_PregledOpreme'},
+        { label: 'Oprema po osebi', href: '/opremaOsebePregled', permission: 'D_PregledOpreme'},
         { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'},
         { label: 'Šifranti', href: '/sifrantiPregled', permission: 'D_UrejanjeUporabnikov'},
         { label: 'Revizijska sled', href:'/auditPregled', permission: 'D_UrejanjeUporabnikov'}
@@ -57,6 +58,71 @@ async function logout() {
         console.error('Logout failed');
     }
 };
+
+const booleanColumns = new Set([
+    'Kamera',
+    'Stojalo',
+    'Dinamičen spomin',
+    'Nadzorna plošča',
+    'Pregled opreme',
+    'Dodajanje opreme',
+    'Urejanje opreme',
+    'Brisanje opreme',
+    'Urejanje uporabnikov'
+]);
+
+const gbColumns = new Set([
+    'RAM',
+    'Disk C',
+    'Disk D',
+    'RAM startup GB',
+    'RAM min GB',
+    'RAM max GB',
+    'Disk C VHD file GB',
+    'Disk C VHD max GB'
+]);
+
+const percentColumns = new Set([
+    'Memory buffer %',
+    'Zasedenost diska %'
+]);
+
+const centeredColumns = new Set([
+    'Kamera'
+])
+
+function formatCellValue(value, columnName) {
+    if (booleanColumns.has(columnName)) {
+        if (value === 1 || value === '1' || value === true) return 'Da';
+        if (value === 0 || value === '0' || value === false) return 'Ne';
+    }
+
+    if (value === null || value === undefined || value === '') return '';
+
+    const textValue = String(value);
+    if (gbColumns.has(columnName) && !textValue.endsWith(' GB')) {
+        return `${textValue} GB`;
+    }
+
+    if (percentColumns.has(columnName) && !textValue.endsWith('%')) {
+        return `${textValue} %`;
+    }
+
+    if(centeredColumns.has(columnName)){
+        
+    }
+
+    return textValue;
+}
+
+function applyCellFormatting(td, value, columnName) {
+    td.textContent = formatCellValue(value, columnName);
+    if (centeredColumns.has(columnName)) {
+        td.classList.add('text-center');
+    } else {
+        td.classList.remove('text-center');
+    }
+}
 
 function movePaginationControls() {
     const table = document.getElementById('datatbl');
@@ -135,7 +201,7 @@ function tabela(url, pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
@@ -221,6 +287,7 @@ function tabelaOsebe(url, pagLimit) {
             });
             
             const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
             akciiHeader.textContent = 'Akcije';
             akciiHeader.style.width = '120px';
             thead.appendChild(akciiHeader);
@@ -237,16 +304,16 @@ function tabelaOsebe(url, pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
                 // Action buttons column
                 const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn btn-primary edit-btn';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -259,7 +326,7 @@ function tabelaOsebe(url, pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn btn-danger delete-btn';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;
@@ -354,6 +421,7 @@ function tabelaUporabniki(url, pagLimit) {
             });
             
             const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
             akciiHeader.textContent = 'Akcije';
             akciiHeader.style.width = '120px';
             thead.appendChild(akciiHeader);
@@ -370,16 +438,16 @@ function tabelaUporabniki(url, pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
                 // Action buttons column
                 const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn edit-btn btn-primary';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -392,7 +460,7 @@ function tabelaUporabniki(url, pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn delete-btn btn-danger';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;
@@ -487,6 +555,7 @@ function tabelaDelovnePostaje(url,buttonAction,pagLimit) {
             });
             
             const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
             akciiHeader.textContent = 'Akcije';
             akciiHeader.style.width = '120px';
             thead.appendChild(akciiHeader);
@@ -503,16 +572,16 @@ function tabelaDelovnePostaje(url,buttonAction,pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
                 // Action buttons column
                 const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn edit-btn btn-primary';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -525,7 +594,7 @@ function tabelaDelovnePostaje(url,buttonAction,pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn delete-btn btn-danger';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;
@@ -626,6 +695,7 @@ function tabelaMonitorji(url,buttonAction,pagLimit) {
             });
             
             const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
             akciiHeader.textContent = 'Akcije';
             akciiHeader.style.width = '120px';
             thead.appendChild(akciiHeader);
@@ -642,16 +712,16 @@ function tabelaMonitorji(url,buttonAction,pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
                 // Action buttons column
                 const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn edit-btn btn-primary';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -664,7 +734,7 @@ function tabelaMonitorji(url,buttonAction,pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn delete-btn btn-danger';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;
@@ -726,6 +796,7 @@ function tabelaMonitorji(url,buttonAction,pagLimit) {
             });
         });
 }
+
 function tabelaTiskalniki(url,buttonAction,pagLimit) {
     console.log(`Fetching data from: ${url}`);
     const savedLimit = localStorage.getItem('pagLimit');
@@ -758,6 +829,7 @@ function tabelaTiskalniki(url,buttonAction,pagLimit) {
             });
             
             const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
             akciiHeader.textContent = 'Akcije';
             akciiHeader.style.width = '120px';
             thead.appendChild(akciiHeader);
@@ -774,16 +846,16 @@ function tabelaTiskalniki(url,buttonAction,pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
                 // Action buttons column
                 const actionCell = document.createElement('td');
-                actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn edit-btn btn-primary';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -796,7 +868,7 @@ function tabelaTiskalniki(url,buttonAction,pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn delete-btn btn-danger';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;
@@ -907,7 +979,7 @@ function tabelaCitalci(url,buttonAction,pagLimit) {
 
                 datacolumns.forEach(col => {
                     const td = document.createElement('td');
-                    td.textContent = row[col] || '';
+                    applyCellFormatting(td, row[col], col);
                     tr.appendChild(td);
                 });
 
@@ -916,7 +988,7 @@ function tabelaCitalci(url,buttonAction,pagLimit) {
                 actionCell.className = 'd-flex justify-content-center align-items-center gap-2';
 
                 const editBtn = document.createElement('button');
-                editBtn.className = 'btn btn-sm btn-primary';
+                editBtn.className = 'btn edit-btn btn-primary';
                 editBtn.textContent = 'Uredi';
                 editBtn.onclick = async () => {
                     console.log('Edit ID:', rowId);
@@ -929,7 +1001,7 @@ function tabelaCitalci(url,buttonAction,pagLimit) {
                 };
 
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-sm btn-danger';
+                deleteBtn.className = 'btn delete-btn btn-danger';
                 deleteBtn.textContent = 'Briši';
                 deleteBtn.onclick = () => {
                     document.getElementById('modalID').textContent = rowId;

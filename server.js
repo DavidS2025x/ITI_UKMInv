@@ -136,7 +136,7 @@ server.get('/uporabnikPodatkiEdit', async (req, res) => {
 
 server.get('/auditPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery('SELECT AuditID AS "ID", EventTime AS "Čas dogodka", TableName AS "Tabela", Action AS "Dejanje", RecordPK AS "Primarni ključ", DbUser AS "Uporabnik DB", AppUser AS "Uporabnik aplikacije", ChangedColumns AS "Spremenjeni stolpci", OldRow AS "Stari zapis", NewRow AS "Novi zapis" FROM auditlog ORDER BY EventTime ASC');
+        const result = await SQLquery('SELECT AuditID AS "ID", DATE_FORMAT(EventTime, "%Y-%m-%d %H:%i:%s") AS "Čas dogodka", TableName AS "Tabela", Action AS "Dejanje", RecordPK AS "Primarni ključ", DbUser AS "Uporabnik DB", AppUser AS "Uporabnik aplikacije", ChangedColumns AS "Spremenjeni stolpci", OldRow AS "Stari zapis", NewRow AS "Novi zapis" FROM auditlog ORDER BY EventTime ASC');
         res.json(result);
     } else if (!req.session.loggedIn){
         res.redirect('/login');
@@ -148,6 +148,15 @@ server.get('/auditPodatki', async (req, res) => {
 server.get('/osebaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const result = await SQLquery(`SELECT UporabniskoIme AS "Uporabniško ime", Ime, Priimek, InterniTelefoni AS 'Interni telefoni', MobilniTelefon AS 'Mobilni telefon', ElektronskaPosta AS 'Elektronska pošta', OznakaSluzbe AS 'Služba' FROM osebaukm ORDER BY Priimek`);
+        res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/osebaPodatkiPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const result = await SQLquery(`SELECT UporabniskoIme AS "Uporabniško ime", Ime, Priimek FROM osebaukm ORDER BY Priimek`);
         res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -183,7 +192,7 @@ server.get('/osPodatki', async (req, res) => {
 
 server.get('/virtualServerPodatki', async(req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery(`SELECT v.ServerName AS 'Naziv strežnika', v.ClusterNode AS 'Cluster', v.OwnerNode AS 'Lastnik', v.Environment AS 'Okolje', v.Criticality AS 'Kritičnost', v.KeySoftware AS 'Ključna programska oprema', v.OSName AS 'Operacijski sistem', v.IP, v.DynamicMemory AS 'Dinamičen spomin', v.RAMStartupGB, v.RAMMinGB, v.RAMMaxGB, v.MemoryBufferPct, v.DiskCVHDMaxGB, v.DiskCVHDFileGB, v.DiskUsagePct, v.DiskCVHDPath, v.Notes, v.CreatedAt, v.UpdatedAt FROM virtualserver v LEFT JOIN operacijskisistem o ON v.OSName = o.OznakaOS`);
+        const result = await SQLquery(`SELECT v.ServerName AS 'Naziv strežnika', v.ClusterNode AS 'Cluster', v.OwnerNode AS 'Lastnik', v.Environment AS 'Okolje', v.Criticality AS 'Kritičnost', v.KeySoftware AS 'Ključna programska oprema', v.OSName AS 'Operacijski sistem', v.IP, v.DynamicMemory AS 'Dinamičen spomin', v.RAMStartupGB AS 'RAM startup GB', v.RAMMinGB AS 'RAM min GB', v.RAMMaxGB AS 'RAM max GB', v.MemoryBufferPct AS 'Memory buffer %', v.DiskCVHDMaxGB AS 'Disk C VHD max GB', v.DiskCVHDFileGB AS 'Disk C VHD file GB', v.DiskUsagePct AS 'Zasedenost diska %', v.DiskCVHDPath AS 'Disck C VHD pot', v.Notes AS 'Opombe', DATE_FORMAT(v.CreatedAt, '%Y-%m-%d') AS 'Ustvarjeno', DATE_FORMAT(v.UpdatedAt, '%Y-%m-%d') AS 'Posodobljeno' FROM virtualserver v LEFT JOIN operacijskisistem o ON v.OSName = o.OznakaOS`);
         res.json(result);
     } else if (!req.session.loggedIn){
         res.redirect('/login');
@@ -338,7 +347,7 @@ server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
 
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery(`SELECT OznakaDP AS 'Oznaka DP', ModelDP AS 'Model DP', OznakaProizvajalca AS 'Proizvajalec', OznakaTipaNaprave AS 'Tip naprave', OznakaLokacije AS 'Lokacija', InventarnaStevilka AS 'Inventarna številka', OznakaOsebeUporabniskoIme AS 'Uporabnik', OznakaEnote AS 'Enota', OznakaSluzbe AS 'Služba', OznakaOS AS 'Operacijski sistem', CPU, RAM, DiskC AS 'Disk C', DiskD AS 'Disk D', SerijskaStevilka AS 'Serijska številka', DatumProizvodnje AS 'Datum proizvodnje', DatumNakupa AS 'Datum nakupa', DatumVnosa AS 'Datum vnosa', DatumPosodobitve AS 'Datum posodobitve', Opombe FROM delovnapostaja ORDER BY OznakaDP`);
+        const result = await SQLquery(`SELECT OznakaDP AS 'Oznaka DP', ModelDP AS 'Model DP', OznakaProizvajalca AS 'Proizvajalec', OznakaTipaNaprave AS 'Tip naprave', OznakaLokacije AS 'Lokacija', InventarnaStevilka AS 'Inventarna številka', OznakaOsebeUporabniskoIme AS 'Uporabnik', OznakaEnote AS 'Enota', OznakaSluzbe AS 'Služba', OznakaOS AS 'Operacijski sistem', CPU, RAM, DiskC AS 'Disk C', DiskD AS 'Disk D', SerijskaStevilka AS 'Serijska številka', DATE_FORMAT(DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje', DATE_FORMAT(DatumNakupa, '%Y-%m-%d') AS 'Datum nakupa', DATE_FORMAT(DatumVnosa, '%Y-%m-%d') AS 'Datum vnosa', DATE_FORMAT(DatumPosodobitve, '%Y-%m-%d') AS 'Datum posodobitve', Opombe FROM delovnapostaja ORDER BY OznakaDP`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -347,7 +356,7 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 
 server.get('/monitorPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery('SELECT * FROM monitor')
+        const result = await SQLquery(`SELECT OznakaMonitorja AS "Oznaka Monitorja", ModelMonitorja AS "Model Monitorja", OznakaProizvajalca AS "Proizvajalec", OznakaDP AS "Delovna Postaja", OznakaLokacije AS "Lokacija", InventarnaStevilka AS "Inventarna številka", OznakaOsebeUporabniskoIme AS "Uporabnik", OznakaEnote AS "Enota", OznakaSluzbe AS "Služba", Velikost, Kamera, SerijskaStevilka AS "Serijska številka", DATE_FORMAT(DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", Opombe FROM monitor ORDER BY OznakaMonitorja`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -356,7 +365,7 @@ server.get('/monitorPodatki', async (req, res) => {
 
 server.get('/tiskalnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery('SELECT * FROM tiskalnik');
+        const result = await SQLquery(`SELECT OznakaTiskalnika AS "Oznaka tiskalnika", ModelTiskalnika AS "Model tiskalnika", OznakaProizvajalca AS "Proizvajalec", OznakaTipaTiskalnika AS "Tip tiskalnika", OznakaDP AS "Delovna postaja", OznakaLokacije AS "Lokacija", InventarnaStevilka AS "Inventarna številka", OznakaOsebeUporabniskoIme AS "Uporabnik", OznakaEnote AS "Enota", OznakaSluzbe AS "Služba", IP, TiskalniskaVrsta AS "Tiskalniška vrsta", SerijskaStevilka AS "Serijska številka", ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", Opombe FROM tiskalnik ORDER BY OznakaTiskalnika`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -365,7 +374,7 @@ server.get('/tiskalnikPodatki', async (req, res) => {
 
 server.get('/rocnicitalecPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
-        const result = await SQLquery('SELECT * FROM rocnicitalec');
+        const result = await SQLquery(`SELECT OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", ModelRocnegaCitalca AS "Model ročnega čitalca", OznakaProizvajalca AS "Proizvajalec", OznakaDP AS "Delovna postaja", OznakaLokacije AS "Lokacija", InventarnaStevilka AS "Inventarna številka", OznakaOsebeUporabniskoIme AS "Uporabnik", OznakaEnote AS "Enota", OznakaSluzbe AS "Služba", Stojalo, SerijskaStevilka AS "Serijska številka", DATE_FORMAT(DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", Opombe FROM rocnicitalec ORDER BY OznakaRocnegaCitalca`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -850,6 +859,20 @@ server.get('/opremaPregled', async (req, res) => {
     }
 });
 
+server.get('/opremaOsebePregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOpremeOsebe.html"), 'utf8');    
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 server.get('/uporabnikVnos', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
@@ -1174,6 +1197,75 @@ server.post('/uporabnikPodatki', async (req, res) => {
         });
     }else{
         res.status(401).json({error: 'Not authenticated'});
+    }
+});
+
+// API routes for person equipment
+server.get('/osebDelovnePostaje', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const username = req.query.username;
+        if(!username){
+            return res.status(400).json({error: 'Username parameter required'});
+        }
+        try {
+            const result = await SQLquery(`SELECT OznakaDP AS 'Oznaka' FROM delovnapostaja WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaDP`, [username]);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({error: 'Database error'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/osebMonitorji', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const username = req.query.username;
+        if(!username){
+            return res.status(400).json({error: 'Username parameter required'});
+        }
+        try {
+            const result = await SQLquery(`SELECT OznakaMonitorja AS 'Oznaka' FROM monitor WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaMonitorja`, [username]);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({error: 'Database error'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/osebTiskalniki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const username = req.query.username;
+        if(!username){
+            return res.status(400).json({error: 'Username parameter required'});
+        }
+        try {
+            const result = await SQLquery(`SELECT OznakaTiskalnika AS 'Oznaka' FROM tiskalnik WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaTiskalnika`, [username]);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({error: 'Database error'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.get('/osebRocniCitalci', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+        const username = req.query.username;
+        if(!username){
+            return res.status(400).json({error: 'Username parameter required'});
+        }
+        try {
+            const result = await SQLquery(`SELECT OznakaRocnegaCitalca AS 'Oznaka' FROM rocnicitalec WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaRocnegaCitalca`, [username]);
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({error: 'Database error'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 });
 

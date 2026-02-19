@@ -48,12 +48,40 @@ table {
     white-space: nowrap;
 }
 
+#datatbl.table tbody td,
+#datatbl tbody td {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+    line-height: 1.05;
+    height: 25px !important;
+}
+
 #datatbl th:first-child,
 #datatbl td:first-child {
     position: sticky;
     left: 0;
     z-index: 5;
     background-color: #ffffff;
+}
+
+#datatbl th.akcije-col,
+#datatbl td.akcije-col {
+    position: sticky;
+    right: 0;
+    z-index: 6;
+    background-color: #ffffff;
+}
+
+#datatbl thead th.akcije-col {
+    background-color: #f8f9fa;
+}
+
+#datatbl tbody tr:hover > td.akcije-col {
+    background-color: #e3ffff !important;
+}
+
+#datatbl tbody tr:hover > td {
+    background-color: #e3ffff !important;
 }
 
 #table-responsive {
@@ -71,6 +99,16 @@ table {
 #table-responsive .table {
     margin-top: 0 !important;
     padding-top: 0 !important;
+}
+
+.edit-btn {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.delete-btn {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.875rem;
 }
 
 /* Subtle scrollbar styling (Chrome/Edge/Safari) */
