@@ -308,7 +308,7 @@ function renderTable(dataUrl, config = {}) {
         });
 }
 
-function tabela(url, pagLimit) {
+function tabela(url, pagLimit, sortOrder = 'asc') {
     console.log(`Fetching data from: ${url}`);
     const savedLimit = localStorage.getItem('pagLimit');
     pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
@@ -366,6 +366,7 @@ function tabela(url, pagLimit) {
                 paging: true,
                 searching: true,
                 ordering: true,
+                order: [[0, sortOrder]], // Sort by first column with specified order
                 info: true,
                 autoWidth: true,
                 lengthChange: false,
