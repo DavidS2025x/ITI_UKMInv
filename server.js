@@ -36,13 +36,19 @@ server.get('/', (req, res) => {
     if(req.session.loggedIn){
         res.redirect('/NadzornaPlosca');
     }else{
-        res.redirect('/login');
+        res.redirect('/login?error=1');
     }
 });
 
 // Login/Logout routes
 server.get('/login', async (req, res) => {
-        res.sendFile(path.join(__dirname,"Public","login.html"));
+    const page = fs.readFileSync(path.join(__dirname, 'Public', 'login.html'), 'utf8');
+    const hasError = !!req.session.loginError;
+    if (hasError) {
+        delete req.session.loginError;
+    }
+    const flagScript = `<script>window.__LOGIN_ERROR__ = ${hasError ? 'true' : 'false'};</script>`;
+    res.send(page.replace('<!-- LOGIN_ERROR_FLAG -->', flagScript));
 });
 
 server.post('/login', async (req, res) => {
@@ -63,6 +69,7 @@ server.post('/login', async (req, res) => {
         req.session.loggedIn = true;
         res.redirect('/nadzornaPlosca');
     }else{
+        req.session.loginError = true;
         res.redirect('/login');
     }
 });
@@ -320,7 +327,7 @@ server.get('/lokacijaPodatkiForm', async (req, res) => {
 
 server.get('/osebaPodatkiForm', async (req, res) => {
     if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
-        const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Ime, ' ', Priimek) AS 'Ime' FROM osebaukm`);
+        const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Priimek, ', ', Ime) AS 'Ime' FROM osebaukm`);
         return res.json(result);
     } else {
         req.status(401).json({error: 'Not authenticated or insufficient permission'});
@@ -1242,6 +1249,9 @@ server.get('/nadzornaPloscaPodatki', async (req, res) => {
     }
 
     try {
+        const parsedStarost = parseInt(req.query.starost, 10);
+        const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
+        
         const [
             delovnePostaje,
             monitorji,
@@ -1263,28 +1273,28 @@ server.get('/nadzornaPloscaPodatki', async (req, res) => {
             SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik'),
             SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec'),
             SQLquery('SELECT COUNT(*) AS stevilo FROM virtualserver'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
             SQLquery(`
                 SELECT
                     MIN(Leto) AS minLeto,
                     MAX(Leto) AS maxLeto
                 FROM (
-                    SELECT YEAR(DatumNakupa) AS Leto FROM delovnapostaja WHERE DatumNakupa IS NOT NULL
+                    SELECT YEAR(DatumProizvodnje) AS Leto FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL
                     UNION ALL
-                    SELECT YEAR(DatumNakupa) AS Leto FROM monitor WHERE DatumNakupa IS NOT NULL
+                    SELECT YEAR(DatumProizvodnje) AS Leto FROM monitor WHERE DatumProizvodnje IS NOT NULL
                     UNION ALL
-                    SELECT YEAR(DatumNakupa) AS Leto FROM tiskalnik WHERE DatumNakupa IS NOT NULL
+                    SELECT YEAR(DatumProizvodnje) AS Leto FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL
                     UNION ALL
-                    SELECT YEAR(DatumNakupa) AS Leto FROM rocnicitalec WHERE DatumNakupa IS NOT NULL
+                    SELECT YEAR(DatumProizvodnje) AS Leto FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL
                 ) x
             `),
-            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM delovnapostaja WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
-            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM monitor WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
-            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM tiskalnik WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
-            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM rocnicitalec WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`)
+            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
+            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM monitor WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
+            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
+            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`)
         ]);
 
         res.json({

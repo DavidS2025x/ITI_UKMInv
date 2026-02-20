@@ -1,47 +1,47 @@
-<div class="card p-4 shadow" style="width: 550px; margin: auto; margin-top: 100px;">
+<div class="card form-card">
     <form action="/dodajOsebo" method="post">
-        <div class="d-flex justify-content-center mb-4">
-            <h1 style="font-weight: bold;" id="naslov">Nova oseba</h1>
+        <div class="form-title-row">
+            <h1 class="form-title" id="naslov">Nova oseba</h1>
         </div>
         <hr class="mb-3">
-        <div class="mb-3 d-flex flex-row">
-            <label for="UporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabniško ime</label>
+        <div class="mb-3 form-row">
+            <label for="UporabniskoIme" class="form-label me-2 form-label-col">Uporabniško ime</label>
             <input type="text" id="UporabniskoIme" class="form-control" name="UporabniskoIme" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Ime" class="form-label me-2" style="width: 200px; text-align: right;">Ime</label>
+        <div class="mb-3 form-row">
+            <label for="Ime" class="form-label me-2 form-label-col">Ime</label>
             <input type="text" id="Ime" class="form-control" name="Ime" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Priimek" class="form-label me-2" style="width: 200px; text-align: right;">Priimek</label>
+        <div class="mb-3 form-row">
+            <label for="Priimek" class="form-label me-2 form-label-col">Priimek</label>
             <input type="text" id="Priimek" class="form-control" name="Priimek" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="InterniTelefoni" class="form-label me-2" style="width: 200px; text-align: right;">Interni telefon</label>
+        <div class="mb-3 form-row">
+            <label for="InterniTelefoni" class="form-label me-2 form-label-col">Interni telefon</label>
             <input type="text" id="InterniTelefoni" class="form-control" name="InterniTelefoni">
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="MobilniTelefon" class="form-label me-2" style="width: 200px; text-align: right;">Zunanja številka</label>
+        <div class="mb-3 form-row">
+            <label for="MobilniTelefon" class="form-label me-2 form-label-col">Zunanja številka</label>
             <input type="text" id="MobilniTelefon" class="form-control" name="MobilniTelefon">
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="ElektronskaPosta" class="form-label me-2" style="width: 200px; text-align: right;">Email</label>
+        <div class="mb-3 form-row">
+            <label for="ElektronskaPosta" class="form-label me-2 form-label-col">Email</label>
             <input type="email" id="ElektronskaPosta" class="form-control" name="ElektronskaPosta" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Sluzba" class="form-label me-2" style="width: 200px; text-align: right;">Sluzba</label>
+        <div class="mb-3 form-row">
+            <label for="Sluzba" class="form-label me-2 form-label-col">Sluzba</label>
             <select id="Sluzba" name="OznakaSluzbe" class="form-select">
                 <option value="" disabled selected hidden>Izberi službo</option>
             </select>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Enota" class="form-label me-2" style="width: 200px; text-align: right;">Enota</label>
+        <div class="mb-3 form-row">
+            <label for="Enota" class="form-label me-2 form-label-col">Enota</label>
             <select id="Enota" name="OznakaEnote" class="form-select">
                 <option value="" disabled selected hidden>Izberi enoto</option>
             </select>
         </div>
         <hr class="mb-3">
-        <div class="mb-1 d-flex flex-row justify-content-end">
+        <div class="form-actions">
             <button type="submit" class="btn btn-primary me-2">Vnos</button>
             <button type="reset" class="btn btn-danger">Ponastavi</button>
         </div>

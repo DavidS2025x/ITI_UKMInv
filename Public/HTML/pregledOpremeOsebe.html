@@ -21,30 +21,30 @@
 <body style="height: 100%;">
 
     <!-- NAVIGATION -->
-    <div class="container-fluid d-flex flex-column" style="padding-top:61px; padding-left: 1rem; padding-right: 1rem;">
+    <div class="container-fluid d-flex flex-column app-page equipment-page">
 
     <!-- Header Section -->
-    <div class="mt-5 mb-4 ms-5">
+    <div class="page-header">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h2 class="mb-0" id="naslovTabele">Pregled opreme osebe</h2>
         </div>
         
         <!-- Person Selector -->
-        <div class="d-flex gap-3 align-items-center">
-            <label for="osebaSelect" class="form-label mb-0" style="min-width: 100px;">Izberite osebo:</label>
-            <select id="osebaSelect" class="form-select" style="max-width: 300px;">
+        <div class="person-selector">
+            <label for="osebaSelect" class="form-label mb-0">Izberite osebo:</label>
+            <select id="osebaSelect" class="form-select">
                 <option value="" disabled selected hidden>-- Izberite osebo --</option>
             </select>
         </div>
     </div>
 
     <!-- Equipment Cards Grid -->
-    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; width: fit-content; margin: 0 auto;">
+    <div class="equipment-grid">
             <!-- Delovne postaje Card -->
-            <div style="margin: auto;">
-                <div class="card equipment-card shadow-sm border-0">
-                    <div class="card-header text-white" style="background-color: #2563eb; border-bottom: none;">
-                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-laptop"></i> Delovne postaje <span id="countDelovnePostaje">[0]</span></h5>
+            <div class="equipment-card-wrapper">
+                <div class="card equipment-card equipment-card--dp">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-laptop"></i> Delovne postaje <span id="countDelovnePostaje">[0]</span></h5>
                     </div>
                     <div class="card-body" id="delovnePostajeContainer">
                         <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
@@ -53,10 +53,10 @@
             </div>
 
             <!-- Monitorji Card -->
-            <div style="margin: auto;">
-                <div class="card equipment-card shadow-sm border-0">
-                    <div class="card-header text-white" style="background-color: #7c3aed; border-bottom: none;">
-                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-display"></i> Monitorji <span id="countMonitorji">[0]</span></h5>
+            <div class="equipment-card-wrapper">
+                <div class="card equipment-card equipment-card--monitor">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-display"></i> Monitorji <span id="countMonitorji">[0]</span></h5>
                     </div>
                     <div class="card-body" id="monitorjiContainer">
                         <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
@@ -65,10 +65,10 @@
             </div>
 
             <!-- Tiskalniki Card -->
-            <div style="margin: auto;">
-                <div class="card equipment-card shadow-sm border-0">
-                    <div class="card-header text-white" style="background-color: #059669; border-bottom: none;">
-                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-printer"></i> Tiskalniki <span id="countTiskalniki">[0]</span></h5>
+            <div class="equipment-card-wrapper">
+                <div class="card equipment-card equipment-card--tiskalnik">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-printer"></i> Tiskalniki <span id="countTiskalniki">[0]</span></h5>
                     </div>
                     <div class="card-body" id="tiskalnikContainer">
                         <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
@@ -77,10 +77,10 @@
             </div>
 
             <!-- Ročni čitalci Card -->
-            <div style="margin: auto;">
-                <div class="card equipment-card shadow-sm border-0">
-                    <div class="card-header text-white" style="background-color: #dc2626; border-bottom: none;">
-                        <h5 class="mb-0" style="display: flex; justify-content: space-between;"><i class="bi bi-qr-code"></i> Ročni čitalci <span id="countRocniCitalci">[0]</span></h5>
+            <div class="equipment-card-wrapper">
+                <div class="card equipment-card equipment-card--citalec">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-qr-code"></i> Ročni čitalci <span id="countRocniCitalci">[0]</span></h5>
                     </div>
                     <div class="card-body" id="rocniCitalecContainer">
                         <p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>
@@ -102,7 +102,7 @@
             osebe.forEach(oseba => {
                 const option = document.createElement('option');
                 option.value = oseba['Uporabniško ime'];
-                option.textContent = `${oseba['Ime']} ${oseba['Priimek']}`;
+                option.textContent = `${oseba['Priimek']}, ${oseba['Ime']}`;
                 select.appendChild(option);
             });
             
@@ -200,11 +200,11 @@
             if (hasEditPermission) {
                 buttonsHTML = `
                     <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-primary p-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi">
-                            <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                        <button class="edit-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi" onmouseover="this.querySelector('i').style.color='#495057'" onmouseout="this.querySelector('i').style.color='#6c757d'">
+                            <i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger p-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" onclick="removeEquipmentFromUser('${equipmentType}', '${oznaka}', '${oznaka}')" title="Odstrani">
-                            <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                        <button class="delete-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="removeEquipmentFromUser('${equipmentType}', '${oznaka}', '${oznaka}')" title="Odstrani" onmouseover="this.querySelector('i').style.color='#c82333'" onmouseout="this.querySelector('i').style.color='#dc3545'">
+                            <i class="bi bi-trash-fill" style="font-size: 1rem; color: #dc3545;"></i>
                         </button>
                     </div>
                 `;

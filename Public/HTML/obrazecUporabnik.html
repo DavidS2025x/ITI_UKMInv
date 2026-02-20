@@ -1,33 +1,33 @@
-<div class="card p-4 shadow" style="width: 550px; margin: auto; margin-top: 100px;">
+<div class="card form-card">
     <form action="/dodajUporabnik" method="post">
-        <div class="d-flex justify-content-center mb-4">
-            <h1 style="font-weight: bold;" id="naslov">Nov uporabnik</h1>
+        <div class="form-title-row">
+            <h1 class="form-title" id="naslov">Nov uporabnik</h1>
         </div>
         <hr class="mb-3">
-        <div class="mb-3 d-flex flex-row">
-            <label for="UporabniskoIme" class="form-label me-2" style="width: 200px; text-align: right;">Uporabniško ime</label>
+        <div class="mb-3 form-row">
+            <label for="UporabniskoIme" class="form-label me-2 form-label-col">Uporabniško ime</label>
             <input type="text" id="UporabniskoIme" class="form-control" name="UporabniskoIme" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Ime" class="form-label me-2" style="width: 200px; text-align: right;">Ime</label>
+        <div class="mb-3 form-row">
+            <label for="Ime" class="form-label me-2 form-label-col">Ime</label>
             <input type="text" id="Ime" class="form-control" name="Ime" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Priimek" class="form-label me-2" style="width: 200px; text-align: right;">Priimek</label>
+        <div class="mb-3 form-row">
+            <label for="Priimek" class="form-label me-2 form-label-col">Priimek</label>
             <input type="text" id="Priimek" class="form-control" name="Priimek" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="Geslo" class="form-label me-2" style="width: 200px; text-align: right;">Geslo</label>
+        <div class="mb-3 form-row">
+            <label for="Geslo" class="form-label me-2 form-label-col">Geslo</label>
             <input type="text" id="Geslo" class="form-control" name="Geslo" required>
         </div>
-        <div class="mb-3 d-flex flex-row">
-            <label for="OznakaVloge" class="form-label me-2" style="width: 200px; text-align: right;">Vloga</label>
+        <div class="mb-3 form-row">
+            <label for="OznakaVloge" class="form-label me-2 form-label-col">Vloga</label>
             <select name="OznakaVloge" class="form-select" id="OznakaVloge" required>
                 <option value="" disabled selected hidden>Izberi vlogo</option>
             </select>
         </div>
         <hr class="mb-3">
-        <div class="mb-1 d-flex flex-row justify-content-end">
+        <div class="form-actions">
             <button type="submit" class="btn btn-primary me-2">Vnos</button>
             <button type="reset" class="btn btn-danger">Ponastavi</button>
         </div>

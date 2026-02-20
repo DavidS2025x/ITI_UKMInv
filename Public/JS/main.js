@@ -91,7 +91,43 @@ const percentColumns = new Set([
 ]);
 
 const centeredColumns = new Set([
-    'Kamera'
+    'Kamera',
+    'Stojalo',
+    'Proizvajalec',
+    'Tip naprave',
+    'Inventarna številka',
+    'Enota',
+    'Služba',
+    'RAM',
+    'Disk C',
+    'Disk D',
+    'Datum nakupa',
+    'Datum proizvodnje',
+    'Datum vnosa',
+    'Datum posodobitve',
+    'Delovna Postaja',
+    'Velikost',
+    'IP',
+    'Serijska številka',
+    'Cluster',
+    'Okolje',
+    'Dinamičen spomin',
+    'RAM startup GB',
+    'RAM min GB',
+    'RAM max GB',
+    'Memory buffer %',
+    'Disk C VHD file GB',
+    'Disk C VHD max GB',
+    'Zasedenost diska %',
+    'Ustvarjeno',
+    'Posodobljeno',
+    'Mobilni telefon',
+    'Nadzorna plošča',
+    'Pregled opreme',
+    'Dodajanje opreme',
+    'Urejanje opreme',
+    'Brisanje opreme',
+    'Urejanje uporabnikov'
 ])
 
 function formatCellValue(value, columnName) {
@@ -225,12 +261,22 @@ function renderTable(dataUrl, config = {}) {
 
                 if (withActions) {
                     const actionCell = document.createElement('td');
-                    actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-2';
+                    actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-1';
 
                     if (canEdit) {
                         const editBtn = document.createElement('button');
-                        editBtn.className = 'btn btn-primary edit-btn';
-                        editBtn.textContent = 'Uredi';
+                        editBtn.className = 'edit-btn';
+                        editBtn.title = 'Uredi';
+                        editBtn.innerHTML = '<i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>';
+                        editBtn.style.background = 'none';
+                        editBtn.style.border = 'none';
+                        editBtn.style.padding = '0.25rem';
+                        editBtn.style.cursor = 'pointer';
+                        editBtn.style.display = 'flex';
+                        editBtn.style.alignItems = 'center';
+                        editBtn.style.transition = 'color 0.2s';
+                        editBtn.onmouseover = () => editBtn.querySelector('i').style.color = '#495057';
+                        editBtn.onmouseout = () => editBtn.querySelector('i').style.color = '#6c757d';
                         editBtn.onclick = async () => {
                             console.log('Edit ID:', rowId);
                             await fetch('/nastaviEditID', {
@@ -245,8 +291,18 @@ function renderTable(dataUrl, config = {}) {
 
                     if (canDelete) {
                         const deleteBtn = document.createElement('button');
-                        deleteBtn.className = 'btn btn-danger delete-btn';
-                        deleteBtn.textContent = 'Briši';
+                        deleteBtn.className = 'delete-btn';
+                        deleteBtn.title = 'Briši';
+                        deleteBtn.innerHTML = '<i class="bi bi-trash-fill" style="font-size: 1rem; color: #dc3545;"></i>';
+                        deleteBtn.style.background = 'none';
+                        deleteBtn.style.border = 'none';
+                        deleteBtn.style.padding = '0.25rem';
+                        deleteBtn.style.cursor = 'pointer';
+                        deleteBtn.style.display = 'flex';
+                        deleteBtn.style.alignItems = 'center';
+                        deleteBtn.style.transition = 'color 0.2s';
+                        deleteBtn.onmouseover = () => deleteBtn.querySelector('i').style.color = '#c82333';
+                        deleteBtn.onmouseout = () => deleteBtn.querySelector('i').style.color = '#dc3545';
                         deleteBtn.onclick = () => {
                             document.getElementById('modalID').textContent = rowId;
                             document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;

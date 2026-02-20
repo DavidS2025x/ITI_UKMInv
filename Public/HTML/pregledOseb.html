@@ -40,17 +40,17 @@
     </div>
 
     <!-- NAVIGATION -->
-    <div class="container-fluid d-flex align-items-start ps-0" style="padding-top:61px;">
+    <div class="container-fluid d-flex align-items-start ps-0 app-page">
 
     <!-- LEFT: buttons -->
-    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 bg-light" style="height: calc(100vh - 61px); position: sticky; top: 61px; padding: 1rem;">
+    <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 app-sidebar">
         
-        <button class="btn btn-primary mb-2" style = "width: 130px !important;"
+        <button class="btn app-sidebar-btn mb-2"
         onclick="currentButtonAction='/vnosOseba'; tabelaOsebe('/osebaPodatki', 'Osebe'); actionUrl = '/izbrisOseba'; setUpAddButton();">
         Osebe
         </button>
 
-        <button class="btn btn-primary"
+        <button class="btn app-sidebar-btn"
         onclick="currentButtonAction='/uporabnikVnos'; tabelaUporabniki('/uporabnikPodatki', 'Uporabniki'); actionUrl = '/izbrisUporabnik'; setUpAddButton(); ">
         Uporabniki
         </button>
@@ -59,41 +59,41 @@
     </div>
 
     <!-- RIGHT: remaining space -->
-    <div class="d-flex flex-column justify-content-start mt-5" style="flex: 1; overflow: hidden;">
-        <div class="me-5 d-flex justify-content-between align-items-center">
-            <h2 class="pt-1" id="naslovTabele">Osebe</h2>
-            <div id="tableControls" style="display: flex; gap: 20px; align-items: center;">
-                <div id="searchContainer" style="display: flex; gap: 10px; align-items: center;">
-                    <input type="text" id="tableSearch" placeholder="Išči..." style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+    <div class="d-flex flex-column justify-content-start mt-5 app-content">
+        <div class="me-5 d-flex justify-content-between align-items-center table-header-row">
+            <h2 id="naslovTabele">Osebe</h2>
+            <div id="tableControls" class="table-controls-box">
+                <div id="searchContainer">
+                    <input type="text" id="tableSearch" placeholder="Išči...">
                 </div>
-                <div id="pagLimitContainer" style="display: flex; gap: 10px; align-items: center; white-space: nowrap;">
+                <div id="pagLimitContainer">
                     <span>Prikaži:</span>
-                    <div class="form-check form-check-inline" style="margin: 0;">
-                        <input class="form-check-input" type="radio" id="25" name="pagLimit" value="25" checked style="width: 14px; height: 14px;">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="25" name="pagLimit" value="25" checked>
                         <label class="form-check-label" for="25">25</label>
                     </div>
-                    <div class="form-check form-check-inline" style="margin: 0;">
-                        <input class="form-check-input" type="radio" id="50" name="pagLimit" value="50" style="width: 14px; height: 14px;">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="50" name="pagLimit" value="50">
                         <label class="form-check-label" for="50">50</label>
                     </div>
-                    <div class="form-check form-check-inline" style="margin: 0;">
-                        <input class="form-check-input" type="radio" id="100" name="pagLimit" value="100" style="width: 14px; height: 14px;">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="100" name="pagLimit" value="100">
                         <label class="form-check-label" for="100">100</label>
                     </div>
-                    <div class="form-check form-check-inline" style="margin: 0;">
-                        <input class="form-check-input" type="radio" id="200" name="pagLimit" value="200" style="width: 14px; height: 14px;">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="200" name="pagLimit" value="200">
                         <label class="form-check-label" for="200">200</label>
                     </div>
                 </div>
-                <button id="addBtn" class="btn btn-sm btn-primary" style="white-space: nowrap; display: none;">+ Dodaj</button>
+                <button id="addBtn" class="btn btn-sm btn-primary">+ Dodaj</button>
             </div>
         </div>
-        <div id="table-responsive" class="me-5" style="flex: 1; display: flex; flex-direction: column;">
-            <table id="datatbl" class="table table-striped table-hover" style="width: 100%; border-collapse: collapse;">
+        <div id="table-responsive" class="me-5">
+            <table id="datatbl" class="table table-striped table-hover">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Akcije</th>
+                        <th class="akcije-col">Akcije</th>
                     </tr>
                 </thead>
                 <tbody>

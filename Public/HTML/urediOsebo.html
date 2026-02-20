@@ -45,7 +45,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaSluzbe;
-                        option.textContent = data.NazivSluzbe;
+                        option.textContent = data.OznakaSluzbe + ' - ' + data.NazivSluzbe;
                         sluzbaSelect.appendChild(option);
                     });
                 });
@@ -57,7 +57,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaEnote;
-                        option.textContent = data.NazivEnote;
+                        option.textContent = data.OznakaEnote + ' - ' + data.NazivEnote;
                         enotaSelect.appendChild(option);
                     });
                 });

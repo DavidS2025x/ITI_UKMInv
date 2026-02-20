@@ -44,7 +44,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaProizvajalca;
-                        option.textContent = data.NazivProizvajalca;
+                        option.textContent = data.OznakaProizvajalca + ' - ' + data.NazivProizvajalca;
                         input.appendChild(option);
                     });
                 });
@@ -56,7 +56,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaTipaTiskalnika;
-                        option.textContent = data.OpisTipaTiskalnika;
+                        option.textContent = data.OznakaTipaTiskalnika + ' - ' + data.OpisTipaTiskalnika;
                         input.appendChild(option);
                     });
                 });
@@ -68,7 +68,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaLokacije;
-                        option.textContent = data.NazivLokacije;
+                        option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije;
                         input.appendChild(option);
                     });
                 });
@@ -80,7 +80,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.UporabniskoIme;
-                        option.textContent = data.Ime;
+                        option.textContent = data.UporabniskoIme + ' - ' + data.Ime;
                         input.appendChild(option);
                     });
                 });
@@ -92,7 +92,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaSluzbe;
-                        option.textContent = data.NazivSluzbe;
+                        option.textContent = data.OznakaSluzbe + ' - ' + data.NazivSluzbe;
                         input.appendChild(option);
                     });
                 });
@@ -104,7 +104,7 @@
                     data.forEach(data => {
                         const option = document.createElement('option');
                         option.value = data.OznakaEnote;
-                        option.textContent = data.NazivEnote;
+                        option.textContent = data.OznakaEnote + ' - ' + data.NazivEnote;
                         input.appendChild(option);
                     });
                 });
