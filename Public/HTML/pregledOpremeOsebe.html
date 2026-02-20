@@ -112,6 +112,8 @@
         }
     }
 
+    let currentUserData = null;
+
     async function loadOsebaOprema() {
         const osebaSelect = document.getElementById('osebaSelect');
         const uporabniskoIme = osebaSelect.value;
@@ -152,10 +154,10 @@
             const rocniCitalci = rcResponse.ok ? await rcResponse.json() : [];
             
             // Render data
-            renderEquipmentList(delovnePostaje, 'delovnePostajeContainer', 'countDelovnePostaje');
-            renderEquipmentList(monitorji, 'monitorjiContainer', 'countMonitorji');
-            renderEquipmentList(tiskalniki, 'tiskalnikContainer', 'countTiskalniki');
-            renderEquipmentList(rocniCitalci, 'rocniCitalecContainer', 'countRocniCitalci');
+            renderEquipmentList(delovnePostaje, 'delovnePostajeContainer', 'countDelovnePostaje', 'delovnePostaje', currentUserData);
+            renderEquipmentList(monitorji, 'monitorjiContainer', 'countMonitorji', 'monitorji', currentUserData);
+            renderEquipmentList(tiskalniki, 'tiskalnikContainer', 'countTiskalniki', 'tiskalniki', currentUserData);
+            renderEquipmentList(rocniCitalci, 'rocniCitalecContainer', 'countRocniCitalci', 'rocniCitalci', currentUserData);
         } catch (err) {
             console.error('Error loading equipment data:', err);
             document.getElementById('delovnePostajeContainer').innerHTML = '<p class="text-danger text-center">Napaka pri nalaganju podatkov</p>';
@@ -169,9 +171,10 @@
         }
     }
 
-    function renderEquipmentList(data, containerId, countSpanId) {
+    function renderEquipmentList(data, containerId, countSpanId, equipmentType, userData) {
         const container = document.getElementById(containerId);
         const countSpan = document.getElementById(countSpanId);
+        const hasEditPermission = userData && userData.D_UrejanjeOpreme === 1;
         
         // Update count in header
         if (countSpan) {
@@ -188,13 +191,29 @@
         
         data.forEach(item => {
             const li = document.createElement('li');
-            li.className = 'mb-2 pb-2 border-bottom';
+            li.className = 'mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center';
             
-            // Get first key-value pair for display
-            const keys = Object.keys(item).slice(0, 1);
-            const displayText = keys.map(key => item[key]).join(' - ');
+            // Use Oznaka as the device identifier
+            const oznaka = item['Oznaka'];
             
-            li.innerHTML = `<small class="text-dark fw-500">${displayText}</small>`;
+            let buttonsHTML = '';
+            if (hasEditPermission) {
+                buttonsHTML = `
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-primary p-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi">
+                            <i class="bi bi-pencil" style="font-size: 0.875rem;"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger p-1" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;" onclick="removeEquipmentFromUser('${equipmentType}', '${oznaka}', '${oznaka}')" title="Odstrani">
+                            <i class="bi bi-trash" style="font-size: 0.875rem;"></i>
+                        </button>
+                    </div>
+                `;
+            }
+            
+            li.innerHTML = `
+                <small class="text-dark fw-500">${oznaka}</small>
+                ${buttonsHTML}
+            `;
             list.appendChild(li);
         });
         
@@ -202,9 +221,88 @@
         container.appendChild(list);
     }
 
+    function editEquipment(equipmentType, oznaka) {
+        const equipmentMap = {
+            'delovnePostaje': '/urediDelovnaPostaja',
+            'monitorji': '/urediMonitor',
+            'tiskalniki': '/urediTiskalnik',
+            'rocniCitalci': '/urediRocniCitalec'
+        };
+        
+        const editUrl = equipmentMap[equipmentType];
+        if (editUrl) {
+            fetch('/nastaviEditID', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({EditID: oznaka})
+            }).then(() => {
+                window.location.href = editUrl;
+            });
+        }
+    }
+
+    async function removeEquipmentFromUser(equipmentType, oznaka) {
+        if (!confirm('Ali ste prepričani, da želite odstraniti to napravo od osebe?')) {
+            return;
+        }
+        
+        try {
+            let endpoint = '';
+            let payload = {};
+            
+            // Dynamically build endpoint and payload based on equipment type using Oznaka
+            if (equipmentType === 'delovnePostaje') {
+                endpoint = '/urediDelovnaPostaja';
+                payload = {
+                    OznakaDP: oznaka,
+                    OznakaOsebeUporabniskoIme: null
+                };
+            } else if (equipmentType === 'monitorji') {
+                endpoint = '/urediMonitor';
+                payload = {
+                    OznakaMonitorja: oznaka,
+                    OznakaOsebeUporabniskoIme: null
+                };
+            } else if (equipmentType === 'tiskalniki') {
+                endpoint = '/urediTiskalnik';
+                payload = {
+                    OznakaTiskalnika: oznaka,
+                    OznakaOsebeUporabniskoIme: null
+                };
+            } else if (equipmentType === 'rocniCitalci') {
+                endpoint = '/urediRocniCitalec';
+                payload = {
+                    OznakaRocnegaCitalca: oznaka,
+                    OznakaOsebeUporabniskoIme: null
+                };
+            }
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            if (response.ok) {
+                loadOsebaOprema();
+            } else {
+                alert('Napaka pri brisanju naprave');
+            }
+        } catch (err) {
+            console.error('Error removing equipment:', err);
+            alert('Napaka pri brisanju naprave');
+        }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
         uporabnikPodatki()
             .then(data => {
+                // Store user data for use in renderEquipmentList
+                currentUserData = data;
                 // Update navbar with user info
                 document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
                 // Generate action buttons based on permissions

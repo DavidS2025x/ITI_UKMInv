@@ -140,12 +140,6 @@
         const grafElement = document.getElementById('nakupiPoLetihGraf');
         if (!grafElement) return;
 
-        const styles = getComputedStyle(document.documentElement);
-        const barvaPrimary = styles.getPropertyValue('--bs-primary').trim();
-        const barvaSuccess = styles.getPropertyValue('--bs-success').trim();
-        const barvaWarning = styles.getPropertyValue('--bs-warning').trim();
-        const barvaPurple = styles.getPropertyValue('--bs-purple').trim() || styles.getPropertyValue('--bs-indigo').trim() || barvaPrimary;
-
         if (grafNakupiPoLetih) {
             grafNakupiPoLetih.destroy();
         }
@@ -158,29 +152,29 @@
                     {
                         label: 'Delovne postaje',
                         data: dpVrednosti,
-                        borderColor: barvaPrimary,
-                        backgroundColor: barvaPrimary,
+                        borderColor: '#3498DB',
+                        backgroundColor: '#3498DB',
                         borderWidth: 1
                     },
                     {
                         label: 'Monitorji',
                         data: monitorjiVrednosti,
-                        borderColor: barvaSuccess,
-                        backgroundColor: barvaSuccess,
+                        borderColor: '#2ECC71',
+                        backgroundColor: '#2ECC71',
                         borderWidth: 1
                     },
                     {
                         label: 'Tiskalniki',
                         data: tiskalnikiVrednosti,
-                        borderColor: barvaWarning,
-                        backgroundColor: barvaWarning,
+                        borderColor: '#E67E22',
+                        backgroundColor: '#E67E22',
                         borderWidth: 1
                     },
                     {
                         label: 'Ročni čitalci',
                         data: citalciVrednosti,
-                        borderColor: barvaPurple,
-                        backgroundColor: barvaPurple,
+                        borderColor: '#9B59B6',
+                        backgroundColor: '#9B59B6',
                         borderWidth: 1
                     }
                 ]
@@ -188,6 +182,15 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 25
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         title: {
