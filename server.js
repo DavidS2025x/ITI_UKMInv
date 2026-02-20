@@ -390,7 +390,9 @@ server.post('/dodajOsebo', async (req, res) => {
         if (OznakaSluzbe === undefined || OznakaSluzbe === '') {
             OznakaSluzbe = null;
         }
-        const result = await SQLquery(`INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Oseba dodana'});
         }else {
@@ -420,7 +422,9 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
         }
 
         console.log(OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe);
-        const result = await SQLquery('INSERT INTO delovnapostaja (OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO delovnapostaja (OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Delovna postaja dodana'});
         } else {
@@ -450,7 +454,9 @@ server.post('/urediDelovnaPostaja', async (req, res) => {
         if (Opombe === undefined || Opombe === '') {
             Opombe = null;
         }
-        const result = await SQLquery('UPDATE delovnapostaja SET OznakaDP = ?, ModelDP = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, OznakaOS = ?, CPU = ?, RAM = ?, DiskC = ?, DiskD = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaDP = ?', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE delovnapostaja SET OznakaDP = ?, ModelDP = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, OznakaOS = ?, CPU = ?, RAM = ?, DiskC = ?, DiskD = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaDP = ?', [OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Delovna postaja uspešno urejena'});
         } else {
@@ -481,7 +487,9 @@ server.post('/dodajMonitor', async (req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery('INSERT INTO monitor(OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO monitor(OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Monitor uspešno dodan'});
         } else {
@@ -512,7 +520,9 @@ server.post('/urediMonitor', async (req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery('UPDATE monitor SET OznakaMonitorja = ?, ModelMonitorja = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Velikost = ?, Kamera = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaMonitorja = ?', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE monitor SET OznakaMonitorja = ?, ModelMonitorja = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Velikost = ?, Kamera = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaMonitorja = ?', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Monitor uspešno urejen'});
         } else {
@@ -555,7 +565,9 @@ server.post('/urediTiskalnik', async (req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery('UPDATE tiskalnik SET OznakaTiskalnika = ?, ModelTiskalnika = ?, OznakaProizvajalca = ?, OznakaTipaTiskalnika = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, IP = ?, TiskalniskaVrsta = ?, SerijskaStevilka = ?, ProduktnaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaTiskalnika = ?', [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE tiskalnik SET OznakaTiskalnika = ?, ModelTiskalnika = ?, OznakaProizvajalca = ?, OznakaTipaTiskalnika = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, IP = ?, TiskalniskaVrsta = ?, SerijskaStevilka = ?, ProduktnaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaTiskalnika = ?', [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Tiskalnik uspešno urejen'});
         } else {
@@ -598,7 +610,9 @@ server.post('/dodajTiskalnik', async(req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery(`INSERT INTO tiskalnik(OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO tiskalnik(OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Tiskalnik dodan'});
         } else {
@@ -632,7 +646,9 @@ server.post('/urediRocniCitalec', async (req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery('UPDATE rocnicitalec SET OznakaRocnegaCitalca = ?, ModelRocnegaCitalca = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Stojalo = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaRocnegaCitalca = ?', [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE rocnicitalec SET OznakaRocnegaCitalca = ?, ModelRocnegaCitalca = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Stojalo = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaRocnegaCitalca = ?', [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Ročni čitalec uspešno urejen'});
         } else {
@@ -666,7 +682,9 @@ server.post('/dodajRocniCitalec', async (req, res) => {
             Opombe = null;
         }
 
-        const result = await SQLquery(`INSERT INTO rocnicitalec(OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO rocnicitalec(OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
                 res.status(200).json({success: true, message: 'Ročni čitalec dodan'});
         } else {
@@ -680,7 +698,9 @@ server.post('/dodajRocniCitalec', async (req, res) => {
 server.post('/dodajUporabnik', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge} = req.body;
-        const result = await SQLquery('INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, OznakaVloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, OznakaVloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge]);
         if(result.affectedRows === 1) {
                 res.status(200).json({success: true, message: 'Uporabnik uspešno dodan'});
         } else {
@@ -696,7 +716,9 @@ server.post('/dodajUporabnik', async (req, res) => {
 server.post('/izbrisOseba', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const { ID } = req.body;
-        const result = await SQLquery(`DELETE FROM osebaukm WHERE uporabniskoIme = ?`, [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `DELETE FROM osebaukm WHERE uporabniskoIme = ?`, [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Oseba izbrisana'});
         }else{
@@ -710,7 +732,9 @@ server.post('/izbrisOseba', async (req, res) => {
 server.post('/izbrisUporabnik', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         const { ID } = req.body;
-        const result = await SQLquery(`DELETE FROM uporabnikiukm WHERE uporabniskoIme = ?`, [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `DELETE FROM uporabnikiukm WHERE uporabniskoIme = ?`, [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Uporabnik izbrisan'});
         }else{
@@ -724,7 +748,9 @@ server.post('/izbrisUporabnik', async (req, res) => {
 server.post('/izbrisDelovnaPostaja', async (req, res) => {
     if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
         const { ID } = req.body;
-        const result = await SQLquery(`DELETE FROM delovnapostaja WHERE OznakaDP = ?`, [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, `DELETE FROM delovnapostaja WHERE OznakaDP = ?`, [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Delovna postaja izbrisana'});
         } else {
@@ -738,7 +764,9 @@ server.post('/izbrisDelovnaPostaja', async (req, res) => {
 server.post('/izbrisMonitor', async (req, res) => {
     if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
         const { ID } = req.body;
-        const result = await SQLquery('DELETE FROM monitor WHERE OznakaMonitorja = ?', [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'DELETE FROM monitor WHERE OznakaMonitorja = ?', [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Monitor izbrisan'});
         } else {
@@ -752,7 +780,9 @@ server.post('/izbrisMonitor', async (req, res) => {
 server.post('/izbrisTiskalnik', async (req, res) => {
     if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
         const { ID } = req.body;
-        const result = await SQLquery('DELETE FROM tiskalnik WHERE OznakaTiskalnika = ?', [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'DELETE FROM tiskalnik WHERE OznakaTiskalnika = ?', [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Tiskalnik izbrisan'});
         } else {
@@ -766,7 +796,9 @@ server.post('/izbrisTiskalnik', async (req, res) => {
 server.post('/izbrisRocniCitalec', async (req, res) =>{
     if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
         const { ID } = req.body;
-        const result = await SQLquery('DELETE FROM rocnicitalec WHERE OznakaRocnegaCitalca = ?', [ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'DELETE FROM rocnicitalec WHERE OznakaRocnegaCitalca = ?', [ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Ročni čitalec izbrisan'});
         } else {
@@ -792,7 +824,9 @@ server.post('/urediOsebo', async (req, res) => {
         if(OznakaEnote == undefined || OznakaEnote == ''){
             OznakaEnote = null;
         }
-        const result = await SQLquery('UPDATE osebaukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, InterniTelefoni = ?, MobilniTelefon = ?, ElektronskaPosta = ?, OznakaSluzbe = ?, OznakaEnote = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE osebaukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, InterniTelefoni = ?, MobilniTelefon = ?, ElektronskaPosta = ?, OznakaSluzbe = ?, OznakaEnote = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Vnos uspešno spremenjen'});
         } else {
@@ -806,7 +840,9 @@ server.post('/urediOsebo', async (req, res) => {
 server.post('/urediUporabnika', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
         let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID} = req.body;
-        const result = await SQLquery('UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, OznakaVloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID]);
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, OznakaVloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Uporabnik uspešno urejen'});
         } else {
@@ -1200,6 +1236,86 @@ server.post('/uporabnikPodatki', async (req, res) => {
     }
 });
 
+server.get('/nadzornaPloscaPodatki', async (req, res) => {
+    if(!(req.session.loggedIn && req.session.D_OgledNadzornePlosce == 1)){
+        return res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+
+    try {
+        const [
+            delovnePostaje,
+            monitorji,
+            tiskalniki,
+            rocniCitalci,
+            virtualniStrezniki,
+            stareDp,
+            stariMonitorji,
+            stariTiskalniki,
+            stariCitalci,
+            letnice,
+            dpPoLetu,
+            monitorjiPoLetu,
+            tiskalnikiPoLetu,
+            citalciPoLetu
+        ] = await Promise.all([
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM virtualserver'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumNakupa IS NOT NULL AND DatumNakupa < DATE_SUB(CURDATE(), INTERVAL 5 YEAR)'),
+            SQLquery(`
+                SELECT
+                    MIN(Leto) AS minLeto,
+                    MAX(Leto) AS maxLeto
+                FROM (
+                    SELECT YEAR(DatumNakupa) AS Leto FROM delovnapostaja WHERE DatumNakupa IS NOT NULL
+                    UNION ALL
+                    SELECT YEAR(DatumNakupa) AS Leto FROM monitor WHERE DatumNakupa IS NOT NULL
+                    UNION ALL
+                    SELECT YEAR(DatumNakupa) AS Leto FROM tiskalnik WHERE DatumNakupa IS NOT NULL
+                    UNION ALL
+                    SELECT YEAR(DatumNakupa) AS Leto FROM rocnicitalec WHERE DatumNakupa IS NOT NULL
+                ) x
+            `),
+            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM delovnapostaja WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
+            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM monitor WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
+            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM tiskalnik WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`),
+            SQLquery(`SELECT YEAR(DatumNakupa) AS Leto, COUNT(*) AS Stevilo FROM rocnicitalec WHERE DatumNakupa IS NOT NULL GROUP BY YEAR(DatumNakupa) ORDER BY YEAR(DatumNakupa)`)
+        ]);
+
+        res.json({
+            kpi: {
+                delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
+                monitorji: Number(monitorji[0]?.stevilo || 0),
+                tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
+                rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0),
+                virtualniStrezniki: Number(virtualniStrezniki[0]?.stevilo || 0)
+            },
+            starejseOd5Let: {
+                delovnePostaje: Number(stareDp[0]?.stevilo || 0),
+                monitorji: Number(stariMonitorji[0]?.stevilo || 0),
+                tiskalniki: Number(stariTiskalniki[0]?.stevilo || 0),
+                rocniCitalci: Number(stariCitalci[0]?.stevilo || 0)
+            },
+            graf: {
+                minLeto: letnice[0]?.minLeto ? Number(letnice[0].minLeto) : null,
+                maxLeto: letnice[0]?.maxLeto ? Number(letnice[0].maxLeto) : null,
+                delovnePostaje: dpPoLetu,
+                monitorji: monitorjiPoLetu,
+                tiskalniki: tiskalnikiPoLetu,
+                rocniCitalci: citalciPoLetu
+            }
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju podatkov za nadzorno ploščo:', err);
+        res.status(500).json({error: 'Napaka pri pridobivanju podatkov za nadzorno ploščo'});
+    }
+});
+
 // API routes for person equipment
 server.get('/osebDelovnePostaje', async (req, res) => {
     if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
@@ -1285,4 +1401,44 @@ function SQLquery(SQLquery, params=[]) {
             }
         });
     });
+}
+
+function SQLqueryWithAppUser(appUser, SQLquery, params = []) {
+    if (!appUser) {
+        return Promise.reject(new Error('Missing app user for audited write query.'));
+    }
+    const resolvedUser = appUser;
+    return new Promise((resolve, reject) => {
+        pool.getConnection((err, connection) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+
+            connection.query('SET @app_user = ?', [resolvedUser], (setErr) => {
+                if (setErr) {
+                    connection.release();
+                    reject(setErr);
+                    return;
+                }
+
+                connection.query(SQLquery, params, (queryErr, results) => {
+                    connection.release();
+                    if (queryErr) {
+                        reject(queryErr);
+                    } else {
+                        resolve(results);
+                    }
+                });
+            });
+        });
+    });
+}
+
+function getAppUserOrRespond(req, res) {
+    if (!req.session || !req.session.UporabniskoIme) {
+        res.status(401).json({error: 'Missing app user for audited write query.'});
+        return null;
+    }
+    return req.session.UporabniskoIme;
 }

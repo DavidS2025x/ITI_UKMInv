@@ -4,25 +4,241 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
-    <title>UKM Inventar</title>
-    <script src="JS/main.js" type="module"></script>
+    <title>Nadzorna plošča</title>
+    <script src="JS/main.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="CSS\style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
 </head>
 <body>
     <!-- NAVIGATION -->
+
+    <main class="container-fluid" style="padding-top: 78px;">
+        <div class="row g-3 pb-3">
+            <div class="col-12 col-xl-4">
+                <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-1">
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header fw-semibold">Naprave po tipu</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                                    <strong id="kpiDP">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                                    <strong id="kpiMonitorji">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                                    <strong id="kpiTiskalniki">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                                    <strong id="kpiCitalci">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-hdd-network"></i><span>Virtualni strežniki</span></div>
+                                    <strong id="kpiVM">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="card h-100">
+                            <div class="card-header fw-semibold">Starejše od 5 let</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                                    <strong id="staroDP">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                                    <strong id="staroMonitorji">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                                    <strong id="staroTiskalniki">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                                    <strong id="staroCitalci">-</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-8">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold">Nakupljene naprave po letih</div>
+                    <div class="card-body">
+                        <div style="height: 360px;">
+                            <canvas id="nakupiPoLetihGraf"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 </body>
 
 <script>
+    let grafNakupiPoLetih = null;
+
+    function setText(id, value) {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = Number(value || 0).toLocaleString('sl-SI');
+        }
+    }
+
+    function pripraviLetoMap(vnosi) {
+        const mapa = new Map();
+        (vnosi || []).forEach(vnos => {
+            const leto = Number(vnos.Leto);
+            const stevilo = Number(vnos.Stevilo || 0);
+            if (!Number.isNaN(leto)) {
+                mapa.set(leto, stevilo);
+            }
+        });
+        return mapa;
+    }
+
+    function zgradiLeta(minLeto, maxLeto) {
+        if (!minLeto || !maxLeto || maxLeto < minLeto) {
+            return [];
+        }
+
+        const leta = [];
+        for (let leto = minLeto; leto <= maxLeto; leto += 1) {
+            leta.push(leto);
+        }
+        return leta;
+    }
+
+    function narisiGrafPoLetih(grafData) {
+        const minLeto = Number(grafData?.minLeto || 0);
+        const maxLeto = Number(grafData?.maxLeto || 0);
+        const leta = zgradiLeta(minLeto, maxLeto);
+
+        const dpMapa = pripraviLetoMap(grafData?.delovnePostaje);
+        const monitorjiMapa = pripraviLetoMap(grafData?.monitorji);
+        const tiskalnikiMapa = pripraviLetoMap(grafData?.tiskalniki);
+        const citalciMapa = pripraviLetoMap(grafData?.rocniCitalci);
+
+        const dpVrednosti = leta.map(leto => dpMapa.get(leto) || 0);
+        const monitorjiVrednosti = leta.map(leto => monitorjiMapa.get(leto) || 0);
+        const tiskalnikiVrednosti = leta.map(leto => tiskalnikiMapa.get(leto) || 0);
+        const citalciVrednosti = leta.map(leto => citalciMapa.get(leto) || 0);
+
+        const grafElement = document.getElementById('nakupiPoLetihGraf');
+        if (!grafElement) return;
+
+        const styles = getComputedStyle(document.documentElement);
+        const barvaPrimary = styles.getPropertyValue('--bs-primary').trim();
+        const barvaSuccess = styles.getPropertyValue('--bs-success').trim();
+        const barvaWarning = styles.getPropertyValue('--bs-warning').trim();
+        const barvaPurple = styles.getPropertyValue('--bs-purple').trim() || styles.getPropertyValue('--bs-indigo').trim() || barvaPrimary;
+
+        if (grafNakupiPoLetih) {
+            grafNakupiPoLetih.destroy();
+        }
+
+        grafNakupiPoLetih = new Chart(grafElement, {
+            type: 'bar',
+            data: {
+                labels: leta,
+                datasets: [
+                    {
+                        label: 'Delovne postaje',
+                        data: dpVrednosti,
+                        borderColor: barvaPrimary,
+                        backgroundColor: barvaPrimary,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Monitorji',
+                        data: monitorjiVrednosti,
+                        borderColor: barvaSuccess,
+                        backgroundColor: barvaSuccess,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Tiskalniki',
+                        data: tiskalnikiVrednosti,
+                        borderColor: barvaWarning,
+                        backgroundColor: barvaWarning,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Ročni čitalci',
+                        data: citalciVrednosti,
+                        borderColor: barvaPurple,
+                        backgroundColor: barvaPurple,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Leto nakupa'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Število naprav'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function naloziNadzornoPlosco() {
+        const response = await fetch('/nadzornaPloscaPodatki');
+        if (!response.ok) {
+            throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
+        }
+
+        const data = await response.json();
+        const kpi = data.kpi || {};
+        const staro = data.starejseOd5Let || {};
+
+        setText('kpiDP', kpi.delovnePostaje);
+        setText('kpiMonitorji', kpi.monitorji);
+        setText('kpiTiskalniki', kpi.tiskalniki);
+        setText('kpiCitalci', kpi.rocniCitalci);
+        setText('kpiVM', kpi.virtualniStrezniki);
+
+        setText('staroDP', staro.delovnePostaje);
+        setText('staroMonitorji', staro.monitorji);
+        setText('staroTiskalniki', staro.tiskalniki);
+        setText('staroCitalci', staro.rocniCitalci);
+
+        narisiGrafPoLetih(data.graf);
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
-                uporabnikPodatki()
-                .then(data => {
-                    // Update navbar with user info
-                    document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
-                    // Generate action buttons based on permissions
-                    addNavigationLinks(data)
+        uporabnikPodatki()
+            .then(data => {
+                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                addNavigationLinks(data)
                     .then(() => {
                         const currentWindow = window.location.pathname.split('/').pop();
                         const links = document.querySelectorAll('#navLinksContainer .nav-link');
@@ -32,10 +248,13 @@
                             }
                         });
                     });
-                }).catch(err => {
-                    console.error('Error loading user data:', err);
-                });
+
+                return naloziNadzornoPlosco();
+            })
+            .catch(err => {
+                console.error('Error loading dashboard:', err);
             });
+    });
 </script>
 
 </html>
