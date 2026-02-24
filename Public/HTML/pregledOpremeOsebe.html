@@ -95,14 +95,14 @@
 <script>
     async function loadOsebeDropdown() {
         try {
-            const response = await fetch('/osebaPodatkiPregled');
+            const response = await fetch('/osebaPodatkiForm');
             const osebe = await response.json();
             const select = document.getElementById('osebaSelect');
             
             osebe.forEach(oseba => {
                 const option = document.createElement('option');
-                option.value = oseba['Uporabniško ime'];
-                option.textContent = `${oseba['Priimek']}, ${oseba['Ime']}`;
+                option.value = oseba['UporabniskoIme'];
+                option.textContent = oseba['Ime'];
                 select.appendChild(option);
             });
             

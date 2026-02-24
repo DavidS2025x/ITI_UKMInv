@@ -114,7 +114,7 @@
 <script>
 
     let actionUrl = '/izbrisOseba';
-    let currentButtonAction = '/vnosOseba';
+    let currentButtonAction = '/osebaVnos';
     window.addButtonPermission = 'D_UrejanjeUporabnikov';
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -134,7 +134,7 @@
                         });
                     });
                 // Load initial table after user data is available
-                currentButtonAction = '/vnosOseba';
+                currentButtonAction = '/osebaVnos';
                 tabelaOsebe('/osebaPodatki', 'Osebe');
             }).catch(err => {
                 console.error('Error loading user data:', err);
@@ -144,7 +144,7 @@
     function izbrisiVnos(id, actionUrl){
         console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
         fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
-            currentButtonAction = '/vnosOseba';
+            currentButtonAction = '/osebaVnos';
             tabelaOsebe('/osebaPodatki', 'Osebe');
         });
     }

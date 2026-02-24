@@ -82,10 +82,28 @@
 
             <div class="col-12 col-xl-8">
                 <div class="card h-100">
-                    <div class="card-header fw-semibold">Proizvedene naprave po letih</div>
+                    <div class="card-header fw-semibold">
+                        <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="tab-leto" data-bs-toggle="tab" data-bs-target="#content-leto" type="button" role="tab" aria-controls="content-leto" aria-selected="true">Po letih</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-enota" data-bs-toggle="tab" data-bs-target="#content-enota" type="button" role="tab" aria-controls="content-enota" aria-selected="false">Po enoti</button>
+                            </li>
+                        </ul>
+                    </div>
                     <div class="card-body">
-                        <div class="chart-container">
-                            <canvas id="nakupiPoLetihGraf"></canvas>
+                        <div class="tab-content">
+                            <div class="tab-pane fade show active" id="content-leto" role="tabpanel" aria-labelledby="tab-leto">
+                                <div class="chart-container">
+                                    <canvas id="nakupiPoLetihGraf"></canvas>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="content-enota" role="tabpanel" aria-labelledby="tab-enota">
+                                <div class="chart-container">
+                                    <canvas id="napraviPosluzbiGraf"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -96,6 +114,7 @@
 
 <script>
     let grafNakupiPoLetih = null;
+    let grafNapravePoSluzbi = null;
     const STAROST_STORAGE_KEY = 'starostNaprave';
 
     function preberiStarostShranjeno() {
@@ -226,7 +245,126 @@
         });
     }
 
-    async function naloziNadzornoPlosco(starost = 0) {
+    function narisiGrafNapravePoSluzbi(grafData) {
+        const enoteMap = new Map();
+        const deviceTypes = ['delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci'];
+        
+        // Prepare data for each device type
+        deviceTypes.forEach(tipNaprave => {
+            const podatki = grafData?.[tipNaprave] || [];
+            podatki.forEach(vnos => {
+                const enota = vnos.OznakaEnote || 'Neznana';
+                if (!enoteMap.has(enota)) {
+                    enoteMap.set(enota, {
+                        delovnePostaje: 0,
+                        monitorji: 0,
+                        tiskalniki: 0,
+                        rocniCitalci: 0
+                    });
+                }
+                const trenutni = enoteMap.get(enota);
+                trenutni[tipNaprave] = Number(vnos.Stevilo || 0);
+            });
+        });
+
+        const enote = Array.from(enoteMap.keys()).sort();
+        const dpVrednosti = enote.map(enota => enoteMap.get(enota).delovnePostaje);
+        const monitorjiVrednosti = enote.map(enota => enoteMap.get(enota).monitorji);
+        const tiskalnikiVrednosti = enote.map(enota => enoteMap.get(enota).tiskalniki);
+        const citalciVrednosti = enote.map(enota => enoteMap.get(enota).rocniCitalci);
+
+        const grafElement = document.getElementById('napraviPosluzbiGraf');
+        if (!grafElement) return;
+
+        if (grafNapravePoSluzbi) {
+            grafNapravePoSluzbi.destroy();
+        }
+
+        grafNapravePoSluzbi = new Chart(grafElement, {
+            type: 'bar',
+            data: {
+                labels: enote,
+                datasets: [
+                    {
+                        label: 'Delovne postaje',
+                        data: dpVrednosti,
+                        backgroundColor: '#3498DB',
+                        borderColor: '#3498DB',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Monitorji',
+                        data: monitorjiVrednosti,
+                        backgroundColor: '#2ECC71',
+                        borderColor: '#2ECC71',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Tiskalniki',
+                        data: tiskalnikiVrednosti,
+                        backgroundColor: '#E67E22',
+                        borderColor: '#E67E22',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Ročni čitalci',
+                        data: citalciVrednosti,
+                        backgroundColor: '#9B59B6',
+                        borderColor: '#9B59B6',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 25
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Enota'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        },
+                        title: {
+                            display: true,
+                            text: 'Število naprav'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    async function fetchAndUpdateNumbers(starost = 0) {
+        const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
+        if (!response.ok) {
+            throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
+        }
+
+        const data = await response.json();
+        const staro = data.starejseOd5Let || {};
+
+        setText('staroDP', staro.delovnePostaje);
+        setText('staroMonitorji', staro.monitorji);
+        setText('staroTiskalniki', staro.tiskalniki);
+        setText('staroCitalci', staro.rocniCitalci);
+    }
+
+    async function initDashboard(starost = 0) {
         const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
         if (!response.ok) {
             throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
@@ -248,6 +386,7 @@
         setText('staroCitalci', staro.rocniCitalci);
 
         narisiGrafPoLetih(data.graf);
+        narisiGrafNapravePoSluzbi(data.napravePoSluzbi);
     }
 
     window.addEventListener("DOMContentLoaded", () => {
@@ -259,7 +398,7 @@
                 const parsedStarost = parseInt(starostInput.value, 10);
                 const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
                 localStorage.setItem(STAROST_STORAGE_KEY, String(starost));
-                await naloziNadzornoPlosco(starost);
+                await fetchAndUpdateNumbers(starost);
             });
         }
 
@@ -277,11 +416,27 @@
                         });
                     });
 
-                return naloziNadzornoPlosco(zacetnaStarost);
+                return initDashboard(zacetnaStarost);
             })
             .catch(err => {
                 console.error('Error loading dashboard:', err);
             });
+
+        // Handle chart resizing when tabs are switched
+        const tabLetoBtn = document.getElementById('tab-leto');
+        const tabEnotaBtn = document.getElementById('tab-enota');
+        
+        if (tabLetoBtn) {
+            tabLetoBtn.addEventListener('shown.bs.tab', () => {
+                if (grafNakupiPoLetih) grafNakupiPoLetih.resize();
+            });
+        }
+        
+        if (tabEnotaBtn) {
+            tabEnotaBtn.addEventListener('shown.bs.tab', () => {
+                if (grafNapravePoSluzbi) grafNapravePoSluzbi.resize();
+            });
+        }
     });
 </script>
 
