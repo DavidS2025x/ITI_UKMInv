@@ -196,6 +196,63 @@ function syncPagLimitRadios(pagLimit) {
     });
 }
 
+function setUpSearch() {
+    const searchInput = document.getElementById('tableSearch');
+    if (!searchInput || !window.currentDataTable) return;
+
+    const newSearchInput = searchInput.cloneNode(true);
+    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+
+    newSearchInput.addEventListener('keyup', (e) => {
+        const searchValue = e.target.value;
+        if (window.currentDataTable) {
+            try {
+                window.currentDataTable.search(searchValue, false, true, true).draw();
+            } catch (err) {
+                console.error('Error applying search:', err);
+            }
+        }
+    });
+}
+
+function setUpAddButton(permissionFlag) {
+    const addBtn = document.getElementById('addBtn');
+    if (!addBtn) return;
+
+    if (window.disableAddButton) {
+        addBtn.style.display = 'none';
+        return;
+    }
+
+    const resolvedPermission = permissionFlag || window.addButtonPermission;
+    if (!resolvedPermission) {
+        addBtn.style.display = 'none';
+        return;
+    }
+
+    if (globalUserData && globalUserData[resolvedPermission] === 1) {
+        addBtn.style.display = 'inline-flex';
+        const action = (typeof currentButtonAction !== 'undefined' && currentButtonAction)
+            ? currentButtonAction
+            : window.currentButtonAction;
+        addBtn.onclick = () => {
+            if (action) {
+                window.location.href = action;
+            }
+        };
+    } else {
+        addBtn.style.display = 'none';
+    }
+}
+
+function removeAddButton() {
+    window.disableAddButton = true;
+    const addBtn = document.getElementById('addBtn');
+    if (addBtn) {
+        addBtn.style.display = 'none';
+    }
+}
+
 function renderTable(dataUrl, config = {}) {
     const {
         editPath = null,
@@ -351,7 +408,7 @@ function renderTable(dataUrl, config = {}) {
 
             // Set title after table is fully rendered
             if (title) {
-                document.getElementById('naslovTabele').innerText = title;
+                setTableTitle(title);
             }
 
             document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
@@ -515,6 +572,45 @@ function tabelaCitalci(url, title, pagLimit) {
     });
 }
 
+const TABLE_TITLE_ICONS = {
+    'Osebe': 'bi-people',
+    'Uporabniki': 'bi-person-badge',
+    'Delovne postaje': 'bi-pc-display',
+    'Monitorji': 'bi-display',
+    'Tiskalniki': 'bi-printer',
+    'Ročni čitalci': 'bi-upc-scan',
+    'Virtualni strežniki': 'bi-hdd-network',
+    'Službe': 'bi-diagram-3',
+    'Enote': 'bi-grid',
+    'Proizvajalci': 'bi-building',
+    'Lokacije': 'bi-geo-alt',
+    'Operacijski sistemi': 'bi-cpu',
+    'Tipi naprav': 'bi-tags',
+    'Tipi tiskalnikov': 'bi-printer',
+    'Vloge': 'bi-shield-lock',
+    'Revizijska sled': 'bi-clipboard-data'
+};
+
+function setTableTitle(title, iconClass) {
+    const titleEl = document.getElementById('naslovTabele');
+    if (!titleEl || !title) {
+        return;
+    }
+
+    const textEl = document.getElementById('naslovTabeleText');
+    if (textEl) {
+        textEl.textContent = title;
+    } else {
+        titleEl.textContent = title;
+    }
+
+    const iconEl = document.getElementById('naslovTabeleIcon');
+    const resolvedIcon = iconClass || TABLE_TITLE_ICONS[title];
+    if (iconEl && resolvedIcon) {
+        iconEl.className = `bi ${resolvedIcon}`;
+    }
+}
+
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
 window.addNavigationLinks = addNavigationLinks;
@@ -526,3 +622,5 @@ window.tabelaDelovnePostaje = tabelaDelovnePostaje;
 window.tabelaMonitorji = tabelaMonitorji;
 window.tabelaTiskalniki = tabelaTiskalniki;
 window.tabelaCitalci = tabelaCitalci;
+window.setTableTitle = setTableTitle;
+window.removeAddButton = removeAddButton;

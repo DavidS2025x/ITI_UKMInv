@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100% !important;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +18,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>let grid = null;</script>
 </head>
-<body style="height: 100%;">
+<body>
 
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -31,7 +31,7 @@
             </div>
 
             <div class="modal-footer">
-                <div id="modalID" style="visibility: hidden;"></div>
+                <div id="modalID" class="visually-hidden"></div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
             </div>
@@ -60,8 +60,13 @@
 
     <!-- RIGHT: remaining space -->
     <div class="d-flex flex-column justify-content-start mt-5 app-content">
-        <div class="me-5 d-flex justify-content-between align-items-center table-header-row">
-            <h2 id="naslovTabele">Osebe</h2>
+        <div class="me-5 d-flex justify-content-between align-items-end table-header-row">
+            <div class="table-title">
+                <h2 id="naslovTabele">
+                <i id="naslovTabeleIcon" class="bi bi-people"></i>
+                <span id="naslovTabeleText">Osebe</span>
+                </h2>
+            </div>
             <div id="tableControls" class="table-controls-box">
                 <div id="searchContainer">
                     <input type="text" id="tableSearch" placeholder="Išči...">
@@ -110,44 +115,7 @@
 
     let actionUrl = '/izbrisOseba';
     let currentButtonAction = '/vnosOseba';
-
-    function setUpAddButton(permissionFlag = 'D_UrejanjeUporabnikov') {
-        const addBtn = document.getElementById('addBtn');
-        // Show add button only if user has permission to add
-        if (globalUserData && globalUserData[permissionFlag] === 1) {
-            if (addBtn) {
-                addBtn.style.display = 'inline-flex';
-                addBtn.onclick = () => window.location.href = currentButtonAction;
-                console.log('Add button set up with action:', currentButtonAction);
-            }
-        }
-    }
-
-    function setUpSearch() {
-        const searchInput = document.getElementById('tableSearch');
-        if (searchInput && window.currentDataTable) {
-            const newSearchInput = searchInput.cloneNode(true);
-            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-            
-            console.log('Setting up search input listener');
-            newSearchInput.addEventListener('keyup', (e) => {
-                const searchValue = e.target.value;
-                console.log('Search keyup - value:', searchValue, 'DataTable exists:', !!window.currentDataTable);
-                if (window.currentDataTable) {
-                    try {
-                        window.currentDataTable.search(searchValue, false, true, true).draw();
-                        console.log('DataTable search applied successfully');
-                    } catch (err) {
-                        console.error('Error applying search:', err);
-                    }
-                }
-            });
-            
-            console.log('Search input setup complete');
-        } else {
-            console.log('Search setup failed - searchInput:', !!searchInput, 'DataTable:', !!window.currentDataTable);
-        }
-    }
+    window.addButtonPermission = 'D_UrejanjeUporabnikov';
 
     window.addEventListener("DOMContentLoaded", () => {
         uporabnikPodatki()

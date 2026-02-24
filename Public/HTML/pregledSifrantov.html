@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" style="height: 100% !important;">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,7 +16,7 @@
     <script src="JS/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 </head>
-<body style="height: 100% !important;">
+<body>
 <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -28,7 +28,7 @@
             </div>
 
             <div class="modal-footer">
-                <div id="modalID" style="visibility: hidden;"></div>
+                <div id="modalID" class="visually-hidden"></div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
             </div>
@@ -42,42 +42,42 @@
     <!-- LEFT: buttons -->
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 app-sidebar">
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/sluzbaPodatki'); document.getElementById('naslovTabele').innerText='Službe'">
+        onclick="tabela('/sluzbaPodatki'); setTableTitle('Službe')">
         Službe
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/enotaPodatki'); document.getElementById('naslovTabele').innerText='Enote'">
+        onclick="tabela('/enotaPodatki'); setTableTitle('Enote')">
         Enote
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/proizvajalecPodatki'); document.getElementById('naslovTabele').innerText='Proizvajalci'">
+        onclick="tabela('/proizvajalecPodatki'); setTableTitle('Proizvajalci')">
         Proizvajalci
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/lokacijaPodatki'); document.getElementById('naslovTabele').innerText='Lokacije'">
+        onclick="tabela('/lokacijaPodatki'); setTableTitle('Lokacije')">
         Lokacije
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/osPodatki'); document.getElementById('naslovTabele').innerText='Operacijski sistemi'">
+        onclick="tabela('/osPodatki'); setTableTitle('Operacijski sistemi')">
         OS
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/tipiNapravPodatki'); document.getElementById('naslovTabele').innerText='Tipi naprav'">
+        onclick="tabela('/tipiNapravPodatki'); setTableTitle('Tipi naprav')">
         Tipi naprav
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/tipiTiskalnikovPodatki'); document.getElementById('naslovTabele').innerText='Tipi tiskalnikov'">
+        onclick="tabela('/tipiTiskalnikovPodatki'); setTableTitle('Tipi tiskalnikov')">
         Tipi tiskalnikov
         </button>
         
         <button class="btn app-sidebar-btn mb-2"
-        onclick="tabela('/vlogePodatki'); document.getElementById('naslovTabele').innerText='Vloge'">
+        onclick="tabela('/vlogePodatki'); setTableTitle('Vloge')">
         Vloge
         </button>
 
@@ -85,8 +85,13 @@
 
     <!-- RIGHT: remaining space -->
     <div class="d-flex flex-column justify-content-start mt-5 app-content">
-        <div class="me-5 d-flex justify-content-between align-items-center table-header-row">
-            <h2 id="naslovTabele">Službe</h2>
+        <div class="me-5 d-flex justify-content-between align-items-end table-header-row">
+            <div class="table-title">
+                <h2 id="naslovTabele">
+                <i id="naslovTabeleIcon" class="bi bi-pc-display"></i>
+                <span id="naslovTabeleText">Službe</span>
+                </h2>
+            </div>
             <div id="tableControls" class="table-controls-box">
                 <div id="searchContainer">
                     <input type="text" id="tableSearch" placeholder="Išči...">
@@ -132,37 +137,7 @@
 <script>
     let actionUrl = '';
     let currentButtonAction = '';
-
-    function setUpAddButton() {
-        // Sifranti pages don't use the add button
-        console.log('setUpAddButton called (sifranti - no button)');
-    }
-
-    function setUpSearch() {
-        const searchInput = document.getElementById('tableSearch');
-        if (searchInput && window.currentDataTable) {
-            const newSearchInput = searchInput.cloneNode(true);
-            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-            
-            console.log('Setting up search input listener');
-            newSearchInput.addEventListener('keyup', (e) => {
-                const searchValue = e.target.value;
-                console.log('Search keyup - value:', searchValue, 'DataTable exists:', !!window.currentDataTable);
-                if (window.currentDataTable) {
-                    try {
-                        window.currentDataTable.search(searchValue, false, true, true).draw();
-                        console.log('DataTable search applied successfully');
-                    } catch (err) {
-                        console.error('Error applying search:', err);
-                    }
-                }
-            });
-            
-            console.log('Search input setup complete');
-        } else {
-            console.log('Search setup failed - searchInput:', !!searchInput, 'DataTable:', !!window.currentDataTable);
-        }
-    }
+    window.disableAddButton = true;
 
     window.addEventListener("DOMContentLoaded", () => {
                 uporabnikPodatki()
