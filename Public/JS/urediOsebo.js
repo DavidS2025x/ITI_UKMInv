@@ -1,4 +1,10 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za urejanje podatkov obstoječe osebe.
+ * Ob nalaganju strani zapolni spustna menija za službo in enoto ter prednapolni polja
+ * z obstoječimi vrednostmi osebe. Obravnava oddajo sprememb in reset obrazca.
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -19,6 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            // Naloži seznam služb v spustni meni
             fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -31,6 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
             
+            // Naloži seznam enot v spustni meni
             fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -46,6 +54,7 @@ window.addEventListener("DOMContentLoaded", () => {
             const naslov = document.getElementById("naslov")
             naslov.innerText = "Uredi osebo";
 
+            // Pridobi obstoječe podatke osebe iz seje in prednapolni polja obrazca
             fetch('/osebaPodatkiEdit')
             .then(response => response.json())
             .then( data => {
@@ -68,6 +77,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('Enota').value = window.OznakaEnote;
             })
 
+            // Obravnava oddaje obrazca – zberi spremembe in pošlji POST na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;
@@ -102,6 +112,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Obnovi vsa polja na izvorne vrednosti, pridobljene ob nalaganju strani
             document.addEventListener('reset', (e) => {
                 e.preventDefault();
                 document.getElementById('UporabniskoIme').value = window.UporabniskoIme;

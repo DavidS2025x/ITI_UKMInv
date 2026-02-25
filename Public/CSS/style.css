@@ -449,7 +449,7 @@ table {
     width: 60px;
     min-width: 60px;
     max-width: 60px;
-    padding-right: 17px !important;
+    padding-right: 10px !important;
     padding-left: 17px !important;
 }
 
@@ -850,4 +850,22 @@ table {
     color: var(--muted);
     font-size: 0.85rem;
 }
+
+/* Fix gap between sticky columns and table edge in modal */
+.modal-body .table-responsive {
+    overflow: auto;
+    scrollbar-gutter: stable;
+    padding: 0;
+    margin: 0;
+}
+
+.modal-body .dataTables_wrapper {
+    overflow-x: auto !important;
+    margin: 0 !important;
+}
+
+.modal-body table {
+    margin-bottom: 0 !important;
+}
+
 

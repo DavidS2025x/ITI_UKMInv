@@ -1,4 +1,9 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za dodajanje nove osebe (zaposleni/oseba v sistemu).
+ * Ob nalaganju strani zapolni spustna menija za službo in enoto ter obravnava oddajo obrazca.
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -19,6 +24,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            // Naloži seznam služb v spustni meni
             fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -32,6 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
             
+            // Naloži seznam enot v spustni meni
             fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -46,6 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Obravnava oddaje obrazca – zberi polja in pošlji POST zahtevo na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;

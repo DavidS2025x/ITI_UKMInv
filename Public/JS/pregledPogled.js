@@ -16,6 +16,11 @@ function displayViewResults(data, viewName) {
     const thead = table.querySelector('thead tr');
     const tbody = table.querySelector('tbody');
 
+    // Destroy existing DataTable if it exists
+    if ($.fn.dataTable.isDataTable('#viewResultsTable')) {
+        $('#viewResultsTable').DataTable().destroy();
+    }
+
     // Clear existing content
     thead.innerHTML = '';
     tbody.innerHTML = '';
@@ -37,6 +42,23 @@ function displayViewResults(data, viewName) {
             tr.appendChild(td);
         });
         tbody.appendChild(tr);
+    });
+
+    // Initialize DataTable with sorting but no pagination
+    $('#viewResultsTable').DataTable({
+        paging: false,
+        searching: true,
+        ordering: true,
+        info: true,
+        autoWidth: true,
+        language: {
+            search: 'Išči:',
+            info: 'Prikazujem _TOTAL_ vnosov',
+            infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
+            infoEmpty: 'Ni rezultatov',
+            zeroRecords: 'Ni najdenih zapisov',
+            emptyTable: 'Ni podatkov v tabeli'
+        }
     });
 
     // Show modal

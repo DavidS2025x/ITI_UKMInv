@@ -310,10 +310,8 @@ function setUpAddButton(permissionFlag) {
     const addBtn = document.getElementById('addBtn');
     if (!addBtn) return;
 
-    if (window.disableAddButton) {
-        addBtn.style.display = 'none';
-        return;
-    }
+    // Omogoči gumb, ker se navigira stran od tabele, ki ga onemogoči
+    window.disableAddButton = false;
 
     const resolvedPermission = permissionFlag || window.addButtonPermission;
     if (!resolvedPermission) {
@@ -823,9 +821,13 @@ function tabelaPogled(url, title, pagLimit) {
                 viewBtn.style.display = 'flex';
                 viewBtn.style.alignItems = 'center';
                 viewBtn.style.transition = 'color 0.2s';
+                // Store viewName in data attribute to avoid closure issues
+                viewBtn.setAttribute('data-view-name', viewName);
                 viewBtn.onmouseover = () => viewBtn.querySelector('i').style.color = '#0b5ed7';
                 viewBtn.onmouseout = () => viewBtn.querySelector('i').style.color = '#0d6efd';
-                viewBtn.onclick = () => executeViewQuery(viewName);
+                viewBtn.onclick = function() {
+                    executeViewQuery(this.getAttribute('data-view-name'));
+                };
                 actionCell.appendChild(viewBtn);
 
                 tr.appendChild(actionCell);
@@ -971,3 +973,4 @@ window.tabelaPogled = tabelaPogled;
 window.executeViewQuery = executeViewQuery;
 window.setTableTitle = setTableTitle;
 window.removeAddButton = removeAddButton;
+window.setUpAddButton = setUpAddButton;

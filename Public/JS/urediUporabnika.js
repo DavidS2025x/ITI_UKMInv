@@ -1,4 +1,10 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za urejanje obstoječega sistemskega uporabnika.
+ * Ob nalaganju strani zapolni spustni meni za vlogo in prednapolni polja
+ * z obstoječimi vrednostmi uporabnika. Obravnava oddajo sprememb in reset obrazca.
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -22,6 +28,7 @@ window.addEventListener("DOMContentLoaded", () => {
             const naslov = document.getElementById("naslov")
             naslov.innerText = "Uredi uporabnika";
 
+            // Naloži seznam vlog v spustni meni
             fetch('/vlogaPodatki')
             .then(response => response.json())
             .then(data => {
@@ -34,6 +41,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Pridobi obstoječe podatke sistemskega uporabnika iz seje in prednapolni polja obrazca
             fetch('/uporabnikPodatkiEdit')
             .then(response => response.json())
             .then( data => {
@@ -50,6 +58,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('OznakaVloge').value = window.OznakaVloge;
             })
 
+            // Obravnava oddaje obrazca – zberi spremembe in pošlji POST na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;
@@ -81,6 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Obnovi vsa polja na izvorne vrednosti, pridobljene ob nalaganju strani
             document.addEventListener('reset', (e) => {
                 e.preventDefault();
                 document.getElementById('UporabniskoIme').value = window.UporabniskoIme;

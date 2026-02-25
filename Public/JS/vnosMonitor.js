@@ -1,4 +1,10 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za dodajanje novega monitorja.
+ * Ob nalaganju strani zapolni spustne menije (proizvajalci, tipi naprav, lokacije,
+ * osebe, službe, enote, delovne postaje) in obravnava oddajo obrazca.
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -19,6 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            // Naloži seznam proizvajalcev v spustni meni
             fetch('/proizvajalecPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -31,6 +38,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam tipov naprav v spustni meni
             fetch('/tipNapravePodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -43,6 +51,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam lokacij v spustni meni
             fetch('/lokacijaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -55,6 +64,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam oseb (dodeljeni uporabnik) v spustni meni
             fetch('/osebaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -67,6 +77,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam služb v spustni meni
             fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -79,6 +90,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
             
+            // Naloži seznam enot v spustni meni
             fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -91,6 +103,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam delovnih postaj za prireditev monitorju
             fetch('/delovnaPostajaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -103,6 +116,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
             })
 
+            // Obravnava oddaje obrazca – zberi polja in pošlji POST zahtevo na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;

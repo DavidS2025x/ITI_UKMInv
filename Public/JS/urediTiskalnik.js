@@ -1,4 +1,11 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za urejanje obstoječega tiskalnika.
+ * Ob nalaganju strani zapolni spustne menije ter prednapolni polja z obstoječimi vrednostmi
+ * tiskalnika (pridobljene iz seja na strežniški strani).
+ * Obravnava oddajo sprememb in vrnitev na izvorna stanja (reset).
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -19,6 +26,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            // Naloži seznam proizvajalcev v spustni meni
             fetch('/proizvajalecPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -31,6 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam tipov tiskalnikov v spustni meni
             fetch('/tipTiskalnikaForm')
             .then(response => response.json())
             .then(data => {
@@ -43,6 +52,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam lokacij v spustni meni
             fetch('/lokacijaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -55,6 +65,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam oseb (dodeljeni uporabnik) v spustni meni
             fetch('/osebaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -67,6 +78,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam služb v spustni meni
             fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -79,6 +91,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
             
+            // Naloži seznam enot v spustni meni
             fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -91,6 +104,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam delovnih postaj za prireditev tiskalniku
             fetch('/delovnaPostajaPodatkiForm')
             .then(response => response.json())
             .then(data => {
@@ -106,6 +120,11 @@ window.addEventListener("DOMContentLoaded", () => {
             const naslov = document.querySelector('h1')
             naslov.innerText = "Uredi tiskalnik";
 
+            /**
+             * Pretvori datumski niz v obliko 'YYYY-MM-DD', primerno za vrednost <input type="date">.
+             * @param {string} dateString - Datumski niz v obliki ISO ali 'YYYY-MM-DD HH:MM:SS'.
+             * @returns {string} Samo datum brez časa ali prazen niz.
+             */
             function formatDateForInput(dateString) {
                 if (!dateString) return '';
                 // Handle both "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DD" formats
@@ -113,6 +132,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 return dateOnly;
             }
 
+            // Pridobi obstoječe podatke tiskalnika iz seje in prednapolni polja obrazca
             fetch('/tiskalnikPodatkiEdit')
             .then(response => response.json())
             .then( data => {
@@ -160,6 +180,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('Opombe').value = window.Opombe;
             })
 
+            // Obravnava oddaje obrazca – zberi spremembe in pošlji POST na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;
@@ -199,6 +220,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Obnovi vsa polja na izvorne vrednosti, pridobljene ob nalaganju strani
             document.addEventListener('reset', (event) => {
                 setTimeout(() => {
                     document.getElementById('OznakaTiskalnika').value = window.OznakaTiskalnika;

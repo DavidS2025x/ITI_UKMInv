@@ -1,14 +1,32 @@
 /// <reference path="./main.js" />
+
+/**
+ * Nadzorna plošča (index) – inicializira KPI števce, grafe po letih in po enotah,
+ * ter filter za starost naprav z ohranjevanjem vrednosti v localStorage.
+ */
+
+/** Referenca na instanco grafa nakupov po letih (Chart.js). */
 let grafNakupiPoLetih = null;
+/** Referenca na instanco grafa naprav po enotah (Chart.js). */
 let grafNapravePoSluzbi = null;
+/** Ključ za shranjevanje filtra starosti naprav v localStorage. */
 const STAROST_STORAGE_KEY = 'starostNaprave';
 
+/**
+ * Prebere shranjeno vrednost filtra starosti iz localStorage.
+ * @returns {number} Shranjena vrednost starosti ali 0, če vrednost ni nastavljena.
+ */
 function preberiStarostShranjeno() {
     const saved = localStorage.getItem(STAROST_STORAGE_KEY);
     const parsed = parseInt(saved, 10);
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/**
+ * Nastavi besedilno vsebino elementa z lokaliziranim formatiranjem za slovenščino.
+ * @param {string} id - ID HTML elementa.
+ * @param {number|string} value - Vrednost za prikaz (privzeto 0, če je prazna).
+ */
 function setText(id, value) {
     const el = document.getElementById(id);
     if (el) {
@@ -16,6 +34,11 @@ function setText(id, value) {
     }
 }
 
+/**
+ * Pretvori seznam vnosov s polji Leto in Stevilo v Map za hitro iskanje po letu.
+ * @param {Array} vnosi - Niz objektov z lastnostima Leto in Stevilo.
+ * @returns {Map<number, number>} Mapa {leto -> število naprav}.
+ */
 function pripraviLetoMap(vnosi) {
     const mapa = new Map();
     (vnosi || []).forEach(vnos => {
@@ -28,6 +51,12 @@ function pripraviLetoMap(vnosi) {
     return mapa;
 }
 
+/**
+ * Zgradi zaporedno tabelo let med minLeto in maxLeto (vključno).
+ * @param {number} minLeto - Začetno leto.
+ * @param {number} maxLeto - Končno leto.
+ * @returns {number[]} Tabela let ali prazen niz, če so parametri neveljavni.
+ */
 function zgradiLeta(minLeto, maxLeto) {
     if (!minLeto || !maxLeto || maxLeto < minLeto) {
         return [];
@@ -40,6 +69,11 @@ function zgradiLeta(minLeto, maxLeto) {
     return leta;
 }
 
+/**
+ * Nariše ali osveži stolpični graf nakupov naprav po letu proizvodnje.
+ * Ob ponovnem klicu uniči obstoječi graf in ga nadomesti z novim.
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPloscaPodatki).
+ */
 function narisiGrafPoLetih(grafData) {
     const minLeto = Number(grafData?.minLeto || 0);
     const maxLeto = Number(grafData?.maxLeto || 0);
@@ -131,6 +165,11 @@ function narisiGrafPoLetih(grafData) {
     });
 }
 
+/**
+ * Nariše ali osveži stolpični graf naprav po enotah.
+ * Združi vse tipe naprav po oznaki enote v skupno mapo in pripravi nabore podatkov.
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPloscaPodatki).
+ */
 function narisiGrafNapravePoSluzbi(grafData) {
     const enoteMap = new Map();
     const deviceTypes = ['delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci'];
@@ -235,6 +274,11 @@ function narisiGrafNapravePoSluzbi(grafData) {
     });
 }
 
+/**
+ * Pridobi posodobljene KPI vrednosti za naprave, starejše od podanega praga,
+ * in jih prikaže v karticah z oznako "Starejše od X let".
+ * @param {number} [starost=0] - Starostni prag v letih.
+ */
 async function fetchAndUpdateNumbers(starost = 0) {
     const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
     if (!response.ok) {
@@ -250,6 +294,11 @@ async function fetchAndUpdateNumbers(starost = 0) {
     setText('staroCitalci', staro.rocniCitalci);
 }
 
+/**
+ * Inicializira celotno nadzorno ploščo: naloži KPI števce, filtrira po starosti
+ * in nariše oba grafa. Pokliče se ob nalaganju strani.
+ * @param {number} [starost=0] - Začetni starostni prag za filter.
+ */
 async function initDashboard(starost = 0) {
     const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
     if (!response.ok) {
@@ -275,6 +324,7 @@ async function initDashboard(starost = 0) {
     narisiGrafNapravePoSluzbi(data.napravePoSluzbi);
 }
 
+// Inicializacija nadzorne plošče ob nalaganju DOM
 window.addEventListener("DOMContentLoaded", () => {
     const starostInput = document.getElementById('starostInput');
     const zacetnaStarost = preberiStarostShranjeno();

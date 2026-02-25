@@ -69,6 +69,7 @@
             <div id="tableControls" class="table-controls-box">
                 <div id="searchContainer">
                     <input type="text" id="tableSearch" placeholder="Išči...">
+                    <button type="button" class="btn btn-outline-danger ms-2" style="width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; line-height: 1;" title="Počisti iskanje" onclick="document.getElementById('tableSearch').value = ''; $('#datatbl').DataTable().search('').draw();"><i class="bi bi-x-circle"></i></button>
                 </div>
                 <div id="pagLimitContainer">
                     <span>Prikaži:</span>

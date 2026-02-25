@@ -1,4 +1,15 @@
 /// <reference path="./main.js" />
+
+/**
+ * Pregled opreme osebe – stran za prikaz vseh naprav, dodeljenih izbrani osebi.
+ * Prikazuje delovne postaje, monitorje, tiskalnike in ročne čitalce v ločenih karticah.
+ * Uporabniki z dovoljenjem D_UrejanjeOpreme imajo na voljo gumbe za urejanje in odstranjevanje.
+ */
+
+/**
+ * Naloži spustni seznam vseh oseb s strežnika in ga zapolni.
+ * Nastavi poslušalec za spremembo izbire, ki sprobi naložitev opreme izbrane osebe.
+ */
 async function loadOsebeDropdown() {
     try {
         const response = await fetch('/osebaPodatkiForm');
@@ -18,8 +29,13 @@ async function loadOsebeDropdown() {
     }
 }
 
+/** Shranjevanje podatkov prijavljenega uporabnika za preverjanje dovoljenj pri izrisu seznamov. */
 let currentUserData = null;
 
+/**
+ * Naloži in prikaže vso opremo izbrane osebe iz spustnega seznama.
+ * Ob spremembi izbire zbriše obstoječo vsebino in pridobi nove podatke s strežnika za vse tipe naprav.
+ */
 async function loadOsebaOprema() {
     const osebaSelect = document.getElementById('osebaSelect');
     const uporabniskoIme = osebaSelect.value;
@@ -77,6 +93,15 @@ async function loadOsebaOprema() {
     }
 }
 
+/**
+ * Izže HTML seznam naprav v podani vsebnik.
+ * Če ima uporabnik dovoljenje za urejanje, doda gumbe za urejanje in odstranjevanje.
+ * @param {Array} data - Niz naprav za prikaz.
+ * @param {string} containerId - ID vsebnika, v katerega se izriše seznam.
+ * @param {string} countSpanId - ID elementa za prikaz števila naprav v glavi kartice.
+ * @param {string} equipmentType - Tip naprave ('delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci').
+ * @param {object} userData - Podatki prijavljenega uporabnika za preverjanje dovoljenj.
+ */
 function renderEquipmentList(data, containerId, countSpanId, equipmentType, userData) {
     const container = document.getElementById(containerId);
     const countSpan = document.getElementById(countSpanId);
@@ -127,6 +152,11 @@ function renderEquipmentList(data, containerId, countSpanId, equipmentType, user
     container.appendChild(list);
 }
 
+/**
+ * Nastavi ID naprave za urejanje v sejo in preusmeri na ustrezen obrazec za urejanje.
+ * @param {string} equipmentType - Tip naprave ('delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci').
+ * @param {string} oznaka - Enolična oznaka naprave.
+ */
 function editEquipment(equipmentType, oznaka) {
     const equipmentMap = {
         'delovnePostaje': '/urediDelovnaPostaja',
@@ -149,6 +179,12 @@ function editEquipment(equipmentType, oznaka) {
     }
 }
 
+/**
+ * Odstrani dodeljeno osebo z naprave (nastavi OznakaOsebeUporabniskoIme na null).
+ * Pred izvršitvijo zahteva potrditev uporabnika in po uspešnem odstranitvi osveži prikaz.
+ * @param {string} equipmentType - Tip naprave.
+ * @param {string} oznaka - Enolična oznaka naprave.
+ */
 async function removeEquipmentFromUser(equipmentType, oznaka) {
     if (!confirm('Ali ste prepričani, da želite odstraniti to napravo od osebe?')) {
         return;
@@ -204,6 +240,7 @@ async function removeEquipmentFromUser(equipmentType, oznaka) {
     }
 }
 
+// Inicializacija strani: naloži podatke prijavljenega uporabnika in zapolni spustni seznam oseb
 window.addEventListener("DOMContentLoaded", () => {
     uporabnikPodatki()
         .then(data => {

@@ -1,4 +1,9 @@
 /// <reference path="./main.js" />
+
+/**
+ * Obrazec za dodajanje novega sistemskega uporabnika.
+ * Ob nalaganju strani zapolni spustni meni za vlogo in obravnava oddajo obrazca.
+ */
 window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
@@ -19,6 +24,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            // Naloži seznam vlog v spustni meni
             fetch('/vlogaPodatki')
             .then(response => response.json())
             .then(data => {
@@ -31,6 +37,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Obravnava oddaje obrazca – zberi polja in pošlji POST zahtevo na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;
