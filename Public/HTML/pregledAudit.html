@@ -16,7 +16,6 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="JS/main.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-    <script>let grid = null;</script>
 </head>
 <body>
 
@@ -91,31 +90,6 @@
     </div>
 </body>
 
-<script>
-
-    window.disableAddButton = true;
-
-    window.addEventListener("DOMContentLoaded", () => {
-        uporabnikPodatki()
-            .then(data => {
-                // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
-                // Generate action buttons based on permissions
-                addNavigationLinks(data)
-                .then(() => {
-                        const currentWindow = window.location.pathname.split('/').pop();
-                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
-                        links.forEach(link => {
-                            if (link.getAttribute('href').includes(currentWindow)) {
-                                link.classList.add('active');
-                            }
-                        });
-                    });
-            }).catch(err => {
-                console.error('Error loading user data:', err);
-            });
-            tabela('/auditPodatki', null, 'desc');
-        });
-</script>
+<script src="JS/pregledAudit.js"></script>
 
 </html>

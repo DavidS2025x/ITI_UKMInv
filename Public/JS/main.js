@@ -1,5 +1,15 @@
+// Globalna spremenljivka za shranjevanje podatkov o prijavljenem uporabniku.
+// Nastavljena ob klicu uporabnikPodatki() in dostopna po vsem skriptu.
 let globalUserData = null;
 
+/**
+ * Pridobi podatke o trenutno prijavljenem uporabniku iz seje strežnika.
+ * Ob uspešnem odgovoru shrani podatke v globalUserData.
+ * V primeru napake (401 / neaktivna seja) preusmeri na stran za prijavo.
+ *
+ * @async
+ * @returns {Promise<Object>} Objekt s polji: Ime, Priimek, UporabniskoIme, OznakaVloge in zastavicami dovoljenj.
+ */
 async function uporabnikPodatki() {
     const response = await fetch('/uporabnikPodatki', {
         method: 'POST',
@@ -19,6 +29,14 @@ async function uporabnikPodatki() {
     return userData;
 };
 
+/**
+ * Dinamično zgradi navigacijske povezave v navigacijski vrstici glede na dovoljenja uporabnika.
+ * Vsaka povezava je prikazana samo, če ima uporabnik ustrezno dovoljenje (vrednost 1).
+ *
+ * @async
+ * @param {Object} userData - Objekt s podatki o uporabniku, pridobljen iz uporabnikPodatki().
+ * @returns {Promise<void>}
+ */
 async function addNavigationLinks(userData) {
     const navLinksContainer = document.getElementById('navLinksContainer');
     navLinksContainer.innerHTML = ' ';
@@ -47,6 +65,14 @@ async function addNavigationLinks(userData) {
     });
 };
 
+/**
+ * Odjavi trenutno prijavljenega uporabnika.
+ * Pošlje POST zahtevo na /logout. Ob preusmeritvi strežnika (po uspešni odjavi)
+ * preusmeri brskalnik na stran za prijavo.
+ *
+ * @async
+ * @returns {Promise<void>}
+ */
 async function logout() {
     const response = await fetch('/logout', {
         method: 'POST',
@@ -63,6 +89,7 @@ async function logout() {
     }
 };
 
+// Nabor stolpcev, katerih vrednosti se prikažejo kot Da/Ne namesto 1/0.
 const booleanColumns = new Set([
     'Kamera',
     'Stojalo',
@@ -75,6 +102,7 @@ const booleanColumns = new Set([
     'Urejanje uporabnikov'
 ]);
 
+// Nabor stolpcev, katerih vrednostim se doda enota GB (za količine pomnilnika in diskov).
 const gbColumns = new Set([
     'RAM',
     'Disk C',
@@ -86,11 +114,13 @@ const gbColumns = new Set([
     'Disk C VHD max GB'
 ]);
 
+// Nabor stolpcev, katerih vrednostim se doda znak % (za deleže in zasedbo).
 const percentColumns = new Set([
     'Memory buffer %',
     'Zasedenost diska %'
 ]);
 
+// Nabor stolpcev, ki se v tabeli prikažejo centrirano.
 const centeredColumns = new Set([
     'Kamera',
     'Stojalo',
@@ -131,6 +161,17 @@ const centeredColumns = new Set([
     'Urejanje uporabnikov'
 ])
 
+/**
+ * Formatira vrednost celice glede na ime stolpca.
+ * - Vrednosti v booleanColumns se pretvorijo v 'Da' ali 'Ne'.
+ * - Vrednostim v gbColumns se doda pripona ' GB'.
+ * - Vrednostim v percentColumns se doda pripona ' %'.
+ * - Prazne, null ali undefined vrednosti se prikažejo kot prazen niz.
+ *
+ * @param {*} value - Vrednost celice.
+ * @param {string} columnName - Ime stolpca (ključ iz vrnjenega objekta JSON).
+ * @returns {string} Formatiran prikaz vrednosti.
+ */
 function formatCellValue(value, columnName) {
     if (booleanColumns.has(columnName)) {
         if (value === 1 || value === '1' || value === true) return 'Da';
@@ -155,6 +196,16 @@ function formatCellValue(value, columnName) {
     return textValue;
 }
 
+/**
+ * Nastavi vsebino in poravnavo elementa <td> glede na vrednost in ime stolpca.
+ * Kliče formatCellValue() za pridobitev prikaza vrednosti ter doda CSS razred
+ * 'text-center', če stolpec spada v centeredColumns.
+ *
+ * @param {HTMLTableCellElement} td - Element <td>, ki ga je treba napolniti.
+ * @param {*} value - Vrednost celice.
+ * @param {string} columnName - Ime stolpca.
+ * @returns {void}
+ */
 function applyCellFormatting(td, value, columnName) {
     td.textContent = formatCellValue(value, columnName);
     if (centeredColumns.has(columnName)) {
@@ -164,6 +215,13 @@ function applyCellFormatting(td, value, columnName) {
     }
 }
 
+/**
+ * Premakne kontrolnike za paginacijo (informacija o strani in gumbi za
+ * navigacijo) iz ovoja DataTables v namenski element #paginationContainer.
+ * Zagotavlja, da kontrolniki ostanejo na pravilnem mestu po ponovni gradnji tabele.
+ *
+ * @returns {void}
+ */
 function movePaginationControls() {
     const table = document.getElementById('datatbl');
     const target = document.getElementById('paginationContainer');
@@ -181,6 +239,12 @@ function movePaginationControls() {
     }
 }
 
+/**
+ * Ponastavi položaj vodoravnega in navpičnega drsnika v kontejnerju tabele
+ * (#table-responsive) na začetek. Kliče se po ponovni gradnji tabele.
+ *
+ * @returns {void}
+ */
 function resetTableScroll() {
     const container = document.getElementById('table-responsive');
     if (container) {
@@ -189,6 +253,13 @@ function resetTableScroll() {
     }
 }
 
+/**
+ * Sinhronizira stanje radijskih gumbov za izbiro števila prikazanih vnosov
+ * (#pagLimitContainer) z vrednostjo pagLimit.
+ *
+ * @param {number} pagLimit - Želena vrednost za število prikazanih vnosov na stran.
+ * @returns {void}
+ */
 function syncPagLimitRadios(pagLimit) {
     const radios = document.querySelectorAll('input[name="pagLimit"]');
     if (!radios.length) return;
@@ -197,6 +268,14 @@ function syncPagLimitRadios(pagLimit) {
     });
 }
 
+/**
+ * Vzpostavi iskalnik za tabelo DataTables (#tableSearch).
+ * Klonira obstoječi vnos, da odstrani prej privezane poslušalce,
+ * nato priveze nov 'keyup' poslušalec, ki sproži iskanje po DataTables.
+ * Kliče se po vsaki gradnji tabele.
+ *
+ * @returns {void}
+ */
 function setUpSearch() {
     const searchInput = document.getElementById('tableSearch');
     if (!searchInput || !window.currentDataTable) return;
@@ -216,6 +295,17 @@ function setUpSearch() {
     });
 }
 
+/**
+ * Pripravi gumb za dodajanje novega vnosa (#addBtn) glede na dovoljenja.
+ * - Če je window.disableAddButton resničen, gumb skrije.
+ * - Če ima uporabnik ustrezno dovoljenje, gumb prikaže in mu nastavi klik na
+ *   window.currentButtonAction (ali lokalno spremenljivko currentButtonAction).
+ * - V nasprotnem primeru gumb skrije.
+ *
+ * @param {string} [permissionFlag] - Ključ dovoljenja (npr. 'D_DodajanjeOpreme').
+ *   Če ni podan, se uporabi window.addButtonPermission.
+ * @returns {void}
+ */
 function setUpAddButton(permissionFlag) {
     const addBtn = document.getElementById('addBtn');
     if (!addBtn) return;
@@ -246,6 +336,13 @@ function setUpAddButton(permissionFlag) {
     }
 }
 
+/**
+ * Trajno skrije gumb za dodajanje (#addBtn) na trenutni strani.
+ * Nastavi window.disableAddButton na true, da prepreči, da bi kasnejši
+ * klici setUpAddButton() gumb znova prikazali.
+ *
+ * @returns {void}
+ */
 function removeAddButton() {
     window.disableAddButton = true;
     const addBtn = document.getElementById('addBtn');
@@ -254,6 +351,22 @@ function removeAddButton() {
     }
 }
 
+/**
+ * Splošna funkcija za prikazovanje tabele s podatki in izbirnimi akcijami (uredi/briši).
+ * Pridobi podatke z določenega URL-ja, dinamično zgradi glavo in vrstice tabele,
+ * ter doda stolpec z gumbi za akcije, če ima uporabnik ustrezna dovoljenja.
+ * Na koncu inicializira DataTables in nastavi iskanje ter paginacijo.
+ *
+ * @param {string} dataUrl - URL za pridobitev JSON podatkov (GET zahteva).
+ * @param {Object} [config] - Konfiguracijski objekt:
+ * @param {string|null} [config.editPath] - Pot za preusmerjanje pri urejanju (npr. '/urediOsebo').
+ * @param {string|null} [config.deleteUrl] - URL za brisanje vnosa (POST zahteva).
+ * @param {number|null} [config.pageLimit] - Število vnosov na stran.
+ * @param {string} [config.editPermission='D_UrejanjeOpreme'] - Ključ dovoljenja za urejanje.
+ * @param {string} [config.deletePermission='D_BrisanjeOpreme'] - Ključ dovoljenja za brisanje.
+ * @param {string|null} [config.title] - Naslov tabele, ki se prikaže nad njo.
+ * @returns {void}
+ */
 function renderTable(dataUrl, config = {}) {
     const {
         editPath = null,
@@ -422,6 +535,17 @@ function renderTable(dataUrl, config = {}) {
         });
 }
 
+/**
+ * Prikazuje enostavno tabelo samo za branje brez gumbov za akcije.
+ * Namenjena prikazovanju podatkov, kjer urejanje in brisanje nista potrebna
+ * (npr. revizijska sled, pogledi).
+ * Inicializira DataTables in nastavi iskanje ter paginacijo.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov (GET zahteva).
+ * @param {number|null} [pagLimit] - Število vnosov na stran; če ni podano, se bere iz localStorage.
+ * @param {string} [sortOrder='asc'] - Smer razvrstitvenega vrstnega reda prvega stolpca ('asc' ali 'desc').
+ * @returns {void}
+ */
 function tabela(url, pagLimit, sortOrder = 'asc') {
     console.log(`Fetching data from: ${url}`);
     const savedLimit = localStorage.getItem('pagLimit');
@@ -521,6 +645,15 @@ function tabela(url, pagLimit, sortOrder = 'asc') {
         });
 }
 
+/**
+ * Prikaže tabelo oseb s stolpcema za urejanje in brisanje.
+ * Obe akciji zahtevata dovoljenje D_UrejanjeUporabnikov.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov oseb.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaOsebe(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediOsebo',
@@ -531,6 +664,15 @@ function tabelaOsebe(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo sistemskih uporabnikov s stolpcema za urejanje in brisanje.
+ * Obe akciji zahtevata dovoljenje D_UrejanjeUporabnikov.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov uporabnikov.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaUporabniki(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediUporabnika',
@@ -541,6 +683,15 @@ function tabelaUporabniki(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo delovnih postaj s stolpcema za urejanje in brisanje.
+ * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov delovnih postaj.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaDelovnePostaje(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediDelovnaPostaja',
@@ -549,6 +700,15 @@ function tabelaDelovnePostaje(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo monitorjev s stolpcema za urejanje in brisanje.
+ * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov monitorjev.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaMonitorji(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediMonitor',
@@ -557,6 +717,15 @@ function tabelaMonitorji(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo tiskalnikov s stolpcema za urejanje in brisanje.
+ * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov tiskalnikov.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaTiskalniki(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediTiskalnik',
@@ -565,6 +734,15 @@ function tabelaTiskalniki(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo ročnih čitalcev s stolpcema za urejanje in brisanje.
+ * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov ročnih čitalcev.
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran.
+ * @returns {void}
+ */
 function tabelaCitalci(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediRocniCitalec',
@@ -573,6 +751,17 @@ function tabelaCitalci(url, title, pagLimit) {
     });
 }
 
+/**
+ * Prikaže tabelo razpoložljivih pogledov (tabela 'pogled') z gumbom za izvedbo
+ * poizvedbe. Za vsako vrstico doda gumb z ikono očesa, ki sproži klic executeViewQuery()
+ * z vrednostjo stolpca 'Naziv pogleda' iz tiste vrstice.
+ * Na koncu inicializira DataTables in nastavi iskanje ter paginacijo.
+ *
+ * @param {string} url - URL za pridobitev JSON podatkov pogledov (GET zahteva).
+ * @param {string} title - Naslov tabele.
+ * @param {number} [pagLimit] - Število vnosov na stran; če ni podano, se bere iz localStorage.
+ * @returns {void}
+ */
 function tabelaPogled(url, title, pagLimit) {
     const savedLimit = localStorage.getItem('pagLimit');
     const limit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
@@ -688,6 +877,14 @@ function tabelaPogled(url, title, pagLimit) {
         });
 }
 
+/**
+ * Pošlje POST zahtevo na /izvrsiPogled z imenom pogleda in prikaže rezultate
+ * v modalnem oknu prek displayViewResults().
+ * Ob napaki prikaže opozorilo.
+ *
+ * @param {string} viewName - Ime podatkovnega pogleda (vrednost stolpca NazivPogleda).
+ * @returns {void}
+ */
 function executeViewQuery(viewName) {
     console.log(`Executing view query: ${viewName}`);
     fetch('/izvrsiPogled', {
@@ -705,6 +902,8 @@ function executeViewQuery(viewName) {
     });
 }
 
+// Slovar naslovov tabel in ustreznih Bootstrap Icons razredov.
+// Ključ je naslov tabele (enak kot parameter 'title'), vrednost pa CSS razred ikone.
 const TABLE_TITLE_ICONS = {
     'Osebe': 'bi-people',
     'Uporabniki': 'bi-person-badge',
@@ -725,6 +924,18 @@ const TABLE_TITLE_ICONS = {
     'Pogled': 'bi-eye'
 };
 
+/**
+ * Nastavi naslov in ikono nad tabelo (#naslovTabele).
+ * - Element #naslovTabeleText dobi novo besedilo.
+ * - Element #naslovTabeleIcon dobi Bootstrap Icons razred glede na TABLE_TITLE_ICONS
+ *   ali neposredno podani iconClass.
+ * Če elementi ne obstajajo ali naslov ni podan, funkcija ne naredi nič.
+ *
+ * @param {string} title - Besedilo naslova tabele.
+ * @param {string} [iconClass] - Neobvezni CSS razred ikone (npr. 'bi-pc-display').
+ *   Če ni podan, se ikona poišče v TABLE_TITLE_ICONS[title].
+ * @returns {void}
+ */
 function setTableTitle(title, iconClass) {
     const titleEl = document.getElementById('naslovTabele');
     if (!titleEl || !title) {

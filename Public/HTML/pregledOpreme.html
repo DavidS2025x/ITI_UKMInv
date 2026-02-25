@@ -122,43 +122,6 @@
     </div>
 </body>
 
-<script>
-
-    let actionUrl = '/izbrisDelovnaPostaja';
-    let currentButtonAction = '/delovnaPostajaVnos';
-    window.addButtonPermission = 'D_DodajanjeOpreme';
-
-
-
-    function izbrisiVnos(id, actionUrl){
-        console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-        fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
-            tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
-        });
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-                uporabnikPodatki()
-                .then(data => {
-                    // Update navbar with user info
-                    document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
-                    // Generate action buttons based on permissions
-                    addNavigationLinks(data)
-                    .then(() => {
-                        const currentWindow = window.location.pathname.split('/').pop();
-                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
-                        links.forEach(link => {
-                            if (link.getAttribute('href').includes(currentWindow)) {
-                                link.classList.add('active');
-                            }
-                        });
-                    });
-                    currentButtonAction = '/delovnaPostajaVnos';
-                    tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
-                }).catch(err => {
-                    console.error('Error loading user data:', err);
-                });
-            });
-</script>
+<script src="JS/pregledOpreme.js"></script>
 
 </html>
