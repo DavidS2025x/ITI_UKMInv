@@ -29,7 +29,8 @@ async function addNavigationLinks(userData) {
         { label: 'Oprema po osebi', href: '/opremaOsebePregled', permission: 'D_PregledOpreme'},
         { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'},
         { label: 'Šifranti', href: '/sifrantiPregled', permission: 'D_UrejanjeUporabnikov'},
-        { label: 'Revizijska sled', href:'/auditPregled', permission: 'D_UrejanjeUporabnikov'}
+        { label: 'Revizijska sled', href:'/auditPregled', permission: 'D_UrejanjeUporabnikov'},
+        { label: 'Pogled', href:'/pogledPregled', permission: 'D_UrejanjeUporabnikov'}
     ];
 
     links.forEach(link => {
@@ -572,6 +573,138 @@ function tabelaCitalci(url, title, pagLimit) {
     });
 }
 
+function tabelaPogled(url, title, pagLimit) {
+    const savedLimit = localStorage.getItem('pagLimit');
+    const limit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
+    window.currentPagLimit = limit;
+    syncPagLimitRadios(limit);
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.length) return;
+
+            if ($.fn.dataTable.isDataTable('#datatbl')) {
+                $('#datatbl').DataTable().destroy();
+            }
+
+            const datacolumns = Object.keys(data[0]);
+            const thead = document.querySelector('#datatbl thead tr');
+            thead.innerHTML = '';
+
+            datacolumns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                thead.appendChild(th);
+            });
+
+            // Add Actions column
+            const akciiHeader = document.createElement('th');
+            akciiHeader.className = 'akcije-col';
+            akciiHeader.textContent = 'Akcije';
+            akciiHeader.style.width = '120px';
+            thead.appendChild(akciiHeader);
+
+            const tbody = document.querySelector('#datatbl tbody');
+            tbody.innerHTML = '';
+
+            const fragment = document.createDocumentFragment();
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const viewName = row['Naziv pogleda'];
+
+                datacolumns.forEach(col => {
+                    const td = document.createElement('td');
+                    applyCellFormatting(td, row[col], col);
+                    tr.appendChild(td);
+                });
+
+                // Add View button
+                const actionCell = document.createElement('td');
+                actionCell.className = 'akcije-col d-flex justify-content-center align-items-center gap-1';
+
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'view-btn';
+                viewBtn.title = 'Prikaži pogled';
+                viewBtn.innerHTML = '<i class="bi bi-eye-fill" style="font-size: 1rem; color: #0d6efd;"></i>';
+                viewBtn.style.background = 'none';
+                viewBtn.style.border = 'none';
+                viewBtn.style.padding = '0.25rem';
+                viewBtn.style.cursor = 'pointer';
+                viewBtn.style.display = 'flex';
+                viewBtn.style.alignItems = 'center';
+                viewBtn.style.transition = 'color 0.2s';
+                viewBtn.onmouseover = () => viewBtn.querySelector('i').style.color = '#0b5ed7';
+                viewBtn.onmouseout = () => viewBtn.querySelector('i').style.color = '#0d6efd';
+                viewBtn.onclick = () => executeViewQuery(viewName);
+                actionCell.appendChild(viewBtn);
+
+                tr.appendChild(actionCell);
+                fragment.appendChild(tr);
+            });
+            tbody.appendChild(fragment);
+
+            window.currentDataTable = $('#datatbl').DataTable({
+                pageLength: limit,
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                autoWidth: true,
+                lengthChange: false,
+                deferRender: true,
+                language: {
+                    search: 'Išči:',
+                    paginate: {
+                        first: 'Prva',
+                        last: 'Zadnja',
+                        next: 'Naslednja',
+                        previous: 'Prejšnja'
+                    },
+                    info: 'Prikazujem od _START_ do _END_ od skupno _TOTAL_ vnosov',
+                    infoFiltered: ' (filtrirano iz _MAX_ vnosov)',
+                    infoEmpty: 'Ni rezultatov',
+                    zeroRecords: 'Ni najdenih zapisov',
+                    emptyTable: 'Ni podatkov v tabeli'
+                }
+            });
+
+            window.currentDataTable.search('').draw();
+            movePaginationControls();
+            resetTableScroll();
+            setUpSearch();
+
+            if (title) {
+                setTableTitle(title);
+            }
+
+            document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    window.currentDataTable.page.len(parseInt(e.target.value)).draw();
+                    localStorage.setItem('pagLimit', e.target.value);
+                    window.currentPagLimit = parseInt(e.target.value);
+                });
+            });
+        });
+}
+
+function executeViewQuery(viewName) {
+    console.log(`Executing view query: ${viewName}`);
+    fetch('/izvrsiPogled', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({viewName: viewName})
+    })
+    .then(r => r.json())
+    .then(data => {
+        displayViewResults(data, viewName);
+    })
+    .catch(err => {
+        console.error('Error executing view:', err);
+        alert('Napaka pri izvajanju pogleda');
+    });
+}
+
 const TABLE_TITLE_ICONS = {
     'Osebe': 'bi-people',
     'Uporabniki': 'bi-person-badge',
@@ -588,7 +721,8 @@ const TABLE_TITLE_ICONS = {
     'Tipi naprav': 'bi-tags',
     'Tipi tiskalnikov': 'bi-printer',
     'Vloge': 'bi-shield-lock',
-    'Revizijska sled': 'bi-clipboard-data'
+    'Revizijska sled': 'bi-clipboard-data',
+    'Pogled': 'bi-eye'
 };
 
 function setTableTitle(title, iconClass) {
@@ -622,5 +756,7 @@ window.tabelaDelovnePostaje = tabelaDelovnePostaje;
 window.tabelaMonitorji = tabelaMonitorji;
 window.tabelaTiskalniki = tabelaTiskalniki;
 window.tabelaCitalci = tabelaCitalci;
+window.tabelaPogled = tabelaPogled;
+window.executeViewQuery = executeViewQuery;
 window.setTableTitle = setTableTitle;
 window.removeAddButton = removeAddButton;

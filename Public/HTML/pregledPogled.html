@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="Icons\UKM_InvDB_Transparent_Alt.ico">
+    <title>Pogled</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="CSS\style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="JS/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>let grid = null;</script>
+</head>
+<body>
+
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Izbris</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="confirmModalBody modal-body">
+            </div>
+
+            <div class="modal-footer">
+                <div id="modalID" class="visually-hidden"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-danger" onclick="izbrisiVnos(document.getElementById('modalID').textContent, actionUrl); bootstrap.Modal.getOrCreateInstance('#confirmModal').hide()">Izbriši</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for View Results -->
+    <div class="modal fade" id="viewResultsModal" tabindex="-1" aria-labelledby="viewResultsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewResultsModalLabel">Rezultati pogleda</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table id="viewResultsTable" class="table table-striped table-hover table-sm">
+                            <thead>
+                                <tr></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="container-fluid d-flex align-items-start justify-content-center app-page">
+
+    <!-- RIGHT: remaining space -->
+    <div class="audit-container d-flex flex-column justify-content-start mt-5 app-content">
+        <div class="d-flex justify-content-between align-items-end table-header-row">
+            <h2 id="naslovTabele" class="table-title">
+                <i id="naslovTabeleIcon" class="bi bi-eye"></i>
+                <span id="naslovTabeleText">Pogled</span>
+            </h2>
+            <div id="tableControls" class="table-controls-box">
+                <div id="searchContainer">
+                    <input type="text" id="tableSearch" placeholder="Išči...">
+                </div>
+                <div id="pagLimitContainer">
+                    <span>Prikaži:</span>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="25" name="pagLimit" value="25" checked>
+                        <label class="form-check-label" for="25">25</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="50" name="pagLimit" value="50">
+                        <label class="form-check-label" for="50">50</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="100" name="pagLimit" value="100">
+                        <label class="form-check-label" for="100">100</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="200" name="pagLimit" value="200">
+                        <label class="form-check-label" for="200">200</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="table-responsive">
+            <table id="datatbl" class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div id="paginationContainer"></div>
+    </div>
+
+    </div>
+</body>
+
+<script>
+
+    window.disableAddButton = true;
+
+    function displayViewResults(data, viewName) {
+        if (!data || data.length === 0) {
+            alert('Ni podatkov v pogledu');
+            return;
+        }
+
+        const modal = document.getElementById('viewResultsModal');
+        const modalTitle = document.getElementById('viewResultsModalLabel');
+        modalTitle.textContent = `Rezultati pogleda: ${viewName}`;
+
+        const table = document.getElementById('viewResultsTable');
+        const thead = table.querySelector('thead tr');
+        const tbody = table.querySelector('tbody');
+
+        // Clear existing content
+        thead.innerHTML = '';
+        tbody.innerHTML = '';
+
+        // Create headers
+        const columns = Object.keys(data[0]);
+        columns.forEach(col => {
+            const th = document.createElement('th');
+            th.textContent = col;
+            thead.appendChild(th);
+        });
+
+        // Create rows
+        data.forEach(row => {
+            const tr = document.createElement('tr');
+            columns.forEach(col => {
+                const td = document.createElement('td');
+                td.textContent = row[col] !== null ? row[col] : '';
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+
+        // Show modal
+        bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+
+    window.displayViewResults = displayViewResults;
+
+    window.addEventListener("DOMContentLoaded", () => {
+        uporabnikPodatki()
+            .then(data => {
+                // Update navbar with user info
+                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                // Generate action buttons based on permissions
+                addNavigationLinks(data)
+                .then(() => {
+                        const currentWindow = window.location.pathname.split('/').pop();
+                        const links = document.querySelectorAll('#navLinksContainer .nav-link');
+                        links.forEach(link => {
+                            if (link.getAttribute('href').includes(currentWindow)) {
+                                link.classList.add('active');
+                            }
+                        });
+                    });
+            }).catch(err => {
+                console.error('Error loading user data:', err);
+            });
+            tabelaPogled('/pogledPodatki', 'Pogled');
+        });
+</script>
+
+</html>

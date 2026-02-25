@@ -227,6 +227,20 @@ server.get('/auditPregled', async (req, res) => {
     }
 });
 
+server.get('/pogledPregled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledPogled.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
 // -- Entry form pages --
 
 server.get('/osebaVnos', async (req, res) => {
@@ -530,6 +544,48 @@ server.get('/auditPodatki', async (req, res) => {
         res.redirect('/login');
     } else {
         res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.get('/pogledPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const result = await SQLquery('SELECT NazivPogleda AS "Naziv pogleda", PrikaznoIme AS "Prikazno ime", OpisKratek AS "Opis", OpisDaljsi AS "Poln opis", PrivzetaUrejenost AS "Privzeta urejenost", IdSkupine AS "ID skupine", DatumVnosa AS "Datum vnosa", DatumPosodobitve AS "Datum posodobitve" FROM pogled WHERE Aktiven = 1 ORDER BY ZaporedjePrikaza ASC');
+        res.json(result);
+    } else if (!req.session.loggedIn){
+        res.redirect('/login');
+    } else {
+        res.redirect('/nadzornaPlosca');
+    }
+});
+
+server.post('/izvrsiPogled', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+        const viewName = req.body.viewName;
+        
+        // Validate viewName to prevent SQL injection
+        // Only allow alphanumeric characters and underscores
+        if (!viewName || !/^[a-zA-Z0-9_]+$/.test(viewName)) {
+            return res.status(400).json({error: 'Invalid view name'});
+        }
+        
+        try {
+            // Verify the view exists in the pogled table
+            const viewExists = await SQLquery('SELECT NazivPogleda FROM pogled WHERE NazivPogleda = ? AND Aktiven = 1', [viewName]);
+            if (viewExists.length === 0) {
+                return res.status(404).json({error: 'View not found or inactive'});
+            }
+            
+            // Execute the query on the view
+            const result = await SQLquery(`SELECT * FROM ${viewName}`);
+            res.json(result);
+        } catch (err) {
+            console.error('Error executing view query:', err);
+            res.status(500).json({error: 'Error executing view query'});
+        }
+    } else if (!req.session.loggedIn){
+        res.status(401).json({error: 'Not authenticated'});
+    } else {
+        res.status(403).json({error: 'Insufficient permissions'});
     }
 });
 
