@@ -1306,6 +1306,54 @@ server.post('/urediDelovnaPostaja', async (req, res) => {
     }
 });
 
+server.post('/nerazporejenaDelovnaPostaja', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const { ID } = req.body;
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        await SQLqueryWithAppUser(appUser, 'CALL spDelovnaPostaja_OznaciKotNerazporejeno(?)', [ID]);
+        res.status(200).json({success: true, message: 'Delovna postaja uspešno označena kot nerazporejena'});
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/nerazporejenMonitor', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const { ID } = req.body;
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        await SQLqueryWithAppUser(appUser, 'CALL spMonitor_OznaciKotNerazporejeno(?)', [ID]);
+        res.status(200).json({success: true, message: 'Monitor uspešno označen kot nerazporejen'});
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/nerazporejenTiskalnik', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const { ID } = req.body;
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        await SQLqueryWithAppUser(appUser, 'CALL spTiskalnik_OznaciKotNerazporejeno(?)', [ID]);
+        res.status(200).json({success: true, message: 'Tiskalnik uspešno označen kot nerazporejen'});
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
+server.post('/nerazporejenRocniCitalec', async (req, res) => {
+    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+        const { ID } = req.body;
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        await SQLqueryWithAppUser(appUser, 'CALL spRocniCitalec_OznaciKotNerazporejeno(?)', [ID]);
+        res.status(200).json({success: true, message: 'Ročni čitalec uspešno označen kot nerazporejen'});
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
+
 server.post('/urediMonitor', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
         let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;

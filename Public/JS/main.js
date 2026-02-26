@@ -369,21 +369,26 @@ function renderTable(dataUrl, config = {}) {
     const {
         editPath = null,
         deleteUrl = null,
+        unassignUrl = null,
+        unassignLabel = null,
         pageLimit = null,
         editPermission = 'D_UrejanjeOpreme',
         deletePermission = 'D_BrisanjeOpreme',
+        unassignPermission = 'D_UrejanjeOpreme',
         title = null
     } = config;
 
     // Determine if user has permissions for any actions
     const canEdit = editPath !== null && globalUserData && globalUserData[editPermission] === 1;
     const canDelete = deleteUrl !== null && globalUserData && globalUserData[deletePermission] === 1;
-    const withActions = canEdit || canDelete;
+    const canUnassign = unassignUrl !== null && globalUserData && globalUserData[unassignPermission] === 1;
+    const withActions = canEdit || canDelete || canUnassign;
 
     const savedLimit = localStorage.getItem('pagLimit');
     const limit = pageLimit !== undefined && pageLimit !== null ? Number(pageLimit) : (savedLimit ? Number(savedLimit) : 25);
     window.currentPagLimit = limit;
     syncPagLimitRadios(limit);
+    window.currentTableReload = () => renderTable(dataUrl, config);
 
     fetch(dataUrl)
         .then(r => r.json())
@@ -458,6 +463,31 @@ function renderTable(dataUrl, config = {}) {
                         actionCell.appendChild(editBtn);
                     }
 
+                    if (canUnassign) {
+                        const unassignBtn = document.createElement('button');
+                        unassignBtn.className = 'unassign-btn';
+                        unassignBtn.title = 'Označi kot nerazporejeno';
+                        unassignBtn.innerHTML = '<i class="bi bi-person-dash-fill" style="font-size: 1rem; color: #fd7e14;"></i>';
+                        unassignBtn.style.background = 'none';
+                        unassignBtn.style.border = 'none';
+                        unassignBtn.style.padding = '0.25rem';
+                        unassignBtn.style.cursor = 'pointer';
+                        unassignBtn.style.display = 'flex';
+                        unassignBtn.style.alignItems = 'center';
+                        unassignBtn.style.transition = 'color 0.2s';
+                        unassignBtn.onmouseover = () => unassignBtn.querySelector('i').style.color = '#e8590c';
+                        unassignBtn.onmouseout = () => unassignBtn.querySelector('i').style.color = '#fd7e14';
+                        unassignBtn.onclick = () => {
+                            const label = unassignLabel || 'delovne postaje';
+                            window.currentUnassignUrl = unassignUrl;
+                            window.currentUnassignLabel = label;
+                            document.getElementById('unassignModalID').textContent = rowId;
+                            document.querySelector('.unassignModalBody').textContent = `Ste prepričani, da želite odstraniti uporabnika z ${label}: ${rowId}?`;
+                            bootstrap.Modal.getOrCreateInstance('#unassignModal').show();
+                        };
+                        actionCell.appendChild(unassignBtn);
+                    }
+
                     if (canDelete) {
                         const deleteBtn = document.createElement('button');
                         deleteBtn.className = 'delete-btn';
@@ -473,6 +503,7 @@ function renderTable(dataUrl, config = {}) {
                         deleteBtn.onmouseover = () => deleteBtn.querySelector('i').style.color = '#c82333';
                         deleteBtn.onmouseout = () => deleteBtn.querySelector('i').style.color = '#dc3545';
                         deleteBtn.onclick = () => {
+                            window.currentDeleteUrl = deleteUrl;
                             document.getElementById('modalID').textContent = rowId;
                             document.querySelector('.confirmModalBody').textContent = `Ste prepričani, da želite izbrisati vnos z ID: ${rowId}?`;
                             bootstrap.Modal.getOrCreateInstance('#confirmModal').show();
@@ -700,6 +731,7 @@ function tabelaDelovnePostaje(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediDelovnaPostaja',
         deleteUrl: '/izbrisDelovnaPostaja',
+        unassignUrl: '/nerazporejenaDelovnaPostaja',
         title: title
     });
 }
@@ -717,6 +749,8 @@ function tabelaMonitorji(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediMonitor',
         deleteUrl: '/izbrisMonitor',
+        unassignUrl: '/nerazporejenMonitor',
+        unassignLabel: 'monitorja',
         title: title
     });
 }
@@ -734,6 +768,8 @@ function tabelaTiskalniki(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediTiskalnik',
         deleteUrl: '/izbrisTiskalnik',
+        unassignUrl: '/nerazporejenTiskalnik',
+        unassignLabel: 'tiskalnika',
         title: title
     });
 }
@@ -751,6 +787,8 @@ function tabelaCitalci(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediRocniCitalec',
         deleteUrl: '/izbrisRocniCitalec',
+        unassignUrl: '/nerazporejenRocniCitalec',
+        unassignLabel: 'ročnega čitalca',
         title: title
     });
 }

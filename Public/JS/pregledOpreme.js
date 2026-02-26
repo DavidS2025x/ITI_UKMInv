@@ -7,9 +7,48 @@ window.addButtonPermission = 'D_DodajanjeOpreme';
 
 
 function izbrisiVnos(id, actionUrl){
-    console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
-    fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
-        tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
+    const deleteUrl = window.currentDeleteUrl || actionUrl;
+    console.log(`Brisanje vnosa z ID: ${id} preko ${deleteUrl}`);
+    fetch(`${deleteUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
+        if (window.currentDataTable) {
+            window.currentDataTable.search('').draw(); // Clear filter/search
+        }
+        const searchInput = document.getElementById('tableSearch');
+        if (searchInput) searchInput.value = '';
+        if (typeof window.currentTableReload === 'function') {
+            window.currentTableReload();
+        } else {
+            tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
+        }
+    });
+}
+
+function oznaciKotNerazporejeno(id) {
+    const unassignUrl = window.currentUnassignUrl || '/nerazporejenaDelovnaPostaja';
+    const label = window.currentUnassignLabel || 'delovne postaje';
+    console.log(`Označevanje ${label} kot nerazporejene: ${id}`);
+    fetch(unassignUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ID: id})
+    }).then(response => {
+        if (response.ok) {
+            if (window.currentDataTable) {
+                window.currentDataTable.search('').draw(); // Clear filter/search
+            }
+            const searchInput = document.getElementById('tableSearch');
+            if (searchInput) searchInput.value = '';
+            if (typeof window.currentTableReload === 'function') {
+                window.currentTableReload();
+            } else {
+                tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje');
+            }
+        } else {
+            alert(`Napaka pri odstranitvi uporabnika z ${label}.`);
+        }
+    }).catch(error => {
+        console.error('Error:', error);
+        alert(`Napaka pri odstranitvi uporabnika z ${label}.`);
     });
 }
 

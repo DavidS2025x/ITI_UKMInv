@@ -32,6 +32,13 @@ async function loadOsebeDropdown() {
 /** Shranjevanje podatkov prijavljenega uporabnika za preverjanje dovoljenj pri izrisu seznamov. */
 let currentUserData = null;
 
+const UNASSIGN_CONFIG = {
+    delovnePostaje: { url: '/nerazporejenaDelovnaPostaja', label: 'delovne postaje' },
+    monitorji: { url: '/nerazporejenMonitor', label: 'monitorja' },
+    tiskalniki: { url: '/nerazporejenTiskalnik', label: 'tiskalnika' },
+    rocniCitalci: { url: '/nerazporejenRocniCitalec', label: 'ročnega čitalca' }
+};
+
 /**
  * Naloži in prikaže vso opremo izbrane osebe iz spustnega seznama.
  * Ob spremembi izbire zbriše obstoječo vsebino in pridobi nove podatke s strežnika za vse tipe naprav.
@@ -129,14 +136,17 @@ function renderEquipmentList(data, containerId, countSpanId, equipmentType, user
         
         let buttonsHTML = '';
         if (hasEditPermission) {
+            const unassignData = UNASSIGN_CONFIG[equipmentType];
+            const unassignBtn = unassignData ? `
+                    <button class="unassign-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="openUnassignModalOS('${oznaka}', '${equipmentType}')" title="Označi kot nerazporejeno" onmouseover="this.querySelector('i').style.color='#e8590c'" onmouseout="this.querySelector('i').style.color='#fd7e14'">
+                        <i class="bi bi-person-dash-fill" style="font-size: 1rem; color: #fd7e14;"></i>
+                    </button>` : '';
             buttonsHTML = `
                 <div class="d-flex gap-1">
                     <button class="edit-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi" onmouseover="this.querySelector('i').style.color='#495057'" onmouseout="this.querySelector('i').style.color='#6c757d'">
                         <i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>
                     </button>
-                    <button class="delete-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="removeEquipmentFromUser('${equipmentType}', '${oznaka}', '${oznaka}')" title="Odstrani" onmouseover="this.querySelector('i').style.color='#c82333'" onmouseout="this.querySelector('i').style.color='#dc3545'">
-                        <i class="bi bi-trash-fill" style="font-size: 1rem; color: #dc3545;"></i>
-                    </button>
+                    ${unassignBtn}
                 </div>
             `;
         }
@@ -185,6 +195,49 @@ function editEquipment(equipmentType, oznaka) {
  * @param {string} equipmentType - Tip naprave.
  * @param {string} oznaka - Enolična oznaka naprave.
  */
+/**
+ * Odpre potrditveni modal za odjavo uporabnika z delovne postaje.
+ * @param {string} oznaka - Oznaka delovne postaje.
+ */
+function openUnassignModalOS(oznaka, equipmentType) {
+    const config = UNASSIGN_CONFIG[equipmentType];
+    if (!config) return;
+    window.currentUnassignUrl = config.url;
+    window.currentUnassignLabel = config.label;
+    document.getElementById('unassignModalOsebeID').textContent = oznaka;
+    document.querySelector('.unassignModalOsebeBody').textContent = `Ste prepričani, da želite odstraniti uporabnika z ${config.label}: ${oznaka}?`;
+    bootstrap.Modal.getOrCreateInstance('#unassignModalOsebe').show();
+}
+
+/**
+ * Pokliče shranjeno proceduro za označitev delovne postaje kot nerazporejene.
+ * Kliče jo gumb za potrditev v modalu.
+ * @param {string} oznaka - Oznaka delovne postaje.
+ */
+function oznaciKotNerazporejenoOS(oznaka) {
+    const id = oznaka || document.getElementById('unassignModalOsebeID').textContent;
+    const label = window.currentUnassignLabel || 'naprave';
+    const url = window.currentUnassignUrl;
+    if (!url) {
+        alert(`Napaka pri odstranitvi uporabnika z ${label}.`);
+        return;
+    }
+    fetch(url, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ID: id})
+    }).then(response => {
+        if (response.ok) {
+            loadOsebaOprema();
+        } else {
+            alert(`Napaka pri odstranitvi uporabnika z ${label}.`);
+        }
+    }).catch(err => {
+        console.error('Error:', err);
+        alert(`Napaka pri odstranitvi uporabnika z ${label}.`);
+    });
+}
+
 async function removeEquipmentFromUser(equipmentType, oznaka) {
     if (!confirm('Ali ste prepričani, da želite odstraniti to napravo od osebe?')) {
         return;

@@ -36,6 +36,24 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="unassignModal" tabindex="-1" aria-labelledby="unassignModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unassignModalLabel">Odstrani uporabnika</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="unassignModalBody modal-body">
+            </div>
+            <div class="modal-footer">
+                <div id="unassignModalID" style="visibility: hidden;"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prekliči</button>
+                <button type="button" class="btn btn-warning" onclick="oznaciKotNerazporejeno(document.getElementById('unassignModalID').textContent); bootstrap.Modal.getOrCreateInstance('#unassignModal').hide()">Odstrani</button>
+            </div>
+            </div>
+        </div>
+    </div>
      <!-- NAVIGATION -->
     <div class="container-fluid d-flex align-items-start ps-0 app-page">
 

@@ -20,6 +20,23 @@
 </head>
 <body>
 
+    <div class="modal fade" id="unassignModalOsebe" tabindex="-1" aria-labelledby="unassignModalOsebeLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="unassignModalOsebeLabel">Odstrani uporabnika</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="unassignModalOsebeBody modal-body"></div>
+            <div class="modal-footer">
+                <div id="unassignModalOsebeID" style="visibility: hidden;"></div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Prekliči</button>
+                <button type="button" class="btn btn-warning" onclick="oznaciKotNerazporejenoOS(document.getElementById('unassignModalOsebeID').textContent); bootstrap.Modal.getOrCreateInstance('#unassignModalOsebe').hide()">Odstrani</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
     <!-- NAVIGATION -->
     <div class="container-fluid d-flex flex-column app-page equipment-page">
 
