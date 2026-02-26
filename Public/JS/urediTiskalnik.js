@@ -127,9 +127,8 @@ window.addEventListener("DOMContentLoaded", () => {
              */
             function formatDateForInput(dateString) {
                 if (!dateString) return '';
-                // Handle both "YYYY-MM-DD HH:MM:SS" and "YYYY-MM-DD" formats
-                const dateOnly = dateString.split('T')[0] || dateString.split(' ')[0];
-                return dateOnly;
+                // Handle "YYYY-MM-DD HH:MM:SS" (MySQL dateStrings), ISO "YYYY-MM-DDT..." and plain "YYYY-MM-DD"
+                return dateString.split('T')[0].split(' ')[0];
             }
 
             // Pridobi obstoječe podatke tiskalnika iz seje in prednapolni polja obrazca

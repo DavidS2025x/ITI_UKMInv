@@ -21,5 +21,5 @@ window.addEventListener("DOMContentLoaded", () => {
         }).catch(err => {
             console.error('Error loading user data:', err);
         });
-        tabela('/auditPodatki', null, 'desc');
+        tabela('/auditPodatki', 'Revizijska sled', null, 'desc');
     });

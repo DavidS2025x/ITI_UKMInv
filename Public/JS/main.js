@@ -540,11 +540,12 @@ function renderTable(dataUrl, config = {}) {
  * Inicializira DataTables in nastavi iskanje ter paginacijo.
  *
  * @param {string} url - URL za pridobitev JSON podatkov (GET zahteva).
+ * @param {string} [title] - Naslov tabele, ki se prikaže nad njo.
  * @param {number|null} [pagLimit] - Število vnosov na stran; če ni podano, se bere iz localStorage.
  * @param {string} [sortOrder='asc'] - Smer razvrstitvenega vrstnega reda prvega stolpca ('asc' ali 'desc').
  * @returns {void}
  */
-function tabela(url, pagLimit, sortOrder = 'asc') {
+function tabela(url, title, pagLimit, sortOrder = 'asc') {
     console.log(`Fetching data from: ${url}`);
     const savedLimit = localStorage.getItem('pagLimit');
     pagLimit = pagLimit !== undefined && pagLimit !== null ? Number(pagLimit) : (savedLimit ? Number(savedLimit) : 25);
@@ -631,6 +632,11 @@ function tabela(url, pagLimit, sortOrder = 'asc') {
             
             // Call setup functions after DataTable is ready
             setUpSearch();
+            
+            // Set title after table is fully rendered
+            if (title) {
+                setTableTitle(title);
+            }
             
             // Update pagination buttons when page length changes
             document.querySelectorAll('input[name="pagLimit"]').forEach(radio => {

@@ -20,7 +20,8 @@ const pool = mysql.createPool({
     database: process.env.DB_DBNAME,
     waitForConnections: true,
     queueLimit: 0,
-    acquireTimeout: 30000
+    acquireTimeout: 30000,
+    dateStrings: true
 });
 
 // Handle pool errors
