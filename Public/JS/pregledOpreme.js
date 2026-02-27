@@ -2,7 +2,7 @@
 
 let actionUrl = '/izbrisDelovnaPostaja';
 let currentButtonAction = '/delovnaPostajaVnos';
-window.addButtonPermission = 'D_DodajanjeOpreme';
+window.addButtonPermission = 'DODAJANJE_OPREME';
 
 
 

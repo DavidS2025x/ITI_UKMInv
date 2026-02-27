@@ -32,10 +32,10 @@ window.addEventListener("DOMContentLoaded", () => {
             fetch('/vlogaPodatki')
             .then(response => response.json())
             .then(data => {
-                const input = document.getElementById('OznakaVloge')
+                const input = document.getElementById('ID_Vloge')
                 data.forEach(data => {
                     const option = document.createElement('option');
-                    option.value = data.OznakaVloge;
+                    option.value = data.ID_Vloge;
                     option.innerText = data.NazivVloge;
                     input.appendChild(option);
                 });
@@ -49,13 +49,13 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.Ime = data.Ime;
                 window.Priimek = data.Priimek;
                 window.Geslo = data.Geslo;
-                window.OznakaVloge = data.OznakaVloge;
+                window.ID_Vloge = data.ID_Vloge;
 
                 document.getElementById('UporabniskoIme').value = window.UporabniskoIme;
                 document.getElementById('Ime').value = window.Ime;
                 document.getElementById('Priimek').value = window.Priimek;
                 document.getElementById('Geslo').value = window.Geslo;
-                document.getElementById('OznakaVloge').value = window.OznakaVloge;
+                document.getElementById('ID_Vloge').value = window.ID_Vloge;
             })
 
             // Obravnava oddaje obrazca – zberi spremembe in pošlji POST na strežnik
@@ -67,7 +67,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     Ime: form.Ime.value,
                     Priimek: form.Priimek.value,
                     Geslo: form.Geslo.value,
-                    OznakaVloge: form.OznakaVloge.value,
+                    ID_Vloge: form.ID_Vloge.value,
                     ID: window.UporabniskoIme
                 };
                 fetch('/urediUporabnika', {
@@ -97,6 +97,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('Ime').value = window.Ime;
                 document.getElementById('Priimek').value = window.Priimek;
                 document.getElementById('Geslo').value = window.Geslo;
-                document.getElementById('OznakaVloge').value = window.OznakaVloge;
+                document.getElementById('ID_Vloge').value = window.ID_Vloge;
             });
         });

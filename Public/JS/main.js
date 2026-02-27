@@ -8,7 +8,7 @@ let globalUserData = null;
  * V primeru napake (401 / neaktivna seja) preusmeri na stran za prijavo.
  *
  * @async
- * @returns {Promise<Object>} Objekt s polji: Ime, Priimek, UporabniskoIme, OznakaVloge in zastavicami dovoljenj.
+ * @returns {Promise<Object>} Objekt s polji: Ime, Priimek, UporabniskoIme, ID_Vloge in seznamom dovoljenj.
  */
 async function uporabnikPodatki() {
     const response = await fetch('/uporabnikPodatki', {
@@ -42,17 +42,17 @@ async function addNavigationLinks(userData) {
     navLinksContainer.innerHTML = ' ';
 
     const links = [
-        { label: 'Nadzorna plošča', href: '/nadzornaPlosca', permission: 'D_OgledNadzornePlosce'},
-        { label: 'Oprema', href: '/opremaPregled', permission: 'D_PregledOpreme'},
-        { label: 'Oprema po osebi', href: '/opremaOsebePregled', permission: 'D_PregledOpreme'},
-        { label: 'Osebe', href: '/osebaPregled', permission: 'D_UrejanjeUporabnikov'},
-        { label: 'Šifranti', href: '/sifrantiPregled', permission: 'D_UrejanjeUporabnikov'},
-        { label: 'Revizijska sled', href:'/auditPregled', permission: 'D_UrejanjeUporabnikov'},
-        { label: 'Pogled', href:'/pogledPregled', permission: 'D_UrejanjeUporabnikov'}
+        { label: 'Nadzorna plošča', href: '/nadzornaPlosca', permission: 'NADZORNA_PLOSCA'},
+        { label: 'Oprema', href: '/opremaPregled', permission: 'PREGLED_OPREME'},
+        { label: 'Oprema po osebi', href: '/opremaOsebePregled', permission: 'PREGLED_OPREME'},
+        { label: 'Osebe', href: '/osebaPregled', permission: 'UREJANJE_UPORABNIKOV'},
+        { label: 'Šifranti', href: '/sifrantiPregled', permission: 'UREJANJE_UPORABNIKOV'},
+        { label: 'Revizijska sled', href:'/auditPregled', permission: 'UREJANJE_UPORABNIKOV'},
+        { label: 'Pogled', href:'/pogledPregled', permission: 'UREJANJE_UPORABNIKOV'}
     ];
 
     links.forEach(link => {
-        if (userData[link.permission] === 1) {
+        if (userData.dovoljenja?.includes(link.permission)) {
             const li = document.createElement('li');
             li.className = 'nav-item';
             const a = document.createElement('a');
@@ -308,7 +308,7 @@ function setUpSearch() {
  *   window.currentButtonAction (ali lokalno spremenljivko currentButtonAction).
  * - V nasprotnem primeru gumb skrije.
  *
- * @param {string} [permissionFlag] - Ključ dovoljenja (npr. 'D_DodajanjeOpreme').
+ * @param {string} [permissionFlag] - Ključ dovoljenja (npr. 'DODAJANJE_OPREME').
  *   Če ni podan, se uporabi window.addButtonPermission.
  * @returns {void}
  */
@@ -325,7 +325,7 @@ function setUpAddButton(permissionFlag) {
         return;
     }
 
-    if (globalUserData && globalUserData[resolvedPermission] === 1) {
+    if (globalUserData && globalUserData.dovoljenja?.includes(resolvedPermission)) {
         addBtn.style.display = 'inline-flex';
         const action = (typeof currentButtonAction !== 'undefined' && currentButtonAction)
             ? currentButtonAction
@@ -366,8 +366,8 @@ function removeAddButton() {
  * @param {string|null} [config.editPath] - Pot za preusmerjanje pri urejanju (npr. '/urediOsebo').
  * @param {string|null} [config.deleteUrl] - URL za brisanje vnosa (POST zahteva).
  * @param {number|null} [config.pageLimit] - Število vnosov na stran.
- * @param {string} [config.editPermission='D_UrejanjeOpreme'] - Ključ dovoljenja za urejanje.
- * @param {string} [config.deletePermission='D_BrisanjeOpreme'] - Ključ dovoljenja za brisanje.
+ * @param {string} [config.editPermission='UREJANJE_OPREME'] - Ključ dovoljenja za urejanje.
+ * @param {string} [config.deletePermission='BRISANJE_OPREME'] - Ključ dovoljenja za brisanje.
  * @param {string|null} [config.title] - Naslov tabele, ki se prikaže nad njo.
  * @returns {void}
  */
@@ -378,16 +378,16 @@ function renderTable(dataUrl, config = {}) {
         unassignUrl = null,
         unassignLabel = null,
         pageLimit = null,
-        editPermission = 'D_UrejanjeOpreme',
-        deletePermission = 'D_BrisanjeOpreme',
-        unassignPermission = 'D_UrejanjeOpreme',
+        editPermission = 'UREJANJE_OPREME',
+        deletePermission = 'BRISANJE_OPREME',
+        unassignPermission = 'UREJANJE_OPREME',
         title = null
     } = config;
 
     // Determine if user has permissions for any actions
-    const canEdit = editPath !== null && globalUserData && globalUserData[editPermission] === 1;
-    const canDelete = deleteUrl !== null && globalUserData && globalUserData[deletePermission] === 1;
-    const canUnassign = unassignUrl !== null && globalUserData && globalUserData[unassignPermission] === 1;
+    const canEdit = editPath !== null && globalUserData && globalUserData.dovoljenja?.includes(editPermission);
+    const canDelete = deleteUrl !== null && globalUserData && globalUserData.dovoljenja?.includes(deletePermission);
+    const canUnassign = unassignUrl !== null && globalUserData && globalUserData.dovoljenja?.includes(unassignPermission);
     const withActions = canEdit || canDelete || canUnassign;
 
     const savedLimit = localStorage.getItem('pagLimit');
@@ -688,7 +688,7 @@ function tabela(url, title, pagLimit, sortOrder = 'asc') {
 
 /**
  * Prikaže tabelo oseb s stolpcema za urejanje in brisanje.
- * Obe akciji zahtevata dovoljenje D_UrejanjeUporabnikov.
+ * Obe akciji zahtevata dovoljenje UREJANJE_UPORABNIKOV.
  *
  * @param {string} url - URL za pridobitev JSON podatkov oseb.
  * @param {string} title - Naslov tabele.
@@ -699,15 +699,15 @@ function tabelaOsebe(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediOsebo',
         deleteUrl: '/izbrisOseba',
-        editPermission: 'D_UrejanjeUporabnikov',
-        deletePermission: 'D_UrejanjeUporabnikov',
+        editPermission: 'UREJANJE_UPORABNIKOV',
+        deletePermission: 'UREJANJE_UPORABNIKOV',
         title: title
     });
 }
 
 /**
  * Prikaže tabelo sistemskih uporabnikov s stolpcema za urejanje in brisanje.
- * Obe akciji zahtevata dovoljenje D_UrejanjeUporabnikov.
+ * Obe akciji zahtevata dovoljenje UREJANJE_UPORABNIKOV.
  *
  * @param {string} url - URL za pridobitev JSON podatkov uporabnikov.
  * @param {string} title - Naslov tabele.
@@ -718,15 +718,15 @@ function tabelaUporabniki(url, title, pagLimit) {
     renderTable(url, {
         editPath: '/urediUporabnika',
         deleteUrl: '/izbrisUporabnik',
-        editPermission: 'D_UrejanjeUporabnikov',
-        deletePermission: 'D_UrejanjeUporabnikov',
+        editPermission: 'UREJANJE_UPORABNIKOV',
+        deletePermission: 'UREJANJE_UPORABNIKOV',
         title: title
     });
 }
 
 /**
  * Prikaže tabelo delovnih postaj s stolpcema za urejanje in brisanje.
- * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ * Akciji zahtevata privzeti dovoljenji UREJANJE_OPREME / BRISANJE_OPREME.
  *
  * @param {string} url - URL za pridobitev JSON podatkov delovnih postaj.
  * @param {string} title - Naslov tabele.
@@ -744,7 +744,7 @@ function tabelaDelovnePostaje(url, title, pagLimit) {
 
 /**
  * Prikaže tabelo monitorjev s stolpcema za urejanje in brisanje.
- * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ * Akciji zahtevata privzeti dovoljenji UREJANJE_OPREME / BRISANJE_OPREME.
  *
  * @param {string} url - URL za pridobitev JSON podatkov monitorjev.
  * @param {string} title - Naslov tabele.
@@ -763,7 +763,7 @@ function tabelaMonitorji(url, title, pagLimit) {
 
 /**
  * Prikaže tabelo tiskalnikov s stolpcema za urejanje in brisanje.
- * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ * Akciji zahtevata privzeti dovoljenji UREJANJE_OPREME / BRISANJE_OPREME.
  *
  * @param {string} url - URL za pridobitev JSON podatkov tiskalnikov.
  * @param {string} title - Naslov tabele.
@@ -782,7 +782,7 @@ function tabelaTiskalniki(url, title, pagLimit) {
 
 /**
  * Prikaže tabelo ročnih čitalcev s stolpcema za urejanje in brisanje.
- * Akciji zahtevata privzeti dovoljenji D_UrejanjeOpreme / D_BrisanjeOpreme.
+ * Akciji zahtevata privzeti dovoljenji UREJANJE_OPREME / BRISANJE_OPREME.
  *
  * @param {string} url - URL za pridobitev JSON podatkov ročnih čitalcev.
  * @param {string} title - Naslov tabele.

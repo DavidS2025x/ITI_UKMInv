@@ -28,10 +28,10 @@ window.addEventListener("DOMContentLoaded", () => {
             fetch('/vlogaPodatki')
             .then(response => response.json())
             .then(data => {
-                const input = document.getElementById('OznakaVloge')
+                const input = document.getElementById('ID_Vloge')
                 data.forEach(data => {
                     const option = document.createElement('option');
-                    option.value = data.OznakaVloge;
+                    option.value = data.ID_Vloge;
                     option.innerText = data.NazivVloge;
                     input.appendChild(option);
                 });
@@ -46,7 +46,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     Ime: form.Ime.value,
                     Priimek: form.Priimek.value,
                     Geslo: form.Geslo.value,
-                    OznakaVloge: form.OznakaVloge.value
+                    ID_Vloge: form.ID_Vloge.value
                 };
                 fetch(form.action, {
                     method: form.method,

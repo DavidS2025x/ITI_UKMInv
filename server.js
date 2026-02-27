@@ -78,26 +78,19 @@ server.get('/login', async (req, res) => {
 server.post('/login', async (req, res) => {
     const UporabniskoIme = req.body.UporabniskoIme;
     const UporabniskoGeslo = req.body.UporabniskoGeslo;
-    const result = await SQLquery(`SELECT * FROM uporabnikiukm LEFT JOIN vloga ON uporabnikiukm.OznakaVloge = vloga.OznakaVloge WHERE UporabniskoIme = ? AND Geslo = ?`, [UporabniskoIme, UporabniskoGeslo]);
+    const result = await SQLquery(`SELECT * FROM uporabnikiukm WHERE UporabniskoIme = ? AND Geslo = ?`, [UporabniskoIme, UporabniskoGeslo]);
     if(result.length > 0){
         req.session.UporabniskoIme = UporabniskoIme;
         req.session.Ime = result[0].Ime;
         req.session.Priimek = result[0].Priimek;
-        req.session.OznakaVloge = result[0].OznakaVloge;
-        req.session.D_PregledOpreme = result[0].PregledOpreme;
-        req.session.D_DodajanjeOpreme = result[0].DodajanjeOpreme;
-        req.session.D_UrejanjeOpreme = result[0].UrejanjeOpreme;
-        req.session.D_BrisanjeOpreme = result[0].BrisanjeOpreme;
-        req.session.D_UrejanjeUporabnikov = result[0].UrejanjeUporabnikov;
-        req.session.D_OgledNadzornePlosce = result[0].OgledNadzornePlosce;
+        req.session.ID_Vloge = result[0].ID_Vloge;
 
         // Load permission codes from the new role/permission structure
-        const oznakaVloge = result[0].OznakaVloge;
+        const idVloge = result[0].ID_Vloge;
         const dovoljenja = await SQLquery(
             `SELECT d.Koda FROM dovoljenje d
              INNER JOIN dovoljenjavloge dv ON dv.ID_Dovoljenja = d.ID_Dovoljenja
-             INNER JOIN vlogatest vt ON vt.ID_Vloge = dv.ID_Vloge
-             WHERE vt.OznakaVloge = ?`, [oznakaVloge]
+             WHERE dv.ID_Vloge = ?`, [idVloge]
         );
         req.session.dovoljenja = dovoljenja.map(d => d.Koda);
 
@@ -125,13 +118,7 @@ server.post('/uporabnikPodatki', async (req, res) => {
             "UporabniskoIme": req.session.UporabniskoIme,
             "Ime": req.session.Ime,
             "Priimek": req.session.Priimek,
-            "OznakaVloge": req.session.OznakaVloge,
-            "D_PregledOpreme": req.session.D_PregledOpreme,
-            "D_DodajanjeOpreme": req.session.D_DodajanjeOpreme,
-            "D_UrejanjeOpreme": req.session.D_UrejanjeOpreme,
-            "D_BrisanjeOpreme": req.session.D_BrisanjeOpreme,
-            "D_UrejanjeUporabnikov": req.session.D_UrejanjeUporabnikov,
-            "D_OgledNadzornePlosce": req.session.D_OgledNadzornePlosce,
+            "ID_Vloge": req.session.ID_Vloge,
             "dovoljenja": req.session.dovoljenja || []
         });
     }else{
@@ -161,7 +148,7 @@ server.post('/nastaviEditID', async (req, res) => {
 
 server.get('/nadzornaPlosca', async (req, res) => {
 
-    if(req.session.loggedIn && req.session.D_OgledNadzornePlosce == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/index.html"), 'utf8');    
 
@@ -187,7 +174,7 @@ server.get('/opremaPregled', async (req, res) => {
 });
 
 server.get('/opremaOsebePregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOpremeOsebe.html"), 'utf8');    
 
@@ -201,7 +188,7 @@ server.get('/opremaOsebePregled', async (req, res) => {
 });
 
 server.get('/osebaPregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOseb.html"), 'utf8');    
 
@@ -215,7 +202,7 @@ server.get('/osebaPregled', async (req, res) => {
 });
 
 server.get('/sifrantiPregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledSifrantov.html"), 'utf8');
 
@@ -227,7 +214,7 @@ server.get('/sifrantiPregled', async (req, res) => {
 });
 
 server.get('/auditPregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledAudit.html"), 'utf8');
 
@@ -241,7 +228,7 @@ server.get('/auditPregled', async (req, res) => {
 });
 
 server.get('/pogledPregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledPogled.html"), 'utf8');
 
@@ -257,7 +244,7 @@ server.get('/pogledPregled', async (req, res) => {
 // -- Entry form pages --
 
 server.get('/osebaVnos', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecOseba.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosOseba.html"), 'utf8');
@@ -273,7 +260,7 @@ server.get('/osebaVnos', async (req, res) => {
 });
 
 server.get('/uporabnikVnos', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecUporabnik.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosUporabnik.html"), 'utf8');
@@ -290,7 +277,7 @@ server.get('/uporabnikVnos', async (req, res) => {
 });
 
 server.get('/delovnaPostajaVnos', async (req,res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecDelovnaPostaja.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosDelovnaPostaja.html"), 'utf8');
@@ -306,7 +293,7 @@ server.get('/delovnaPostajaVnos', async (req,res) => {
 });
 
 server.get('/monitorVnos', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecMonitor.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosMonitor.html"), 'utf8');
@@ -322,7 +309,7 @@ server.get('/monitorVnos', async(req, res) => {
 });
 
 server.get('/tiskalnikVnos', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecTiskalnik.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosTiskalnik.html"), 'utf8');
@@ -338,7 +325,7 @@ server.get('/tiskalnikVnos', async(req, res) => {
 });
 
 server.get('/rocniCitalecVnos', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecRocniCitalec.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/vnosRocniCitalec.html"), 'utf8');
@@ -356,7 +343,7 @@ server.get('/rocniCitalecVnos', async(req, res) => {
 // -- Edit form pages --
 
 server.get('/urediOsebo', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecOseba.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediOsebo.html"), 'utf8');
@@ -372,7 +359,7 @@ server.get('/urediOsebo', async (req, res) => {
 });
 
 server.get('/urediUporabnika', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecUporabnik.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediUporabnika.html"), 'utf8');
@@ -388,7 +375,7 @@ server.get('/urediUporabnika', async (req, res) => {
 });
 
 server.get('/urediDelovnaPostaja', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecDelovnaPostaja.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediDelovnaPostaja.html"), 'utf8');
@@ -404,7 +391,7 @@ server.get('/urediDelovnaPostaja', async (req, res) => {
 });
 
 server.get('/urediMonitor', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecMonitor.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediMonitor.html"), 'utf8');
@@ -420,7 +407,7 @@ server.get('/urediMonitor', async(req, res) => {
 });
 
 server.get('/urediTiskalnik', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecTiskalnik.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediTiskalnik.html"), 'utf8');
@@ -436,7 +423,7 @@ server.get('/urediTiskalnik', async(req, res) => {
 });
 
 server.get('/urediRocniCitalec', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         const form = fs.readFileSync(path.join(__dirname,"Public","/HTML/obrazecRocniCitalec.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/urediRocniCitalec.html"), 'utf8');
@@ -457,7 +444,7 @@ server.get('/urediRocniCitalec', async(req, res) => {
 
 server.get('/vlogaPodatki', async (req, res) => {
     if(req.session.loggedIn){
-        const result = await SQLquery(`SELECT OznakaVloge, NazivVloge FROM vloga ORDER BY OznakaVloge`);
+        const result = await SQLquery(`SELECT ID_Vloge, NazivVloge FROM vlogatest ORDER BY ID_Vloge`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -483,7 +470,7 @@ server.get('/enotaPodatkiForm', async (req, res) => {
 });
 
 server.get('/proizvajalecPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT * FROM proizvajalec`);
         return res.json(result);
     } else {
@@ -492,7 +479,7 @@ server.get('/proizvajalecPodatkiForm', async (req, res) => {
 });
 
 server.get('/tipNapravePodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT * FROM tipnaprave`);
         return res.json(result);
     } else {
@@ -501,7 +488,7 @@ server.get('/tipNapravePodatkiForm', async (req, res) => {
 });
 
 server.get('/tipTiskalnikaForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT * FROM tiptiskalnika`);
         return res.json(result);
     } else {
@@ -510,7 +497,7 @@ server.get('/tipTiskalnikaForm', async (req, res) => {
 })
 
 server.get('/lokacijaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT * FROM lokacijaukm`);
         return res.json(result);
     } else {
@@ -519,7 +506,7 @@ server.get('/lokacijaPodatkiForm', async (req, res) => {
 })
 
 server.get('/osebaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Priimek, ', ', Ime) AS 'Ime' FROM osebaukm`);
         return res.json(result);
     } else {
@@ -528,7 +515,7 @@ server.get('/osebaPodatkiForm', async (req, res) => {
 });
 
 server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         const result = await SQLquery(`SELECT * FROM operacijskisistem`);
         return res.json(result);
     } else {
@@ -537,7 +524,7 @@ server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
 });
 
 server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT OznakaDP FROM delovnapostaja`)
         return res.json(result);
     } else {
@@ -550,7 +537,7 @@ server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
 // ============================================================
 
 server.get('/auditPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery('SELECT AuditID AS "ID", DATE_FORMAT(EventTime, "%Y-%m-%d %H:%i:%s") AS "Čas dogodka", TableName AS "Tabela", Action AS "Dejanje", RecordPK AS "Primarni ključ", DbUser AS "Uporabnik DB", AppUser AS "Uporabnik aplikacije", ChangedColumns AS "Spremenjeni stolpci", OldRow AS "Stari zapis", NewRow AS "Novi zapis" FROM auditlog ORDER BY EventTime ASC');
         res.json(result);
     } else if (!req.session.loggedIn){
@@ -561,7 +548,7 @@ server.get('/auditPodatki', async (req, res) => {
 });
 
 server.get('/pogledPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery('SELECT NazivPogleda AS "Naziv pogleda", PrikaznoIme AS "Prikazno ime", OpisKratek AS "Opis", OpisDaljsi AS "Poln opis", PrivzetaUrejenost AS "Privzeta urejenost", IdSkupine AS "ID skupine", DatumVnosa AS "Datum vnosa", DatumPosodobitve AS "Datum posodobitve" FROM pogled WHERE Aktiven = 1 ORDER BY ZaporedjePrikaza ASC');
         res.json(result);
     } else if (!req.session.loggedIn){
@@ -572,7 +559,7 @@ server.get('/pogledPodatki', async (req, res) => {
 });
 
 server.post('/izvrsiPogled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const viewName = req.body.viewName;
         
         // Validate viewName to prevent SQL injection
@@ -603,7 +590,7 @@ server.post('/izvrsiPogled', async (req, res) => {
 });
 
 server.get('/osebaPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT UporabniskoIme AS "Uporabniško ime", Ime, Priimek, InterniTelefoni AS 'Interni telefoni', MobilniTelefon AS 'Mobilni telefon', ElektronskaPosta AS 'Elektronska pošta', OznakaSluzbe AS 'Služba' FROM osebaukm ORDER BY Priimek`);
         res.json(result);
     } else {
@@ -612,8 +599,8 @@ server.get('/osebaPodatki', async (req, res) => {
 });
 
 server.get('/uporabnikPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery(`SELECT u.UporabniskoIme AS 'Uporabniško ime', u.Ime, u.Priimek, v.NazivVloge AS 'Vloga' FROM uporabnikiukm u LEFT JOIN vloga v ON u.OznakaVloge = v.OznakaVloge ORDER BY Priimek`);
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        const result = await SQLquery(`SELECT u.UporabniskoIme AS 'Uporabniško ime', u.Ime, u.Priimek, vt.NazivVloge AS 'Vloga' FROM uporabnikiukm u LEFT JOIN vlogatest vt ON u.ID_Vloge = vt.ID_Vloge ORDER BY Priimek`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -621,7 +608,7 @@ server.get('/uporabnikPodatki', async (req, res) => {
 });
 
 server.get('/enotaPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT e.OznakaEnote AS 'Oznaka enote', e.NazivEnote AS 'Naziv enote', CONCAT (o.Ime, ' ', o.Priimek) AS 'Vodja enote' FROM enotaukm e LEFT JOIN osebaukm o ON e.VodjaEnoteUporabniskoIme = o.UporabniskoIme ORDER BY e.OznakaEnote`);
         return res.json(result);
     } else {
@@ -630,7 +617,7 @@ server.get('/enotaPodatki', async (req, res) => {
 });
 
 server.get('/sluzbaPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT s.OznakaSluzbe AS 'Oznaka službe', s.NazivSluzbe AS 'Naziv službe', s.OznakaEnote AS 'Oznaka enote', CONCAT(o.Ime, ' ', o.Priimek) AS 'Vodja službe'  FROM sluzbaukm s LEFT JOIN osebaukm o ON s.VodjaSluzbeUporabniskoIme = o.UporabniskoIme ORDER BY s.OznakaSluzbe`);
         return res.json(result);
     } else {
@@ -639,7 +626,7 @@ server.get('/sluzbaPodatki', async (req, res) => {
 });
 
 server.get('/lokacijaPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT OznakaLokacije AS 'Oznaka lokacije', NazivLokacije AS 'Naziv Lokacije', OznakaNadstropja AS 'Nadstropje' FROM lokacijaukm`);
         return res.json(result);
     } else {
@@ -648,7 +635,7 @@ server.get('/lokacijaPodatki', async (req, res) => {
 });
 
 server.get('/osPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT OznakaOS AS 'Operacijski sistem', KategorijaOS AS 'Kategorija' FROM operacijskisistem`);
         return res.json(result);
     } else {
@@ -657,7 +644,7 @@ server.get('/osPodatki', async (req, res) => {
 });
 
 server.get('/tipiNapravPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT OznakaTipaNaprave AS 'Oznaka tipa', OpisTipaNaprave AS 'Opis' FROM tipnaprave`);
         return res.json(result);
     } else {
@@ -666,7 +653,7 @@ server.get('/tipiNapravPodatki', async (req, res) => {
 });
 
 server.get('/tipiTiskalnikovPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT OznakaTipaTiskalnika AS 'Oznaka tipa', OpisTipaTiskalnika AS 'Opis' FROM tiptiskalnika`);
         return res.json(result);
     } else {
@@ -675,7 +662,7 @@ server.get('/tipiTiskalnikovPodatki', async (req, res) => {
 });
 
 server.get('/proizvajalecPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery('SELECT OznakaProizvajalca AS "Oznaka proizvajalca", NazivProizvajalca AS "Naziv proizvajalca" FROM proizvajalec');
         return res.json(result);
     } else {
@@ -684,7 +671,7 @@ server.get('/proizvajalecPodatki', async (req, res) => {
 })
 
 server.get('/vlogePodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         // Fetch all permissions
         const dovoljenja = await SQLquery('SELECT ID_Dovoljenja, NazivDovoljenja FROM dovoljenje ORDER BY ID_Dovoljenja');
         // Fetch all roles
@@ -711,7 +698,7 @@ server.get('/vlogePodatki', async (req, res) => {
 });
 
 server.get('/delovnaPostajaPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT dp.OznakaDP AS 'Oznaka DP', dp.ModelDP AS 'Model DP', dp.OznakaProizvajalca AS 'Proizvajalec', tn.OpisTipaNaprave AS 'Tip naprave', lok.NazivLokacije AS 'Lokacija', dp.InventarnaStevilka AS 'Inventarna številka', CONCAT_WS(' ', os.Ime, os.Priimek) AS 'Uporabnik', dp.OznakaEnote AS 'Enota', dp.OznakaSluzbe AS 'Služba', dp.OznakaOS AS 'Operacijski sistem', dp.CPU, dp.RAM, dp.DiskC AS 'Disk C', dp.DiskD AS 'Disk D', dp.SerijskaStevilka AS 'Serijska številka', DATE_FORMAT(dp.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje', DATE_FORMAT(dp.DatumNakupa, '%Y-%m-%d') AS 'Datum nakupa', DATE_FORMAT(dp.DatumVnosa, '%Y-%m-%d') AS 'Datum vnosa', DATE_FORMAT(dp.DatumPosodobitve, '%Y-%m-%d') AS 'Datum posodobitve', dp.Opombe FROM delovnapostaja dp LEFT JOIN osebaukm os ON dp.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON dp.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON dp.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY dp.OznakaDP`);
         return res.json(result);
     } else {
@@ -720,7 +707,7 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 });
 
 server.get('/monitorPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije ORDER BY m.OznakaMonitorja`);
         return res.json(result);
     } else {
@@ -729,7 +716,7 @@ server.get('/monitorPodatki', async (req, res) => {
 });
 
 server.get('/tiskalnikPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije ORDER BY t.OznakaTiskalnika`);
         return res.json(result);
     } else {
@@ -738,7 +725,7 @@ server.get('/tiskalnikPodatki', async (req, res) => {
 });
 
 server.get('/rocnicitalecPodatki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije ORDER BY rc.OznakaRocnegaCitalca`);
         return res.json(result);
     } else {
@@ -747,7 +734,7 @@ server.get('/rocnicitalecPodatki', async (req, res) => {
 });
 
 server.get('/virtualServerPodatki', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const result = await SQLquery(`SELECT v.ServerName AS 'Naziv strežnika', v.ClusterNode AS 'Cluster', v.OwnerNode AS 'Lastnik', v.Environment AS 'Okolje', v.Criticality AS 'Kritičnost', v.KeySoftware AS 'Ključna programska oprema', v.OSName AS 'Operacijski sistem', v.IP, v.DynamicMemory AS 'Dinamičen spomin', v.RAMStartupGB AS 'RAM startup GB', v.RAMMinGB AS 'RAM min GB', v.RAMMaxGB AS 'RAM max GB', v.MemoryBufferPct AS 'Memory buffer %', v.DiskCVHDMaxGB AS 'Disk C VHD max GB', v.DiskCVHDFileGB AS 'Disk C VHD file GB', v.DiskUsagePct AS 'Zasedenost diska %', v.DiskCVHDPath AS 'Disck C VHD pot', v.Notes AS 'Opombe', DATE_FORMAT(v.CreatedAt, '%Y-%m-%d') AS 'Ustvarjeno', DATE_FORMAT(v.UpdatedAt, '%Y-%m-%d') AS 'Posodobljeno' FROM virtualserver v LEFT JOIN operacijskisistem o ON v.OSName = o.OznakaOS`);
         res.json(result);
     } else if (!req.session.loggedIn){
@@ -762,7 +749,7 @@ server.get('/virtualServerPodatki', async(req, res) => {
 // ============================================================
 
 server.get('/osebaPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -784,7 +771,7 @@ server.get('/osebaPodatkiEdit', async (req, res) => {
 });
 
 server.get('/uporabnikPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -806,7 +793,7 @@ server.get('/uporabnikPodatkiEdit', async (req, res) => {
 });
 
 server.get('/delovnaPostajaPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -828,7 +815,7 @@ server.get('/delovnaPostajaPodatkiEdit', async (req, res) => {
 });
 
 server.get('/monitorPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -850,7 +837,7 @@ server.get('/monitorPodatkiEdit', async (req, res) => {
 });
 
 server.get('/tiskalnikPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -872,7 +859,7 @@ server.get('/tiskalnikPodatkiEdit', async (req, res) => {
 });
 
 server.get('/rocniCitalecPodatkiEdit', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const id = req.session.editID;
         console.log(id);
         if(!id){
@@ -898,7 +885,7 @@ server.get('/rocniCitalecPodatkiEdit', async (req, res) => {
 // ============================================================
 
 server.get('/nadzornaPloscaPodatki', async (req, res) => {
-    if(!(req.session.loggedIn && req.session.D_OgledNadzornePlosce == 1)){
+    if(!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))){
         return res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 
@@ -999,7 +986,7 @@ server.get('/nadzornaPloscaPodatki', async (req, res) => {
 // ============================================================
 
 server.get('/osebDelovnePostaje', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const username = req.query.username;
         if(!username){
             return res.status(400).json({error: 'Username parameter required'});
@@ -1016,7 +1003,7 @@ server.get('/osebDelovnePostaje', async (req, res) => {
 });
 
 server.get('/osebMonitorji', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const username = req.query.username;
         if(!username){
             return res.status(400).json({error: 'Username parameter required'});
@@ -1033,7 +1020,7 @@ server.get('/osebMonitorji', async (req, res) => {
 });
 
 server.get('/osebTiskalniki', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const username = req.query.username;
         if(!username){
             return res.status(400).json({error: 'Username parameter required'});
@@ -1050,7 +1037,7 @@ server.get('/osebTiskalniki', async (req, res) => {
 });
 
 server.get('/osebRocniCitalci', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const username = req.query.username;
         if(!username){
             return res.status(400).json({error: 'Username parameter required'});
@@ -1071,7 +1058,7 @@ server.get('/osebRocniCitalci', async (req, res) => {
 // ============================================================
 
 server.post('/dodajOsebo', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         let { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote } = req.body;
         if (OznakaEnote === undefined || OznakaEnote === '') {
             OznakaEnote = null;
@@ -1094,11 +1081,11 @@ server.post('/dodajOsebo', async (req, res) => {
 });
 
 server.post('/dodajUporabnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge} = req.body;
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        let {UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge} = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, OznakaVloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge]);
+        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, ID_Vloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge]);
         if(result.affectedRows === 1) {
                 res.status(200).json({success: true, message: 'Uporabnik uspešno dodan'});
         } else {
@@ -1112,7 +1099,7 @@ server.post('/dodajUporabnik', async (req, res) => {
 });
 
 server.post('/dodajDelovnoPostajo', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         let {OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
         if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
             OznakaTipaNaprave = null;
@@ -1144,7 +1131,7 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
 });
 
 server.post('/dodajMonitor', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1177,7 +1164,7 @@ server.post('/dodajMonitor', async (req, res) => {
 });
 
 server.post('/dodajTiskalnik', async(req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1222,7 +1209,7 @@ server.post('/dodajTiskalnik', async(req, res) => {
 });
 
 server.post('/dodajRocniCitalec', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_DodajanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
         let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
         
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1262,7 +1249,7 @@ server.post('/dodajRocniCitalec', async (req, res) => {
 // ============================================================
 
 server.post('/urediOsebo', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         let {UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID} = req.body;
         if(InterniTelefoni == undefined || InterniTelefoni == ''){
             InterniTelefoni = null;
@@ -1290,11 +1277,11 @@ server.post('/urediOsebo', async (req, res) => {
 });
 
 server.post('/urediUporabnika', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        let {UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID} = req.body;
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        let {UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge,ID} = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, OznakaVloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,OznakaVloge,ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, ID_Vloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge,ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Uporabnik uspešno urejen'});
         } else {
@@ -1306,7 +1293,7 @@ server.post('/urediUporabnika', async (req, res) => {
 });
 
 server.post('/urediDelovnaPostaja', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         let {OznakaDP, ModelDP, OznakaProizvajalca, OznakaTipaNaprave, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, OznakaOS, CPU, RAM, DiskC, DiskD, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
         if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
             OznakaTipaNaprave = null;
@@ -1337,7 +1324,7 @@ server.post('/urediDelovnaPostaja', async (req, res) => {
 });
 
 server.post('/nerazporejenaDelovnaPostaja', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1349,7 +1336,7 @@ server.post('/nerazporejenaDelovnaPostaja', async (req, res) => {
 });
 
 server.post('/nerazporejenMonitor', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1361,7 +1348,7 @@ server.post('/nerazporejenMonitor', async (req, res) => {
 });
 
 server.post('/nerazporejenTiskalnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1373,7 +1360,7 @@ server.post('/nerazporejenTiskalnik', async (req, res) => {
 });
 
 server.post('/nerazporejenRocniCitalec', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1385,7 +1372,7 @@ server.post('/nerazporejenRocniCitalec', async (req, res) => {
 });
 
 server.post('/urediMonitor', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1418,7 +1405,7 @@ server.post('/urediMonitor', async (req, res) => {
 });
 
 server.post('/urediTiskalnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1463,7 +1450,7 @@ server.post('/urediTiskalnik', async (req, res) => {
 });
 
 server.post('/urediRocniCitalec', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
@@ -1503,7 +1490,7 @@ server.post('/urediRocniCitalec', async (req, res) => {
 // ============================================================
 
 server.post('/izbrisOseba', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1519,7 +1506,7 @@ server.post('/izbrisOseba', async (req, res) => {
 });
 
 server.post('/izbrisUporabnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1535,7 +1522,7 @@ server.post('/izbrisUporabnik', async (req, res) => {
 });
 
 server.post('/izbrisDelovnaPostaja', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('BRISANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1551,7 +1538,7 @@ server.post('/izbrisDelovnaPostaja', async (req, res) => {
 })
 
 server.post('/izbrisMonitor', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('BRISANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1567,7 +1554,7 @@ server.post('/izbrisMonitor', async (req, res) => {
 });
 
 server.post('/izbrisTiskalnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('BRISANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1583,7 +1570,7 @@ server.post('/izbrisTiskalnik', async (req, res) => {
 });
 
 server.post('/izbrisRocniCitalec', async (req, res) =>{
-    if(req.session.loggedIn && req.session.D_BrisanjeOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('BRISANJE_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;

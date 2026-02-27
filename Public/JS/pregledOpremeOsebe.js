@@ -3,7 +3,7 @@
 /**
  * Pregled opreme osebe – stran za prikaz vseh naprav, dodeljenih izbrani osebi.
  * Prikazuje delovne postaje, monitorje, tiskalnike in ročne čitalce v ločenih karticah.
- * Uporabniki z dovoljenjem D_UrejanjeOpreme imajo na voljo gumbe za urejanje in odstranjevanje.
+ * Uporabniki z dovoljenjem UREJANJE_OPREME imajo na voljo gumbe za urejanje in odstranjevanje.
  */
 
 /**
@@ -112,7 +112,7 @@ async function loadOsebaOprema() {
 function renderEquipmentList(data, containerId, countSpanId, equipmentType, userData) {
     const container = document.getElementById(containerId);
     const countSpan = document.getElementById(countSpanId);
-    const hasEditPermission = userData && userData.D_UrejanjeOpreme === 1;
+    const hasEditPermission = userData && userData.dovoljenja?.includes('UREJANJE_OPREME');
     
     // Update count in header
     if (countSpan) {

@@ -2,7 +2,7 @@
 
 let actionUrl = '/izbrisOseba';
 let currentButtonAction = '/osebaVnos';
-window.addButtonPermission = 'D_UrejanjeUporabnikov';
+window.addButtonPermission = 'UREJANJE_UPORABNIKOV';
 
 window.addEventListener("DOMContentLoaded", () => {
     uporabnikPodatki()
