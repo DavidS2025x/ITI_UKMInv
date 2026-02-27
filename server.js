@@ -90,6 +90,17 @@ server.post('/login', async (req, res) => {
         req.session.D_BrisanjeOpreme = result[0].BrisanjeOpreme;
         req.session.D_UrejanjeUporabnikov = result[0].UrejanjeUporabnikov;
         req.session.D_OgledNadzornePlosce = result[0].OgledNadzornePlosce;
+
+        // Load permission codes from the new role/permission structure
+        const oznakaVloge = result[0].OznakaVloge;
+        const dovoljenja = await SQLquery(
+            `SELECT d.Koda FROM dovoljenje d
+             INNER JOIN dovoljenjavloge dv ON dv.ID_Dovoljenja = d.ID_Dovoljenja
+             INNER JOIN vlogatest vt ON vt.ID_Vloge = dv.ID_Vloge
+             WHERE vt.OznakaVloge = ?`, [oznakaVloge]
+        );
+        req.session.dovoljenja = dovoljenja.map(d => d.Koda);
+
         req.session.loggedIn = true;
         res.redirect('/nadzornaPlosca');
     }else{
@@ -120,7 +131,8 @@ server.post('/uporabnikPodatki', async (req, res) => {
             "D_UrejanjeOpreme": req.session.D_UrejanjeOpreme,
             "D_BrisanjeOpreme": req.session.D_BrisanjeOpreme,
             "D_UrejanjeUporabnikov": req.session.D_UrejanjeUporabnikov,
-            "D_OgledNadzornePlosce": req.session.D_OgledNadzornePlosce
+            "D_OgledNadzornePlosce": req.session.D_OgledNadzornePlosce,
+            "dovoljenja": req.session.dovoljenja || []
         });
     }else{
         res.status(401).json({error: 'Not authenticated'});
@@ -161,7 +173,7 @@ server.get('/nadzornaPlosca', async (req, res) => {
 });
 
 server.get('/opremaPregled', async (req, res) => {
-    if(req.session.loggedIn && req.session.D_PregledOpreme == 1){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
         let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/pregledOpreme.html"), 'utf8');    
 
@@ -673,7 +685,25 @@ server.get('/proizvajalecPodatki', async (req, res) => {
 
 server.get('/vlogePodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.D_UrejanjeUporabnikov == 1){
-        const result = await SQLquery('SELECT OznakaVloge AS "Oznaka", NazivVloge AS "Naziv", OgledNadzornePlosce AS "Nadzorna plošča", PregledOpreme AS "Pregled opreme", DodajanjeOpreme AS "Dodajanje opreme", UrejanjeOpreme AS "Urejanje opreme", BrisanjeOpreme AS "Brisanje opreme", UrejanjeUporabnikov AS "Urejanje uporabnikov" FROM vloga');
+        // Fetch all permissions
+        const dovoljenja = await SQLquery('SELECT ID_Dovoljenja, NazivDovoljenja FROM dovoljenje ORDER BY ID_Dovoljenja');
+        // Fetch all roles
+        const vloge = await SQLquery('SELECT ID_Vloge, NazivVloge FROM vlogatest ORDER BY ID_Vloge');
+        // Fetch all role-permission assignments
+        const dovoljenjaVlog = await SQLquery('SELECT ID_Vloge, ID_Dovoljenja FROM dovoljenjavloge');
+
+        // Build a set for quick lookup
+        const assignedSet = new Set(dovoljenjaVlog.map(dv => `${dv.ID_Vloge}_${dv.ID_Dovoljenja}`));
+
+        // Build pivot result: each row = one role, each permission = a column with 1/0
+        const result = vloge.map(vloga => {
+            const row = { 'ID': vloga.ID_Vloge, 'Naziv vloge': vloga.NazivVloge };
+            dovoljenja.forEach(d => {
+                row[d.NazivDovoljenja] = assignedSet.has(`${vloga.ID_Vloge}_${d.ID_Dovoljenja}`) ? 1 : 0;
+            });
+            return row;
+        });
+
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});

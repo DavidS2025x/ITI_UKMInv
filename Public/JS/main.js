@@ -99,7 +99,10 @@ const booleanColumns = new Set([
     'Dodajanje opreme',
     'Urejanje opreme',
     'Brisanje opreme',
-    'Urejanje uporabnikov'
+    'Urejanje uporabnikov',
+    'Odpis opreme',
+    'Pregled nadzorne plošče',
+    'Odstranitev uporabnika opreme'
 ]);
 
 // Nabor stolpcev, katerih vrednostim se doda enota GB (za količine pomnilnika in diskov).
@@ -158,7 +161,10 @@ const centeredColumns = new Set([
     'Dodajanje opreme',
     'Urejanje opreme',
     'Brisanje opreme',
-    'Urejanje uporabnikov'
+    'Urejanje uporabnikov',
+    'Odpis opreme',
+    'Pregled nadzorne plošče',
+    'Odstranitev uporabnika opreme'
 ])
 
 /**
