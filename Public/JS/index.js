@@ -9,6 +9,10 @@
 let grafNakupiPoLetih = null;
 /** Referenca na instanco grafa naprav po enotah (Chart.js). */
 let grafNapravePoSluzbi = null;
+/** Indeks aktivnega nabora podatkov v grafu nakupov (za toggle legend). */
+let activeDatasetNakupi = null;
+/** Indeks aktivnega nabora podatkov v grafu naprav (za toggle legend). */
+let activeDatasetNaprave = null;
 /** Ključ za shranjevanje filtra starosti naprav v localStorage. */
 const STAROST_STORAGE_KEY = 'starostNaprave';
 
@@ -140,6 +144,26 @@ function narisiGrafPoLetih(grafData) {
                         usePointStyle: true,
                         pointStyle: 'circle',
                         padding: 25
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+                        
+                        if (activeDatasetNakupi === index) {
+                            // If clicking the same dataset, show all
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = false;
+                            });
+                            activeDatasetNakupi = null;
+                        } else {
+                            // Hide all except the clicked one
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = i !== index;
+                            });
+                            activeDatasetNakupi = index;
+                        }
+                        
+                        chart.update();
                     }
                 }
             },
@@ -249,6 +273,26 @@ function narisiGrafNapravePoSluzbi(grafData) {
                         usePointStyle: true,
                         pointStyle: 'circle',
                         padding: 25
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+                        
+                        if (activeDatasetNaprave === index) {
+                            // If clicking the same dataset, show all
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = false;
+                            });
+                            activeDatasetNaprave = null;
+                        } else {
+                            // Hide all except the clicked one
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = i !== index;
+                            });
+                            activeDatasetNaprave = index;
+                        }
+                        
+                        chart.update();
                     }
                 }
             },
