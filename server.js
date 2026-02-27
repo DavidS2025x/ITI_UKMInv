@@ -443,7 +443,7 @@ server.get('/urediRocniCitalec', async(req, res) => {
 // ============================================================
 
 server.get('/vlogaPodatki', async (req, res) => {
-    if(req.session.loggedIn){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_UPORABNIKOV') || req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV'))){
         const result = await SQLquery(`SELECT ID_Vloge, NazivVloge FROM vlogatest ORDER BY ID_Vloge`);
         return res.json(result);
     } else {
@@ -452,7 +452,7 @@ server.get('/vlogaPodatki', async (req, res) => {
 });
 
 server.get('/sluzbaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT OznakaSluzbe, NazivSluzbe FROM sluzbaukm ORDER BY OznakaSluzbe`);
         return res.json(result);
     } else {
@@ -461,7 +461,7 @@ server.get('/sluzbaPodatkiForm', async (req, res) => {
 });
 
 server.get('/enotaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT OznakaEnote, NazivEnote FROM enotaukm ORDER BY OznakaEnote`);
         return res.json(result);
     } else {
@@ -470,56 +470,56 @@ server.get('/enotaPodatkiForm', async (req, res) => {
 });
 
 server.get('/proizvajalecPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT * FROM proizvajalec`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permissions'});
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 });
 
 server.get('/tipNapravePodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT * FROM tipnaprave`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
 
 server.get('/tipTiskalnikaForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT * FROM tiptiskalnika`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 })
 
 server.get('/lokacijaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT * FROM lokacijaukm`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 })
 
 server.get('/osebaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Priimek, ', ', Ime) AS 'Ime' FROM osebaukm`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
 
 server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
         const result = await SQLquery(`SELECT * FROM operacijskisistem`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
 
@@ -528,7 +528,7 @@ server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
         const result = await SQLquery(`SELECT OznakaDP FROM delovnapostaja`)
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permission'});
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
 
@@ -648,7 +648,7 @@ server.get('/tipiNapravPodatki', async (req, res) => {
         const result = await SQLquery(`SELECT OznakaTipaNaprave AS 'Oznaka tipa', OpisTipaNaprave AS 'Opis' FROM tipnaprave`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permissions'});
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 });
 
@@ -657,7 +657,7 @@ server.get('/tipiTiskalnikovPodatki', async (req, res) => {
         const result = await SQLquery(`SELECT OznakaTipaTiskalnika AS 'Oznaka tipa', OpisTipaTiskalnika AS 'Opis' FROM tiptiskalnika`);
         return res.json(result);
     } else {
-        req.status(401).json({error: 'Not authenticated or insufficient permissions'});
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
 });
 
@@ -1406,9 +1406,10 @@ server.post('/urediMonitor', async (req, res) => {
 
 server.post('/urediTiskalnik', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+        try {
         let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
-        if(OznakaDP == undefined || OznakaDP == ' '){
+        if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
@@ -1444,6 +1445,10 @@ server.post('/urediTiskalnik', async (req, res) => {
         } else {
             res.status(500).json({success: false, message: 'Napaka pri urejanju tiskalnika'})
         }
+        } catch (err) {
+            console.error('Napaka pri urejanju tiskalnika:', err);
+            res.status(500).json({success: false, message: 'Napaka pri urejanju tiskalnika'});
+        }
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
     }
@@ -1451,9 +1456,10 @@ server.post('/urediTiskalnik', async (req, res) => {
 
 server.post('/urediRocniCitalec', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+        try {
         let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
-        if(OznakaDP == undefined || OznakaDP == ' '){
+        if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
@@ -1479,6 +1485,10 @@ server.post('/urediRocniCitalec', async (req, res) => {
             res.status(200).json({success: true, message: 'Ročni čitalec uspešno urejen'});
         } else {
             res.status(500).json({success: false, message: 'Napaka pri urejanju ročnega čitalca'})
+        }
+        } catch (err) {
+            console.error('Napaka pri urejanju ročnega čitalca:', err);
+            res.status(500).json({success: false, message: 'Napaka pri urejanju ročnega čitalca'});
         }
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
