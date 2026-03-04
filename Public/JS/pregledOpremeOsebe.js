@@ -304,7 +304,7 @@ window.addEventListener("DOMContentLoaded", () => {
             // Store user data for use in renderEquipmentList
             currentUserData = data;
             // Update navbar with user info
-            document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+            updateUserDisplay(data);
             // Generate action buttons based on permissions
             addNavigationLinks(data)
                 .then(() => {

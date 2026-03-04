@@ -10,7 +10,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {
@@ -48,6 +48,19 @@ window.addEventListener("DOMContentLoaded", () => {
                     const option = document.createElement('option');
                     option.value = data.OznakaTipaTiskalnika;
                     option.textContent = data.OznakaTipaTiskalnika + ' - ' + data.OpisTipaTiskalnika;
+                    input.appendChild(option);
+                });
+            });
+
+            // Naloži seznam tipov naprav v spustni meni
+            fetch('/tipNapravePodatkiForm')
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById('OznakaTipaNaprave');
+                data.forEach(data => {
+                    const option = document.createElement('option');
+                    option.value = data.OznakaTipaNaprave;
+                    option.textContent = data.OpisTipaNaprave + ' - ' + data.OznakaKategorijeNaprave;
                     input.appendChild(option);
                 });
             });
@@ -142,6 +155,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.OznakaTiskalnika = data.OznakaTiskalnika;
                 window.ModelTiskalnika = data.ModelTiskalnika;
                 window.OznakaProizvajalca = data.OznakaProizvajalca;
+                window.OznakaTipaNaprave = data.OznakaTipaNaprave;
                 window.OznakaTipaTiskalnika = data.OznakaTipaTiskalnika;
                 window.OznakaDP = data.OznakaDP || ' ';
                 window.OznakaLokacije = data.OznakaLokacije;
@@ -163,6 +177,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('OznakaTiskalnika').value = window.OznakaTiskalnika;
                 document.getElementById('ModelTiskalnika').value = window.ModelTiskalnika;
                 document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
+                document.getElementById('OznakaTipaNaprave').value = window.OznakaTipaNaprave;
                 document.getElementById('OznakaTipaTiskalnika').value = window.OznakaTipaTiskalnika;
                 document.getElementById('OznakaDP').value = window.OznakaDP;
                 document.getElementById('OznakaLokacije').value = window.OznakaLokacije;
@@ -187,6 +202,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     OznakaTiskalnika: form.OznakaTiskalnika.value,
                     ModelTiskalnika: form.ModelTiskalnika.value,
                     OznakaProizvajalca: form.OznakaProizvajalca.value,
+                    OznakaTipaNaprave: form.OznakaTipaNaprave.value,
                     OznakaTipaTiskalnika: form.OznakaTipaTiskalnika.value,
                     OznakaDP: form.OznakaDP.value,
                     OznakaLokacije: form.OznakaLokacije.value,
@@ -225,6 +241,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     document.getElementById('OznakaTiskalnika').value = window.OznakaTiskalnika;
                     document.getElementById('ModelTiskalnika').value = window.ModelTiskalnika;
                     document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
+                    document.getElementById('OznakaTipaNaprave').value = window.OznakaTipaNaprave;
                     document.getElementById('OznakaTipaTiskalnika').value = window.OznakaTipaTiskalnika;
                     document.getElementById('OznakaDP').value = window.OznakaDP;
                     document.getElementById('OznakaLokacije').value = window.OznakaLokacije;

@@ -20,9 +20,18 @@
           
           <!-- Right side - User info and logout -->
           <ul class="navbar-nav ms-auto mb-2 mb-xl-0 align-items-xl-center">
-            <li class="nav-item d-flex align-items-center">
-              <button id="username" class="btn btn-sm app-logout app-username-btn" type="button" tabindex="-1" aria-disabled="true"></button>
-              <button class="btn btn-sm app-logout" type="button" onclick="logout()">Odjava</button>
+            <li class="nav-item dropdown">
+              <button class="btn btn-sm app-logout app-username-btn" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="pointer-events: auto;">
+                <div id="username" style="text-align: left;">
+                  <div id="userFullName" style="font-weight: 600;"></div>
+                  <div id="userRole" style="font-size: 0.85rem; color: #cbd5e1; margin-top: 2px;"></div>
+                </div>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                <li><a class="dropdown-item" href="#" onclick="openChangePasswordModal(event)">Spremeni geslo</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item app-logout-link" href="#" onclick="logout(event)">Odjava</a></li>
+              </ul>
             </li>
           </ul>
         </div>

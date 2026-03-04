@@ -11,12 +11,16 @@ let grafNakupiPoLetih = null;
 let grafNapravePoEnoti = null;
 /** Referenca na instanco grafa naprav po službah (Chart.js). */
 let grafNapravePoSluzbi = null;
+/** Referenca na instanco grafa naprav po statusu (Chart.js). */
+let grafNapravePoStatusu = null;
 /** Indeks aktivnega nabora podatkov v grafu nakupov (za toggle legend). */
 let activeDatasetNakupi = null;
 /** Indeks aktivnega nabora podatkov v grafu naprav po enotah (za toggle legend). */
 let activeDatasetNaprave = null;
 /** Indeks aktivnega nabora podatkov v grafu naprav po službah (za toggle legend). */
 let activeDatasetSluzbe = null;
+/** Indeks aktivnega nabora podatkov v grafu naprav po statusu (za toggle legend). */
+let activeDatasetStatusu = null;
 /** Ključ za shranjevanje filtra starosti naprav v localStorage. */
 const STAROST_STORAGE_KEY = 'starostNaprave';
 
@@ -39,6 +43,105 @@ function setText(id, value) {
     const el = document.getElementById(id);
     if (el) {
         el.textContent = Number(value || 0).toLocaleString('sl-SI');
+    }
+}
+
+const SKLADISCE_NAPRAVE_CONFIG = {
+    delovnePostaje: {
+        modalNaslov: 'Delovne postaje v skladišču',
+        editPath: '/urediDelovnaPostaja'
+    },
+    monitorji: {
+        modalNaslov: 'Monitorji v skladišču',
+        editPath: '/urediMonitor'
+    },
+    tiskalniki: {
+        modalNaslov: 'Tiskalniki v skladišču',
+        editPath: '/urediTiskalnik'
+    },
+    rocniCitalci: {
+        modalNaslov: 'Ročni čitalci v skladišču',
+        editPath: '/urediRocniCitalec'
+    }
+};
+
+function prikaziSkladisceNapraveModal(vnosi, tip) {
+    const modalTitleEl = document.getElementById('skladisceNapraveModalLabel');
+    const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
+    const config = SKLADISCE_NAPRAVE_CONFIG[tip];
+
+    if (!modalTitleEl || !modalBodyEl || !config) return;
+
+    modalTitleEl.textContent = config.modalNaslov;
+
+    if (!Array.isArray(vnosi) || vnosi.length === 0) {
+        modalBodyEl.innerHTML = '<div class="text-muted">Ni najdenih naprav.</div>';
+        return;
+    }
+
+    const canEdit = typeof globalUserData !== 'undefined' && globalUserData?.dovoljenja?.includes('UREJANJE_OPREME');
+    const prikaznaPolja = Object.keys(vnosi[0] || {}).filter(key => key !== 'EditID');
+
+    const rowsHtml = vnosi.map(vnos => {
+        const encodedEditId = encodeURIComponent(vnos.EditID || '');
+        const naslovPolje = prikaznaPolja[0];
+        const naslovVrednost = naslovPolje ? (vnos[naslovPolje] ?? '-') : '-';
+
+        const podrobnostiHtml = prikaznaPolja
+            .slice(1)
+            .map(polje => `<div class="small text-muted">${polje}: ${vnos[polje] ?? '-'}</div>`)
+            .join('');
+
+        return `
+            <div class="d-flex justify-content-between align-items-start border rounded p-2 mb-2">
+                <div>
+                    <div><strong>${naslovPolje}: ${naslovVrednost}</strong></div>
+                    ${podrobnostiHtml}
+                </div>
+                ${canEdit ? `<button type="button" class="btn btn-sm btn-outline-secondary" data-edit-id="${encodedEditId}">Uredi</button>` : ''}
+            </div>
+        `;
+    }).join('');
+
+    modalBodyEl.innerHTML = rowsHtml;
+
+    if (canEdit) {
+        modalBodyEl.querySelectorAll('[data-edit-id]').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = decodeURIComponent(btn.getAttribute('data-edit-id') || '');
+                await odpriUrejanjeNaprave(id, config.editPath);
+            });
+        });
+    }
+}
+
+async function odpriUrejanjeNaprave(id, editPath) {
+    if (!id || !editPath) return;
+    await fetch('/nastaviEditID', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ EditID: id })
+    });
+    window.location.href = editPath;
+}
+
+async function odpriSkladisceNapraveModal(tip) {
+    const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
+    const modalEl = document.getElementById('skladisceNapraveModal');
+    if (!modalBodyEl || !modalEl) return;
+
+    modalBodyEl.innerHTML = '<div class="text-muted">Nalaganje...</div>';
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    try {
+        const response = await fetch(`/nadzornaPlosca/skladisceNaprave/${tip}`);
+        if (!response.ok) throw new Error('Napaka pri pridobivanju naprav iz skladišča');
+
+        const payload = await response.json();
+        prikaziSkladisceNapraveModal(payload.vnosi, tip);
+    } catch (err) {
+        console.error('Napaka pri odpiranju modala skladišča:', err);
+        modalBodyEl.innerHTML = '<div class="text-danger">Napaka pri pridobivanju podatkov.</div>';
     }
 }
 
@@ -447,10 +550,134 @@ function narisiGrafNapravePoSluzbi(grafData) {
     });
 }
 
+/**
+ * Nariše ali osveži stolpični graf naprav po statusu razporeditve.
+ * Prikaže tri status kategorije (Osebno, Skupno, Skladišče) z razčlenitvijo po tipu naprave.
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/equipmentByStatus).
+ */
+function narisiGrafNapravePoStatusu(grafData) {
+    // Statusi: Osebno, Skupno, Skladišče
+    const statusni = [
+        { 
+            key: 'osebno', 
+            label: 'Osebno'
+        },
+        { 
+            key: 'skupno', 
+            label: 'Skupno'
+        },
+        { 
+            key: 'skladisce', 
+            label: 'Skladišče'
+        }
+    ];
+
+    const labels = statusni.map(s => s.label);
+    const dpVrednosti = statusni.map(s => grafData?.[s.key]?.delovnePostaje || 0);
+    const monitorjiVrednosti = statusni.map(s => grafData?.[s.key]?.monitorji || 0);
+    const tiskalnikiVrednosti = statusni.map(s => grafData?.[s.key]?.tiskalniki || 0);
+    const citalciVrednosti = statusni.map(s => grafData?.[s.key]?.rocniCitalci || 0);
+
+    const grafElement = document.getElementById('napravePoStatusuGraf');
+    if (!grafElement) return;
+
+    if (grafNapravePoStatusu) {
+        grafNapravePoStatusu.destroy();
+    }
+
+    grafNapravePoStatusu = new Chart(grafElement, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Delovne postaje',
+                    data: dpVrednosti,
+                    backgroundColor: '#3498DB',
+                    borderColor: '#3498DB',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Monitorji',
+                    data: monitorjiVrednosti,
+                    backgroundColor: '#2ECC71',
+                    borderColor: '#2ECC71',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Tiskalniki',
+                    data: tiskalnikiVrednosti,
+                    backgroundColor: '#E67E22',
+                    borderColor: '#E67E22',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Ročni čitalci',
+                    data: citalciVrednosti,
+                    backgroundColor: '#9B59B6',
+                    borderColor: '#9B59B6',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 25
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+
+                        if (activeDatasetStatusu === index) {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = false;
+                            });
+                            activeDatasetStatusu = null;
+                        } else {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = i !== index;
+                            });
+                            activeDatasetStatusu = index;
+                        }
+
+                        chart.update();
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Status dodeljenosti'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: 'Število naprav'
+                    }
+                }
+            }
+        }
+    });
+}
+
 /** Ali je graf po enotah že naložen (lazy-load ob prvem kliku zavihka). */
 let enotaGrafNalozen = false;
 /** Ali je graf po službah že naložen (lazy-load ob prvem kliku zavihka). */
 let sluzbaGrafNalozen = false;
+/** Ali je graf po statusu že naložen (lazy-load ob prvem kliku zavihka). */
+let statusGrafNalozen = false;
 
 /**
  * Naloži in nariše graf naprav po enotah (kliče /nadzornaPlosca/grafPoEnoti).
@@ -483,6 +710,23 @@ async function naloziGrafPoSluzbi() {
         sluzbaGrafNalozen = true;
     } catch (err) {
         console.error('Napaka pri nalaganju grafa po službah:', err);
+    }
+}
+
+/**
+ * Naloži in nariše graf naprav po statusu (kliče /nadzornaPlosca/equipmentByStatus).
+ * Kliče se ob prvem prikazu zavihka "Po statusu".
+ */
+async function naloziGrafPoStatusu() {
+    if (statusGrafNalozen) return;
+    try {
+        const response = await fetch('/nadzornaPlosca/equipmentByStatus');
+        if (!response.ok) throw new Error('Napaka pri nalaganju grafa po statusu');
+        const data = await response.json();
+        narisiGrafNapravePoStatusu(data);
+        statusGrafNalozen = true;
+    } catch (err) {
+        console.error('Napaka pri nalaganju grafa po statusu:', err);
     }
 }
 
@@ -562,9 +806,27 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const viewNerazDP = document.getElementById('viewNerazDP');
+    const viewNerazMonitorji = document.getElementById('viewNerazMonitorji');
+    const viewNerazTiskalniki = document.getElementById('viewNerazTiskalniki');
+    const viewNerazCitalci = document.getElementById('viewNerazCitalci');
+
+    if (viewNerazDP) {
+        viewNerazDP.addEventListener('click', () => odpriSkladisceNapraveModal('delovnePostaje'));
+    }
+    if (viewNerazMonitorji) {
+        viewNerazMonitorji.addEventListener('click', () => odpriSkladisceNapraveModal('monitorji'));
+    }
+    if (viewNerazTiskalniki) {
+        viewNerazTiskalniki.addEventListener('click', () => odpriSkladisceNapraveModal('tiskalniki'));
+    }
+    if (viewNerazCitalci) {
+        viewNerazCitalci.addEventListener('click', () => odpriSkladisceNapraveModal('rocniCitalci'));
+    }
+
     uporabnikPodatki()
         .then(data => {
-            document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+            updateUserDisplay(data);
             addNavigationLinks(data)
                 .then(() => {
                     const currentWindow = window.location.pathname.split('/').pop();
@@ -586,6 +848,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const tabLetoBtn = document.getElementById('tab-leto');
     const tabEnotaBtn = document.getElementById('tab-enota');
     const tabSluzbaBtn = document.getElementById('tab-sluzba');
+    const tabStatusBtn = document.getElementById('tab-status');
     
     if (tabLetoBtn) {
         tabLetoBtn.addEventListener('shown.bs.tab', () => {
@@ -604,6 +867,13 @@ window.addEventListener("DOMContentLoaded", () => {
         tabSluzbaBtn.addEventListener('shown.bs.tab', async () => {
             await naloziGrafPoSluzbi();
             if (grafNapravePoSluzbi) grafNapravePoSluzbi.resize();
+        });
+    }
+
+    if (tabStatusBtn) {
+        tabStatusBtn.addEventListener('shown.bs.tab', async () => {
+            await naloziGrafPoStatusu();
+            if (grafNapravePoStatusu) grafNapravePoStatusu.resize();
         });
     }
 });

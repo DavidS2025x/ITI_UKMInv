@@ -7,7 +7,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {

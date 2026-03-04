@@ -9,7 +9,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {
@@ -34,6 +34,19 @@ window.addEventListener("DOMContentLoaded", () => {
                     const option = document.createElement('option');
                     option.value = data.OznakaProizvajalca;
                     option.textContent = data.OznakaProizvajalca + ' - ' + data.NazivProizvajalca;
+                    input.appendChild(option);
+                });
+            });
+
+            // Naloži seznam tipov naprav v spustni meni
+            fetch('/tipNapravePodatkiForm')
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById('OznakaTipaNaprave');
+                data.forEach(data => {
+                    const option = document.createElement('option');
+                    option.value = data.OznakaTipaNaprave;
+                    option.textContent = data.OpisTipaNaprave + ' - ' + data.OznakaKategorijeNaprave;
                     input.appendChild(option);
                 });
             });
@@ -111,13 +124,14 @@ window.addEventListener("DOMContentLoaded", () => {
                     OznakaRocnegaCitalca: form.OznakaRocnegaCitalca.value,
                     ModelRocnegaCitalca: form.ModelRocnegaCitalca.value,
                     OznakaProizvajalca: form.OznakaProizvajalca.value,
+                    OznakaTipaNaprave: form.OznakaTipaNaprave.value,
                     OznakaDP: form.OznakaDP.value,
                     OznakaLokacije: form.OznakaLokacije.value,
                     InventarnaStevilka: form.InventarnaStevilka.value,
                     OznakaOsebeUporabniskoIme: form.OznakaOsebeUporabniskoIme.value,
                     OznakaEnote: form.OznakaEnote.value,
                     OznakaSluzbe: form.OznakaSluzbe.value,
-                    Stojalo: form.OznakaSluzbe.value,
+                    Stojalo: form.Stojalo.value,
                     SerijskaStevilka: form.SerijskaStevilka.value,
                     DatumProizvodnje: form.DatumProizvodnje.value,
                     DatumNakupa: form.DatumNakupa.value,

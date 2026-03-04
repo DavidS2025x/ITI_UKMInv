@@ -374,6 +374,18 @@ server.get('/urediUporabnika', async (req, res) => {
     }
 });
 
+server.get('/spremembaGesla', async (req, res) => {
+    if(req.session.loggedIn){
+        const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
+        let page = fs.readFileSync(path.join(__dirname,"Public","/HTML/spremembaGesla.html"), 'utf8');
+
+        page = page.replace('<!-- NAVIGATION -->', nav);
+        res.send(page);
+    }else{
+        res.redirect('/login');
+    }
+});
+
 server.get('/urediDelovnaPostaja', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         const nav = fs.readFileSync(path.join(__dirname,"Public","/HTML/navigacijskaVrstica.html"), 'utf8');
@@ -444,7 +456,7 @@ server.get('/urediRocniCitalec', async(req, res) => {
 
 server.get('/vlogaPodatki', async (req, res) => {
     if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_UPORABNIKOV') || req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV'))){
-        const result = await SQLquery(`SELECT ID_Vloge, NazivVloge FROM vlogatest ORDER BY ID_Vloge`);
+        const result = await SQLquery(`SELECT ID_Vloge, NazivVloge FROM vloga ORDER BY ID_Vloge`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -480,7 +492,7 @@ server.get('/proizvajalecPodatkiForm', async (req, res) => {
 
 server.get('/tipNapravePodatkiForm', async (req, res) => {
     if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
-        const result = await SQLquery(`SELECT * FROM tipnaprave`);
+        const result = await SQLquery(`SELECT t.OznakaTipaNaprave, t.OpisTipaNaprave, t.OznakaKategorijeNaprave FROM tipnaprave t`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permission'});
@@ -508,6 +520,23 @@ server.get('/lokacijaPodatkiForm', async (req, res) => {
 server.get('/osebaPodatkiForm', async (req, res) => {
     if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME') || req.session.dovoljenja?.includes('PREGLED_OPREME'))){
         const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Priimek, ', ', Ime) AS 'Ime' FROM osebaukm`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.get('/osebaZaUporabnikPodatkiForm', async (req, res) => {
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        const includeUsername = req.query.includeUsername || null;
+        const result = await SQLquery(
+            `SELECT o.UporabniskoIme, o.Ime, o.Priimek
+             FROM osebaukm o
+             LEFT JOIN uporabnikiukm u ON o.UporabniskoIme = u.UporabniskoIme
+             WHERE u.UporabniskoIme IS NULL OR o.UporabniskoIme = ?
+             ORDER BY o.Priimek, o.Ime`,
+            [includeUsername]
+        );
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permission'});
@@ -600,7 +629,7 @@ server.get('/osebaPodatki', async (req, res) => {
 
 server.get('/uporabnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT u.UporabniskoIme AS 'Uporabniško ime', u.Ime, u.Priimek, vt.NazivVloge AS 'Vloga' FROM uporabnikiukm u LEFT JOIN vlogatest vt ON u.ID_Vloge = vt.ID_Vloge ORDER BY Priimek`);
+        const result = await SQLquery(`SELECT u.UporabniskoIme AS 'Uporabniško ime', u.Ime, u.Priimek, vt.NazivVloge AS 'Vloga' FROM uporabnikiukm u LEFT JOIN vloga vt ON u.ID_Vloge = vt.ID_Vloge ORDER BY Priimek`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -645,7 +674,25 @@ server.get('/osPodatki', async (req, res) => {
 
 server.get('/tipiNapravPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT OznakaTipaNaprave AS 'Oznaka tipa', OpisTipaNaprave AS 'Opis' FROM tipnaprave`);
+        const result = await SQLquery(`SELECT OznakaTipaNaprave AS 'Oznaka tipa', OpisTipaNaprave AS 'Opis', OznakaKategorijeNaprave AS 'Kategorija' FROM tipnaprave`);
+
+        server.get('/tipiKategorijeNapravPodatki', async (req, res) => {
+            if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+                const result = await SQLquery(`SELECT OznakaKategorijeNaprave AS 'Oznaka tipa', OpisKategorijeNaprave AS 'Opis' FROM tipkategorijenaprave`);
+                return res.json(result);
+            } else {
+                res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+            }
+        });
+
+        server.get('/dovoljenjaPodatki', async (req, res) => {
+            if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+                const result = await SQLquery(`SELECT ID_Dovoljenja AS 'ID', Koda AS 'Koda', NazivDovoljenja AS 'Naziv dovoljenja' FROM dovoljenje`);
+                return res.json(result);
+            } else {
+                res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+            }
+        });
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -675,7 +722,7 @@ server.get('/vlogePodatki', async (req, res) => {
         // Fetch all permissions
         const dovoljenja = await SQLquery('SELECT ID_Dovoljenja, NazivDovoljenja FROM dovoljenje ORDER BY ID_Dovoljenja');
         // Fetch all roles
-        const vloge = await SQLquery('SELECT ID_Vloge, NazivVloge FROM vlogatest ORDER BY ID_Vloge');
+        const vloge = await SQLquery('SELECT ID_Vloge, NazivVloge FROM vloga ORDER BY ID_Vloge');
         // Fetch all role-permission assignments
         const dovoljenjaVlog = await SQLquery('SELECT ID_Vloge, ID_Dovoljenja FROM dovoljenjavloge');
 
@@ -708,7 +755,7 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 
 server.get('/monitorPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije ORDER BY m.OznakaMonitorja`);
+        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON m.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY m.OznakaMonitorja`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -717,7 +764,7 @@ server.get('/monitorPodatki', async (req, res) => {
 
 server.get('/tiskalnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije ORDER BY t.OznakaTiskalnika`);
+        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON t.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY t.OznakaTiskalnika`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -726,7 +773,7 @@ server.get('/tiskalnikPodatki', async (req, res) => {
 
 server.get('/rocnicitalecPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije ORDER BY rc.OznakaRocnegaCitalca`);
+        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON rc.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY rc.OznakaRocnegaCitalca`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -947,6 +994,102 @@ server.get('/nadzornaPlosca/nerazporejene', async (req, res) => {
 });
 
 /**
+ * Nerazporejene naprave v skladišču po tipu – seznam vnosov za modal na nadzorni plošči.
+ */
+server.get('/nadzornaPlosca/skladisceNaprave/:tip', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    const tip = req.params.tip;
+    const tipConfig = {
+        delovnePostaje: {
+            tipNaziv: 'Delovna postaja',
+            query: `
+                SELECT
+                    dp.OznakaDP AS 'Oznaka delovne postaje',
+                    dp.ModelDP AS 'Model delovne postaje',
+                    dp.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    dp.OznakaTipaNaprave AS 'Oznaka tipa naprave',
+                    dp.OznakaOS AS 'Oznaka operacijskega sistema',
+                    dp.CPU AS 'CPU',
+                    dp.RAM AS 'RAM',
+                    dp.DiskC AS 'Disk C',
+                    dp.DiskD AS 'Disk D',
+                    dp.OznakaDP AS EditID
+                FROM delovnapostaja dp
+                WHERE dp.OznakaOsebeUporabniskoIme IS NULL
+                  AND dp.OznakaLokacije = '000010'
+                ORDER BY dp.OznakaDP
+            `
+        },
+        monitorji: {
+            tipNaziv: 'Monitor',
+            query: `
+                SELECT
+                    m.OznakaMonitorja AS 'Oznaka monitorja',
+                    m.ModelMonitorja AS 'Model monitorja',
+                    m.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    m.Velikost AS 'Velikost',
+                    m.Kamera AS 'Kamera',
+                    m.OznakaMonitorja AS EditID
+                FROM monitor m
+                WHERE m.OznakaOsebeUporabniskoIme IS NULL
+                  AND m.OznakaLokacije = '000010'
+                ORDER BY m.OznakaMonitorja
+            `
+        },
+        tiskalniki: {
+            tipNaziv: 'Tiskalnik',
+            query: `
+                SELECT
+                    t.OznakaTiskalnika AS 'Oznaka tiskalnika',
+                    t.ModelTiskalnika AS 'Model tiskalnika',
+                    t.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    t.OznakaTipaTiskalnika AS 'Oznaka tipa tiskalnika',
+                    t.OznakaTiskalnika AS EditID
+                FROM tiskalnik t
+                WHERE t.OznakaOsebeUporabniskoIme IS NULL
+                  AND t.OznakaLokacije = '000010'
+                ORDER BY t.OznakaTiskalnika
+            `
+        },
+        rocniCitalci: {
+            tipNaziv: 'Ročni čitalec',
+            query: `
+                SELECT
+                    rc.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
+                    rc.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    rc.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    rc.Stojalo AS 'Stojalo',
+                    rc.OznakaRocnegaCitalca AS EditID
+                FROM rocnicitalec rc
+                WHERE rc.OznakaOsebeUporabniskoIme IS NULL
+                  AND rc.OznakaLokacije = '000010'
+                ORDER BY rc.OznakaRocnegaCitalca
+            `
+        }
+    };
+
+    const config = tipConfig[tip];
+    if (!config) {
+        return res.status(400).json({ error: 'Neveljaven tip naprave' });
+    }
+
+    try {
+        const naprave = await SQLquery(config.query);
+        res.json({
+            tip: tip,
+            tipNaziv: config.tipNaziv,
+            vnosi: naprave
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju nerazporejenih naprav v skladišču:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju nerazporejenih naprav v skladišču' });
+    }
+});
+
+/**
  * Starost – število naprav, starejših od podanega praga (v letih).
  * 4 COUNT poizvedb s filtrom na DatumProizvodnje.
  */
@@ -1081,6 +1224,56 @@ server.get('/nadzornaPlosca/grafPoSluzbi', async (req, res) => {
     }
 });
 
+server.get('/nadzornaPlosca/equipmentByStatus', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        // Osebno: OznakaOsebeUporabniskoIme IS NOT NULL (regardless of location)
+        const osebnoDP = await SQLquery('SELECT COUNT(OznakaDP) AS Stevilo FROM delovnapostaja WHERE OznakaOsebeUporabniskoIme IS NOT NULL');
+        const osebnoMonitorji = await SQLquery('SELECT COUNT(OznakaMonitorja) AS Stevilo FROM monitor WHERE OznakaOsebeUporabniskoIme IS NOT NULL');
+        const osebnoTiskalniki = await SQLquery('SELECT COUNT(OznakaTiskalnika) AS Stevilo FROM tiskalnik WHERE OznakaOsebeUporabniskoIme IS NOT NULL');
+        const osebnoRocniCitalci = await SQLquery('SELECT COUNT(OznakaRocnegaCitalca) AS Stevilo FROM rocnicitalec WHERE OznakaOsebeUporabniskoIme IS NOT NULL');
+
+        // Skupno: OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> '000010'
+        const skupnoDP = await SQLquery('SELECT COUNT(OznakaDP) AS Stevilo FROM delovnapostaja WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> ?', ['000010']);
+        const skupnoMonitorji = await SQLquery('SELECT COUNT(OznakaMonitorja) AS Stevilo FROM monitor WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> ?', ['000010']);
+        const skupnoTiskalniki = await SQLquery('SELECT COUNT(OznakaTiskalnika) AS Stevilo FROM tiskalnik WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> ?', ['000010']);
+        const skupnoRocniCitalci = await SQLquery('SELECT COUNT(OznakaRocnegaCitalca) AS Stevilo FROM rocnicitalec WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> ?', ['000010']);
+
+        // Skladišče: OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = '000010'
+        const skladisceDP = await SQLquery('SELECT COUNT(OznakaDP) AS Stevilo FROM delovnapostaja WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = ?', ['000010']);
+        const skladisceMonitorji = await SQLquery('SELECT COUNT(OznakaMonitorja) AS Stevilo FROM monitor WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = ?', ['000010']);
+        const skladisceTiskalniki = await SQLquery('SELECT COUNT(OznakaTiskalnika) AS Stevilo FROM tiskalnik WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = ?', ['000010']);
+        const skladisceRocniCitalci = await SQLquery('SELECT COUNT(OznakaRocnegaCitalca) AS Stevilo FROM rocnicitalec WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = ?', ['000010']);
+
+        res.json({
+            osebno: {
+                delovnePostaje: osebnoDP[0]?.Stevilo || 0,
+                monitorji: osebnoMonitorji[0]?.Stevilo || 0,
+                tiskalniki: osebnoTiskalniki[0]?.Stevilo || 0,
+                rocniCitalci: osebnoRocniCitalci[0]?.Stevilo || 0
+            },
+            skupno: {
+                delovnePostaje: skupnoDP[0]?.Stevilo || 0,
+                monitorji: skupnoMonitorji[0]?.Stevilo || 0,
+                tiskalniki: skupnoTiskalniki[0]?.Stevilo || 0,
+                rocniCitalci: skupnoRocniCitalci[0]?.Stevilo || 0
+            },
+            skladisce: {
+                delovnePostaje: skladisceDP[0]?.Stevilo || 0,
+                monitorji: skladisceMonitorji[0]?.Stevilo || 0,
+                tiskalniki: skladisceTiskalniki[0]?.Stevilo || 0,
+                rocniCitalci: skladisceRocniCitalci[0]?.Stevilo || 0
+            }
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju grafa po statusu:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju grafa po statusu' });
+    }
+});
+
 // ============================================================
 // PERSON EQUIPMENT ROUTES (Equipment assigned to a person)
 // ============================================================
@@ -1183,6 +1376,13 @@ server.post('/dodajOsebo', async (req, res) => {
 server.post('/dodajUporabnik', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         let {UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge} = req.body;
+        
+        // Preveri geslo
+        const passwordValidation = validatePasswordRequirements(Geslo);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({success: false, message: passwordValidation.message});
+        }
+        
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
         const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO uporabnikiukm(UporabniskoIme, Ime, Priimek, Geslo, ID_Vloge) VALUES (?,?,?,?,?)', [UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge]);
@@ -1232,7 +1432,7 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
 
 server.post('/dodajMonitor', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
-        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
@@ -1252,7 +1452,7 @@ server.post('/dodajMonitor', async (req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO monitor(OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const result = await SQLqueryWithAppUser(appUser, 'INSERT INTO monitor(OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Monitor uspešno dodan'});
         } else {
@@ -1265,7 +1465,7 @@ server.post('/dodajMonitor', async (req, res) => {
 
 server.post('/dodajTiskalnik', async(req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
-        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaNaprave, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
@@ -1297,7 +1497,7 @@ server.post('/dodajTiskalnik', async(req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO tiskalnik(OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO tiskalnik(OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaNaprave, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaNaprave, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Tiskalnik dodan'});
         } else {
@@ -1310,7 +1510,7 @@ server.post('/dodajTiskalnik', async(req, res) => {
 
 server.post('/dodajRocniCitalec', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('DODAJANJE_OPREME')){
-        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
+        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe} = req.body;
         
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
@@ -1333,7 +1533,7 @@ server.post('/dodajRocniCitalec', async (req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO rocnicitalec(OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO rocnicitalec(OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe]);
         if(result.affectedRows === 1) {
                 res.status(200).json({success: true, message: 'Ročni čitalec dodan'});
         } else {
@@ -1378,10 +1578,17 @@ server.post('/urediOsebo', async (req, res) => {
 
 server.post('/urediUporabnika', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        let {UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge,ID} = req.body;
+        let {Geslo, ID_Vloge, ID} = req.body;
+        
+        // Preveri geslo
+        const passwordValidation = validatePasswordRequirements(Geslo);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({success: false, message: passwordValidation.message});
+        }
+        
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, Geslo = ?, ID_Vloge = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,Geslo,ID_Vloge,ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET Geslo = ?, ID_Vloge = ? WHERE UporabniskoIme = ?', [Geslo, ID_Vloge, ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Uporabnik uspešno urejen'});
         } else {
@@ -1389,6 +1596,43 @@ server.post('/urediUporabnika', async (req, res) => {
         }
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.post('/spremembaGesla', async (req, res) => {
+    if(req.session.loggedIn){
+        let {stareGeslo, novoGeslo} = req.body;
+        
+        // Preveri novo geslo
+        const passwordValidation = validatePasswordRequirements(novoGeslo);
+        if (!passwordValidation.valid) {
+            return res.status(400).json({success: false, message: passwordValidation.message});
+        }
+        
+        const appUser = getAppUserOrRespond(req, res);
+        if (!appUser) return;
+        
+        // Pridobi trenutno geslo uporabnika
+        const trenutniPodatki = await SQLquery('SELECT Geslo FROM uporabnikiukm WHERE UporabniskoIme = ?', [req.session.UporabniskoIme]);
+        
+        if(trenutniPodatki.length === 0){
+            return res.status(500).json({success: false, message: 'Napaka pri pridobivanju podatkov uporabnika'});
+        }
+        
+        // Primerjaj staro geslo
+        if(trenutniPodatki[0].Geslo !== stareGeslo){
+            return res.status(400).json({success: false, message: 'Staro geslo je nepravilno'});
+        }
+        
+        // Posodobi geslo
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE uporabnikiukm SET Geslo = ? WHERE UporabniskoIme = ?', [novoGeslo, req.session.UporabniskoIme]);
+        if(result.affectedRows === 1){
+            res.status(200).json({success: true, message: 'Geslo uspešno spremenjeno'});
+        } else {
+            res.status(500).json({success: false, message: 'Napaka pri spreminjanju gesla'});
+        }
+    } else {
+        res.status(401).json({error: 'Not authenticated'});
     }
 });
 
@@ -1473,7 +1717,7 @@ server.post('/nerazporejenRocniCitalec', async (req, res) => {
 
 server.post('/urediMonitor', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
-        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+        let {OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
@@ -1493,7 +1737,7 @@ server.post('/urediMonitor', async (req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE monitor SET OznakaMonitorja = ?, ModelMonitorja = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Velikost = ?, Kamera = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaMonitorja = ?', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE monitor SET OznakaMonitorja = ?, ModelMonitorja = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Velikost = ?, Kamera = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaMonitorja = ?', [OznakaMonitorja, ModelMonitorja, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Velikost, Kamera, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Monitor uspešno urejen'});
         } else {
@@ -1507,7 +1751,7 @@ server.post('/urediMonitor', async (req, res) => {
 server.post('/urediTiskalnik', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         try {
-        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+        let {OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaNaprave, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
@@ -1539,7 +1783,7 @@ server.post('/urediTiskalnik', async (req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE tiskalnik SET OznakaTiskalnika = ?, ModelTiskalnika = ?, OznakaProizvajalca = ?, OznakaTipaTiskalnika = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, IP = ?, TiskalniskaVrsta = ?, SerijskaStevilka = ?, ProduktnaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaTiskalnika = ?', [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE tiskalnik SET OznakaTiskalnika = ?, ModelTiskalnika = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaTipaTiskalnika = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, IP = ?, TiskalniskaVrsta = ?, SerijskaStevilka = ?, ProduktnaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaTiskalnika = ?', [OznakaTiskalnika, ModelTiskalnika, OznakaProizvajalca, OznakaTipaNaprave, OznakaTipaTiskalnika, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, IP, TiskalniskaVrsta, SerijskaStevilka, ProduktnaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Tiskalnik uspešno urejen'});
         } else {
@@ -1557,7 +1801,7 @@ server.post('/urediTiskalnik', async (req, res) => {
 server.post('/urediRocniCitalec', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
         try {
-        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
+        let {OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID} = req.body;
 
         if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
@@ -1580,7 +1824,7 @@ server.post('/urediRocniCitalec', async (req, res) => {
 
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE rocnicitalec SET OznakaRocnegaCitalca = ?, ModelRocnegaCitalca = ?, OznakaProizvajalca = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Stojalo = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaRocnegaCitalca = ?', [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE rocnicitalec SET OznakaRocnegaCitalca = ?, ModelRocnegaCitalca = ?, OznakaProizvajalca = ?, OznakaTipaNaprave = ?, OznakaDP = ?, OznakaLokacije = ?, InventarnaStevilka = ?, OznakaOsebeUporabniskoIme = ?, OznakaEnote = ?, OznakaSluzbe = ?, Stojalo = ?, SerijskaStevilka = ?, DatumProizvodnje = ?, DatumNakupa = ?, Opombe = ? WHERE OznakaRocnegaCitalca = ?', [OznakaRocnegaCitalca, ModelRocnegaCitalca, OznakaProizvajalca, OznakaTipaNaprave, OznakaDP, OznakaLokacije, InventarnaStevilka, OznakaOsebeUporabniskoIme, OznakaEnote, OznakaSluzbe, Stojalo, SerijskaStevilka, DatumProizvodnje, DatumNakupa, Opombe, ID]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Ročni čitalec uspešno urejen'});
         } else {
@@ -1749,6 +1993,48 @@ function SQLqueryWithAppUser(appUser, SQLquery, params = []) {
             });
         });
     });
+}
+
+/**
+ * Preveri, ali geslo izpolnjuje zahteve za varnost.
+ * Zahteve: min. 8 znakov, min. 1 posebni znak, min. 1 velika črka, min. 1 številka.
+ * 
+ * @param {string} geslo - Geslo za preverjanje
+ * @returns {Object} Objekt z rezultati {valid: boolean, message: string}
+ */
+function validatePasswordRequirements(geslo) {
+    if (!geslo || geslo.length < 8) {
+        return {
+            valid: false,
+            message: 'Geslo mora vsebovati najmanj 8 znakov'
+        };
+    }
+    
+    if (!/[A-Z]/.test(geslo)) {
+        return {
+            valid: false,
+            message: 'Geslo mora vsebovati najmanj eno veliko črko (A-Z)'
+        };
+    }
+    
+    if (!/[0-9]/.test(geslo)) {
+        return {
+            valid: false,
+            message: 'Geslo mora vsebovati najmanj eno številko (0-9)'
+        };
+    }
+    
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(geslo)) {
+        return {
+            valid: false,
+            message: 'Geslo mora vsebovati najmanj en posebni znak (!@#$%^&*...)'
+        };
+    }
+    
+    return {
+        valid: true,
+        message: 'Geslo je veljavno'
+    };
 }
 
 function getAppUserOrRespond(req, res) {

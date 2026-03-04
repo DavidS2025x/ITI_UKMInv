@@ -10,7 +10,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {
@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.forEach(data => {
                     const option = document.createElement('option');
                     option.value = data.OznakaTipaNaprave;
-                    option.textContent = data.OznakaTipaNaprave + ' - ' + data.OpisTipaNaprave;
+                    option.textContent = data.OpisTipaNaprave + ' - ' + data.OznakaKategorijeNaprave;
                     input.appendChild(option);
                 });
             });
@@ -142,6 +142,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.OznakaMonitorja = data.OznakaMonitorja;
                 window.ModelMonitorja = data.ModelMonitorja;
                 window.OznakaProizvajalca = data.OznakaProizvajalca;
+                window.OznakaTipaNaprave = data.OznakaTipaNaprave;
                 window.OznakaDP = data.OznakaDP;
                 window.OznakaLokacije = data.OznakaLokacije;
                 window.InventarnaStevilka = data.InventarnaStevilka;
@@ -183,6 +184,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     OznakaMonitorja: form.OznakaMonitorja.value,
                     ModelMonitorja: form.ModelMonitorja.value,
                     OznakaProizvajalca: form.OznakaProizvajalca.value,
+                    OznakaTipaNaprave: form.OznakaTipaNaprave.value,
                     OznakaDP: form.OznakaDP.value,
                     OznakaLokacije: form.OznakaLokacije.value,
                     InventarnaStevilka: form.InventarnaStevilka.value,
@@ -223,7 +225,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 e.preventDefault();
                 document.getElementById('OznakaMonitorja').value = window.OznakaMonitorja;
                 document.getElementById('ModelMonitorja').value = window.ModelMonitorja;
-                document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
+                document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;                document.getElementById('OznakaTipaNaprave').value = window.OznakaTipaNaprave;                document.getElementById('OznakaTipaNaprave').value = window.OznakaTipaNaprave;
                 document.getElementById('OznakaDP').value = window.OznakaDP;
                 document.getElementById('OznakaLokacije').value = window.OznakaLokacije;
                 document.getElementById('InventarnaStevilka').value = window.InventarnaStevilka;

@@ -6,20 +6,23 @@
         <hr class="mb-3">
         <div class="mb-3 form-row">
             <label for="UporabniskoIme" class="form-label me-2 form-label-col">Uporabniško ime</label>
-            <input type="text" id="UporabniskoIme" class="form-control" name="UporabniskoIme" required>
+            <select name="UporabniskoIme" class="form-select" id="UporabniskoIme" required>
+                <option value="" disabled selected hidden>Izberi uporabniško ime</option>
+            </select>
         </div>
         <div class="mb-3 form-row">
             <label for="Ime" class="form-label me-2 form-label-col">Ime</label>
-            <input type="text" id="Ime" class="form-control" name="Ime" required>
+            <input type="text" id="Ime" class="form-control" name="Ime" required disabled>
         </div>
         <div class="mb-3 form-row">
             <label for="Priimek" class="form-label me-2 form-label-col">Priimek</label>
-            <input type="text" id="Priimek" class="form-control" name="Priimek" required>
+            <input type="text" id="Priimek" class="form-control" name="Priimek" required disabled>
         </div>
         <div class="mb-3 form-row">
             <label for="Geslo" class="form-label me-2 form-label-col">Geslo</label>
             <input type="text" id="Geslo" class="form-control" name="Geslo" required>
         </div>
+        <div id="passwordRequirements"></div>
         <div class="mb-3 form-row">
             <label for="ID_Vloge" class="form-label me-2 form-label-col">Vloga</label>
             <select name="ID_Vloge" class="form-select" id="ID_Vloge" required>

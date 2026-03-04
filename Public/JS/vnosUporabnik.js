@@ -8,7 +8,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {
@@ -24,6 +24,22 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.error('Error loading user data:', err);
             });
 
+            const osebePoUporabniskemImenu = new Map();
+
+            // Naloži seznam oseb, ki še nimajo sistemskega uporabnika
+            fetch('/osebaZaUporabnikPodatkiForm')
+            .then(response => response.json())
+            .then(data => {
+                const input = document.getElementById('UporabniskoIme');
+                data.forEach(oseba => {
+                    osebePoUporabniskemImenu.set(oseba.UporabniskoIme, oseba);
+                    const option = document.createElement('option');
+                    option.value = oseba.UporabniskoIme;
+                    option.textContent = oseba.UporabniskoIme;
+                    input.appendChild(option);
+                });
+            });
+
             // Naloži seznam vlog v spustni meni
             fetch('/vlogaPodatki')
             .then(response => response.json())
@@ -37,14 +53,40 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Ob izboru uporabniškega imena samodejno izpolni ime in priimek
+            document.getElementById('UporabniskoIme').addEventListener('change', (event) => {
+                const oseba = osebePoUporabniskemImenu.get(event.target.value);
+                document.getElementById('Ime').value = oseba?.Ime || '';
+                document.getElementById('Priimek').value = oseba?.Priimek || '';
+            });
+
+            // Prikaži zahteve za geslo že ob nalaganju strani
+            updatePasswordValidationDisplay('', 'passwordRequirements');
+
+            // Ob vnosu gesla prikaži zahteve za varnost
+            document.getElementById('Geslo').addEventListener('input', (event) => {
+                updatePasswordValidationDisplay(event.target.value, 'passwordRequirements');
+            });
+
             // Obravnava oddaje obrazca – zberi polja in pošlji POST zahtevo na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
                 const form = event.target;
+                
+                // Preveri, ali je geslo veljavno
+                const geslo = form.Geslo.value;
+                const isPasswordValid = updatePasswordValidationDisplay(geslo, 'passwordRequirements');
+                
+                if (!isPasswordValid) {
+                    alert('Geslo ne izpolnjuje zahtev za varnost!');
+                    form.Geslo.focus();
+                    return;
+                }
+                
                 const payload = {
                     UporabniskoIme: form.UporabniskoIme.value,
-                    Ime: form.Ime.value,
-                    Priimek: form.Priimek.value,
+                    Ime: document.getElementById('Ime').value,
+                    Priimek: document.getElementById('Priimek').value,
                     Geslo: form.Geslo.value,
                     ID_Vloge: form.ID_Vloge.value
                 };
@@ -57,6 +99,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     if (response.ok) {
                         alert('Uporabnik uspešno dodan!');
                         form.reset();
+                        document.getElementById('passwordRequirements').innerHTML = '';
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
                         alert('Napaka pri dodajanju uporabnika.');
@@ -66,5 +109,11 @@ window.addEventListener("DOMContentLoaded", () => {
                     console.error('Error submitting form:', error);
                     alert('Napaka pri dodajanju uporabnika.');
                 });
+            });
+
+            // Ponastavljanje obrazca – prikaži zahteve za prazno geslo
+            document.addEventListener('reset', (e) => {
+                updatePasswordValidationDisplay('', 'passwordRequirements');
+                document.getElementById('Geslo').classList.remove('password-invalid');
             });
         });

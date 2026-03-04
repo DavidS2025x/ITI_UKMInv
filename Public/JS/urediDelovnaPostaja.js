@@ -10,7 +10,7 @@ window.addEventListener("DOMContentLoaded", () => {
             uporabnikPodatki()
             .then(data => {
                 // Update navbar with user info
-                document.getElementById('username').textContent = data.Ime + ' ' + data.Priimek;
+                updateUserDisplay(data);
                 // Generate action buttons based on permissions
                 addNavigationLinks(data)
                 .then(() => {
@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.forEach(data => {
                     const option = document.createElement('option');
                     option.value = data.OznakaTipaNaprave;
-                    option.textContent = data.OznakaTipaNaprave + ' - ' + data.OpisTipaNaprave;
+                    option.textContent = data.OpisTipaNaprave + ' - ' + data.OznakaKategorijeNaprave;
                     input.appendChild(option);
                 });
             });

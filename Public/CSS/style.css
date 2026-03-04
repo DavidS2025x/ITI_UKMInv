@@ -195,14 +195,70 @@ body:not(.login-page) .card-header {
 }
 
 .app-navbar .app-username-btn {
-    pointer-events: none;
     border-bottom-color: transparent;
     color: #e2e8f0;
+    text-align: left;
+    padding: 6px 8px;
+    font-weight: 600;
 }
 
 .app-navbar .app-username-btn:hover {
     color: #e2e8f0;
     border-bottom-color: transparent;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.app-navbar .app-logout-link {
+    color: #b91c1c !important;
+    font-weight: 600;
+}
+
+.app-navbar .app-logout-link:hover {
+    color: #ef4444 !important;
+}
+
+.password-requirements {
+    border-left: 3px solid #cbd5e1;
+    margin-left: 212px;
+    margin-bottom: 12px;
+    width: calc(100% - 212px);
+}
+
+.password-requirements small:first-child {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1f2937;
+}
+
+.requirement {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    margin-bottom: 4px;
+    color: #4b5563;
+}
+
+.requirement.met {
+    color: #059669;
+}
+
+.requirement.unmet {
+    color: #991b1b;
+}
+
+.requirement i {
+    font-size: 0.75rem;
+}
+
+.password-invalid {
+    border-color: #dc2626 !important;
+}
+
+.password-invalid:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 0.2rem rgba(220, 38, 38, 0.15);
 }
 
 .app-sidebar {

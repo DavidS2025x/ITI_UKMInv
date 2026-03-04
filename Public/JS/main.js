@@ -71,9 +71,13 @@ async function addNavigationLinks(userData) {
  * preusmeri brskalnik na stran za prijavo.
  *
  * @async
+ * @param {Event} [event] - DOM event, če je klic iz event listenra
  * @returns {Promise<void>}
  */
-async function logout() {
+async function logout(event) {
+    if (event) {
+        event.preventDefault();
+    }
     const response = await fetch('/logout', {
         method: 'POST',
         headers: {
@@ -87,6 +91,127 @@ async function logout() {
         console.log(response);
         console.error('Logout failed');
     }
+};
+
+/**
+ * Odpre stran za spremembo gesla trenutnega uporabnika.
+ * 
+ * @param {Event} event - DOM event
+ * @returns {void}
+ */
+function openChangePasswordModal(event) {
+    if (event) {
+        event.preventDefault();
+    }
+    window.location.href = '/spremembaGesla';
+};
+
+/**
+ * Posodobi prikaz imena uporabnika in vloge v navigacijski vrstici.
+ * Pridobi podatke o vlogah s strežnika in prikaže ustrezno vlogo.
+ * 
+ * @async
+ * @param {Object} userData - Objekt s podatki o uporabniku (Ime, Priimek, ID_Vloge)
+ * @returns {Promise<void>}
+ */
+async function updateUserDisplay(userData) {
+    const userFullNameEl = document.getElementById('userFullName');
+    const userRoleEl = document.getElementById('userRole');
+    
+    if (userFullNameEl) {
+        userFullNameEl.textContent = userData.Ime + ' ' + userData.Priimek;
+    }
+    
+    if (userRoleEl && userData.ID_Vloge) {
+        // Pridobi podatke o vlogah in poišči trenutno vlogo
+        try {
+            const response = await fetch('/vlogaPodatki');
+            const vloge = await response.json();
+            const trenutnaVloga = vloge.find(v => v.ID_Vloge === userData.ID_Vloge);
+            if (trenutnaVloga) {
+                userRoleEl.textContent = trenutnaVloga.NazivVloge;
+            }
+        } catch (error) {
+            console.error('Error fetching roles:', error);
+        }
+    }
+};
+
+/**
+ * Preveri geslo glede na zahteve za varnost.
+ * Zahteve: min. 8 znakov, min. 1 posebni znak, min. 1 velika črka, min. 1 številka.
+ * 
+ * @param {string} geslo - Geslo za preverjanje
+ * @returns {Object} Objekt z rezultati preverjanja {valid: boolean, requirements: {hasLength: boolean, hasSpecial: boolean, hasUppercase: boolean, hasNumber: boolean}}
+ */
+function validatePassword(geslo) {
+    const requirements = {
+        hasLength: geslo.length >= 8,
+        hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(geslo),
+        hasUppercase: /[A-Z]/.test(geslo),
+        hasNumber: /[0-9]/.test(geslo)
+    };
+    
+    return {
+        valid: requirements.hasLength && requirements.hasSpecial && requirements.hasUppercase && requirements.hasNumber,
+        requirements: requirements
+    };
+};
+
+/**
+ * Posodobi prikaz validacije gesla na strani.
+ * 
+ * @param {string} geslo - Geslo za preverjanje
+ * @param {string} elementId - ID elementa, v katerega se izpišejo zahteve (default: 'passwordRequirements')
+ * @returns {boolean} True če je geslo veljavno
+ */
+function updatePasswordValidationDisplay(geslo, elementId = 'passwordRequirements') {
+    const validation = validatePassword(geslo);
+    const element = document.getElementById(elementId);
+    const passwordInputId = elementId === 'passwordRequirements' ? 'Geslo' : (elementId === 'passwordRequirementsChange' ? 'novoGeslo' : 'Geslo');
+    const passwordInput = document.getElementById(passwordInputId);
+    
+    if (!element) return validation.valid;
+    
+    const requirements = validation.requirements;
+    const requirementsHTML = `
+        <div class="password-requirements mt-2 p-2 bg-light rounded">
+            <small class="d-block">Zahteve za geslo:</small>
+            <div class="requirement ${requirements.hasLength ? 'met' : 'unmet'}">
+                <i class="bi ${requirements.hasLength ? 'bi-check-circle-fill text-success' : 'bi-circle bi-danger'}"></i>
+                <small>Min. 8 znakov</small>
+            </div>
+            <div class="requirement ${requirements.hasUppercase ? 'met' : 'unmet'}">
+                <i class="bi ${requirements.hasUppercase ? 'bi-check-circle-fill text-success' : 'bi-circle'}"></i>
+                <small>Min. 1 velika črka (A-Z)</small>
+            </div>
+            <div class="requirement ${requirements.hasNumber ? 'met' : 'unmet'}">
+                <i class="bi ${requirements.hasNumber ? 'bi-check-circle-fill text-success' : 'bi-circle'}"></i>
+                <small>Min. 1 številka (0-9)</small>
+            </div>
+            <div class="requirement ${requirements.hasSpecial ? 'met' : 'unmet'}">
+                <i class="bi ${requirements.hasSpecial ? 'bi-check-circle-fill text-success' : 'bi-circle'}"></i>
+                <small>Min. 1 posebni znak (!@#$%^&*...)</small>
+            </div>
+        </div>
+    `;
+    
+    element.innerHTML = requirementsHTML;
+    
+    // Dodaj ali odstrani класс за invalid geslo
+    if (passwordInput) {
+        if (validation.valid) {
+            passwordInput.classList.remove('password-invalid');
+        } else {
+            if (geslo.length > 0) {
+                passwordInput.classList.add('password-invalid');
+            } else {
+                passwordInput.classList.remove('password-invalid');
+            }
+        }
+    }
+    
+    return validation.valid;
 };
 
 // Nabor stolpcev, katerih vrednosti se prikažejo kot Da/Ne namesto 1/0.
@@ -1010,6 +1135,10 @@ function setTableTitle(title, iconClass) {
 
 window.uporabnikPodatki = uporabnikPodatki;
 window.logout = logout;
+window.openChangePasswordModal = openChangePasswordModal;
+window.updateUserDisplay = updateUserDisplay;
+window.validatePassword = validatePassword;
+window.updatePasswordValidationDisplay = updatePasswordValidationDisplay;
 window.addNavigationLinks = addNavigationLinks;
 window.tabela = tabela;
 window.renderTable = renderTable;
