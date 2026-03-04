@@ -506,7 +506,7 @@ server.get('/lokacijaPodatkiForm', async (req, res) => {
 })
 
 server.get('/osebaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME') || req.session.dovoljenja?.includes('PREGLED_OPREME'))){
         const result = await SQLquery(`SELECT UporabniskoIme, CONCAT(Priimek, ', ', Ime) AS 'Ime' FROM osebaukm`);
         return res.json(result);
     } else {
@@ -881,47 +881,114 @@ server.get('/rocniCitalecPodatkiEdit', async (req, res) => {
 });
 
 // ============================================================
-// DASHBOARD DATA ROUTE
+// NADZORNA PLOŠČA (DASHBOARD) – DATA ROUTES
 // ============================================================
 
-server.get('/nadzornaPloscaPodatki', async (req, res) => {
-    if(!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))){
-        return res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+/**
+ * KPI – skupno število naprav po tipih.
+ * 5 COUNT poizvedb (delovne postaje, monitorji, tiskalniki, ročni čitalci, virtualni strežniki).
+ */
+server.get('/nadzornaPlosca/kpi', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const [delovnePostaje, monitorji, tiskalniki, rocniCitalci, virtualniStrezniki] = await Promise.all([
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM virtualserver')
+        ]);
+
+        res.json({
+            delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
+            monitorji: Number(monitorji[0]?.stevilo || 0),
+            tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
+            rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0),
+            virtualniStrezniki: Number(virtualniStrezniki[0]?.stevilo || 0)
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju KPI podatkov:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju KPI podatkov' });
+    }
+});
+
+/**
+ * Nerazporejene naprave – število naprav brez dodeljenega uporabnika na lokaciji 000010.
+ * 4 COUNT poizvedb (delovne postaje, monitorji, tiskalniki, ročni čitalci).
+ */
+server.get('/nadzornaPlosca/nerazporejene', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const pogoj = "WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije = '000010'";
+
+        const [delovnePostaje, monitorji, tiskalniki, rocniCitalci] = await Promise.all([
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM delovnapostaja ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM monitor ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM tiskalnik ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM rocnicitalec ${pogoj}`)
+        ]);
+
+        res.json({
+            delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
+            monitorji: Number(monitorji[0]?.stevilo || 0),
+            tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
+            rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0)
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju nerazporejenih naprav:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju nerazporejenih naprav' });
+    }
+});
+
+/**
+ * Starost – število naprav, starejših od podanega praga (v letih).
+ * 4 COUNT poizvedb s filtrom na DatumProizvodnje.
+ */
+server.get('/nadzornaPlosca/starost', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
     }
 
     try {
         const parsedStarost = parseInt(req.query.starost, 10);
         const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
-        
-        const [
-            delovnePostaje,
-            monitorji,
-            tiskalniki,
-            rocniCitalci,
-            virtualniStrezniki,
-            stareDp,
-            stariMonitorji,
-            stariTiskalniki,
-            stariCitalci,
-            letnice,
-            dpPoLetu,
-            monitorjiPoLetu,
-            tiskalnikiPoLetu,
-            citalciPoLetu,
-            dpPoSluzbi,
-            monitorjiPoSluzbi,
-            tiskalnikiPoSluzbi,
-            citalciPoSluzbi
-        ] = await Promise.all([
-            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec'),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM virtualserver'),
+
+        const [stareDp, stariMonitorji, stariTiskalniki, stariCitalci] = await Promise.all([
             SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
             SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
             SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost])
+        ]);
+
+        res.json({
+            delovnePostaje: Number(stareDp[0]?.stevilo || 0),
+            monitorji: Number(stariMonitorji[0]?.stevilo || 0),
+            tiskalniki: Number(stariTiskalniki[0]?.stevilo || 0),
+            rocniCitalci: Number(stariCitalci[0]?.stevilo || 0)
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju podatkov o starosti naprav:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju podatkov o starosti naprav' });
+    }
+});
+
+/**
+ * Graf po letih – razpon letnic (min/max) in število naprav po letu proizvodnje.
+ * 5 poizvedb (1 za razpon + 4 za posamezne tipe naprav).
+ */
+server.get('/nadzornaPlosca/grafPoLetih', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const [letnice, dpPoLetu, monitorjiPoLetu, tiskalnikiPoLetu, citalciPoLetu] = await Promise.all([
             SQLquery(`
                 SELECT
                     MIN(Leto) AS minLeto,
@@ -939,7 +1006,34 @@ server.get('/nadzornaPloscaPodatki', async (req, res) => {
             SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
             SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM monitor WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
             SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
-            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`),
+            SQLquery(`SELECT YEAR(DatumProizvodnje) AS Leto, COUNT(*) AS Stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL GROUP BY YEAR(DatumProizvodnje) ORDER BY YEAR(DatumProizvodnje)`)
+        ]);
+
+        res.json({
+            minLeto: letnice[0]?.minLeto ? Number(letnice[0].minLeto) : null,
+            maxLeto: letnice[0]?.maxLeto ? Number(letnice[0].maxLeto) : null,
+            delovnePostaje: dpPoLetu,
+            monitorji: monitorjiPoLetu,
+            tiskalniki: tiskalnikiPoLetu,
+            rocniCitalci: citalciPoLetu
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju grafa po letih:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju grafa po letih' });
+    }
+});
+
+/**
+ * Graf po enotah – število naprav po organizacijski enoti.
+ * 4 poizvedb (delovne postaje, monitorji, tiskalniki, ročni čitalci po enoti).
+ */
+server.get('/nadzornaPlosca/grafPoEnoti', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const [dpPoEnoti, monitorjiPoEnoti, tiskalnikiPoEnoti, citalciPoEnoti] = await Promise.all([
             SQLquery(`SELECT e.OznakaEnote, COUNT(d.OznakaDP) AS Stevilo FROM enotaukm e LEFT JOIN delovnapostaja d ON e.OznakaEnote = d.OznakaEnote GROUP BY e.OznakaEnote ORDER BY e.OznakaEnote`),
             SQLquery(`SELECT e.OznakaEnote, COUNT(m.OznakaMonitorja) AS Stevilo FROM enotaukm e LEFT JOIN monitor m ON e.OznakaEnote = m.OznakaEnote GROUP BY e.OznakaEnote ORDER BY e.OznakaEnote`),
             SQLquery(`SELECT e.OznakaEnote, COUNT(t.OznakaTiskalnika) AS Stevilo FROM enotaukm e LEFT JOIN tiskalnik t ON e.OznakaEnote = t.OznakaEnote GROUP BY e.OznakaEnote ORDER BY e.OznakaEnote`),
@@ -947,37 +1041,43 @@ server.get('/nadzornaPloscaPodatki', async (req, res) => {
         ]);
 
         res.json({
-            kpi: {
-                delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
-                monitorji: Number(monitorji[0]?.stevilo || 0),
-                tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
-                rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0),
-                virtualniStrezniki: Number(virtualniStrezniki[0]?.stevilo || 0)
-            },
-            starejseOd5Let: {
-                delovnePostaje: Number(stareDp[0]?.stevilo || 0),
-                monitorji: Number(stariMonitorji[0]?.stevilo || 0),
-                tiskalniki: Number(stariTiskalniki[0]?.stevilo || 0),
-                rocniCitalci: Number(stariCitalci[0]?.stevilo || 0)
-            },
-            graf: {
-                minLeto: letnice[0]?.minLeto ? Number(letnice[0].minLeto) : null,
-                maxLeto: letnice[0]?.maxLeto ? Number(letnice[0].maxLeto) : null,
-                delovnePostaje: dpPoLetu,
-                monitorji: monitorjiPoLetu,
-                tiskalniki: tiskalnikiPoLetu,
-                rocniCitalci: citalciPoLetu
-            },
-            napravePoSluzbi: {
-                delovnePostaje: dpPoSluzbi,
-                monitorji: monitorjiPoSluzbi,
-                tiskalniki: tiskalnikiPoSluzbi,
-                rocniCitalci: citalciPoSluzbi
-            }
+            delovnePostaje: dpPoEnoti,
+            monitorji: monitorjiPoEnoti,
+            tiskalniki: tiskalnikiPoEnoti,
+            rocniCitalci: citalciPoEnoti
         });
     } catch (err) {
-        console.error('Napaka pri pridobivanju podatkov za nadzorno ploščo:', err);
-        res.status(500).json({error: 'Napaka pri pridobivanju podatkov za nadzorno ploščo'});
+        console.error('Napaka pri pridobivanju grafa po enotah:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju grafa po enotah' });
+    }
+});
+
+/**
+ * Graf po službah – število naprav po službi.
+ * 4 poizvedb (delovne postaje, monitorji, tiskalniki, ročni čitalci po službi).
+ */
+server.get('/nadzornaPlosca/grafPoSluzbi', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const [dpPoSluzbi, monitorjiPoSluzbi, tiskalnikiPoSluzbi, citalciPoSluzbi] = await Promise.all([
+            SQLquery(`SELECT s.OznakaSluzbe, COUNT(d.OznakaDP) AS Stevilo FROM sluzbaukm s LEFT JOIN delovnapostaja d ON s.OznakaSluzbe = d.OznakaSluzbe GROUP BY s.OznakaSluzbe ORDER BY s.OznakaSluzbe`),
+            SQLquery(`SELECT s.OznakaSluzbe, COUNT(m.OznakaMonitorja) AS Stevilo FROM sluzbaukm s LEFT JOIN monitor m ON s.OznakaSluzbe = m.OznakaSluzbe GROUP BY s.OznakaSluzbe ORDER BY s.OznakaSluzbe`),
+            SQLquery(`SELECT s.OznakaSluzbe, COUNT(t.OznakaTiskalnika) AS Stevilo FROM sluzbaukm s LEFT JOIN tiskalnik t ON s.OznakaSluzbe = t.OznakaSluzbe GROUP BY s.OznakaSluzbe ORDER BY s.OznakaSluzbe`),
+            SQLquery(`SELECT s.OznakaSluzbe, COUNT(r.OznakaRocnegaCitalca) AS Stevilo FROM sluzbaukm s LEFT JOIN rocnicitalec r ON s.OznakaSluzbe = r.OznakaSluzbe GROUP BY s.OznakaSluzbe ORDER BY s.OznakaSluzbe`)
+        ]);
+
+        res.json({
+            delovnePostaje: dpPoSluzbi,
+            monitorji: monitorjiPoSluzbi,
+            tiskalniki: tiskalnikiPoSluzbi,
+            rocniCitalci: citalciPoSluzbi
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju grafa po službah:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju grafa po službah' });
     }
 });
 
@@ -1324,7 +1424,7 @@ server.post('/urediDelovnaPostaja', async (req, res) => {
 });
 
 server.post('/nerazporejenaDelovnaPostaja', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('ODSTRANITEV_UPORABNIKA_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1336,7 +1436,7 @@ server.post('/nerazporejenaDelovnaPostaja', async (req, res) => {
 });
 
 server.post('/nerazporejenMonitor', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('ODSTRANITEV_UPORABNIKA_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1348,7 +1448,7 @@ server.post('/nerazporejenMonitor', async (req, res) => {
 });
 
 server.post('/nerazporejenTiskalnik', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('ODSTRANITEV_UPORABNIKA_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
@@ -1360,7 +1460,7 @@ server.post('/nerazporejenTiskalnik', async (req, res) => {
 });
 
 server.post('/nerazporejenRocniCitalec', async (req, res) => {
-    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_OPREME')){
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('ODSTRANITEV_UPORABNIKA_OPREME')){
         const { ID } = req.body;
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;

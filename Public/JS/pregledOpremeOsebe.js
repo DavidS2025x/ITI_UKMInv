@@ -3,7 +3,8 @@
 /**
  * Pregled opreme osebe – stran za prikaz vseh naprav, dodeljenih izbrani osebi.
  * Prikazuje delovne postaje, monitorje, tiskalnike in ročne čitalce v ločenih karticah.
- * Uporabniki z dovoljenjem UREJANJE_OPREME imajo na voljo gumbe za urejanje in odstranjevanje.
+ * Uporabniki z dovoljenjem UREJANJE_OPREME imajo na voljo gumbe za urejanje,
+ * uporabniki z dovoljenjem ODSTRANITEV_UPORABNIKA_OPREME pa gumbe za odstranjevanje.
  */
 
 /**
@@ -113,6 +114,7 @@ function renderEquipmentList(data, containerId, countSpanId, equipmentType, user
     const container = document.getElementById(containerId);
     const countSpan = document.getElementById(countSpanId);
     const hasEditPermission = userData && userData.dovoljenja?.includes('UREJANJE_OPREME');
+    const hasUnassignPermission = userData && userData.dovoljenja?.includes('ODSTRANITEV_UPORABNIKA_OPREME');
     
     // Update count in header
     if (countSpan) {
@@ -135,17 +137,19 @@ function renderEquipmentList(data, containerId, countSpanId, equipmentType, user
         const oznaka = item['Oznaka'];
         
         let buttonsHTML = '';
-        if (hasEditPermission) {
+        if (hasEditPermission || hasUnassignPermission) {
             const unassignData = UNASSIGN_CONFIG[equipmentType];
-            const unassignBtn = unassignData ? `
+            const unassignBtn = (hasUnassignPermission && unassignData) ? `
                     <button class="unassign-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="openUnassignModalOS('${oznaka}', '${equipmentType}')" title="Označi kot nerazporejeno" onmouseover="this.querySelector('i').style.color='#e8590c'" onmouseout="this.querySelector('i').style.color='#fd7e14'">
                         <i class="bi bi-person-dash-fill" style="font-size: 1rem; color: #fd7e14;"></i>
                     </button>` : '';
-            buttonsHTML = `
-                <div class="d-flex gap-1">
+            const editBtn = hasEditPermission ? `
                     <button class="edit-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi" onmouseover="this.querySelector('i').style.color='#495057'" onmouseout="this.querySelector('i').style.color='#6c757d'">
                         <i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>
-                    </button>
+                    </button>` : '';
+            buttonsHTML = `
+                <div class="d-flex gap-1">
+                    ${editBtn}
                     ${unassignBtn}
                 </div>
             `;

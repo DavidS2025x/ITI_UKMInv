@@ -380,7 +380,7 @@ function renderTable(dataUrl, config = {}) {
         pageLimit = null,
         editPermission = 'UREJANJE_OPREME',
         deletePermission = 'BRISANJE_OPREME',
-        unassignPermission = 'UREJANJE_OPREME',
+        unassignPermission = 'ODSTRANITEV_UPORABNIKA_OPREME',
         title = null
     } = config;
 

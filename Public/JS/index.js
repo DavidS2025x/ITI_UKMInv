@@ -8,11 +8,15 @@
 /** Referenca na instanco grafa nakupov po letih (Chart.js). */
 let grafNakupiPoLetih = null;
 /** Referenca na instanco grafa naprav po enotah (Chart.js). */
+let grafNapravePoEnoti = null;
+/** Referenca na instanco grafa naprav po službah (Chart.js). */
 let grafNapravePoSluzbi = null;
 /** Indeks aktivnega nabora podatkov v grafu nakupov (za toggle legend). */
 let activeDatasetNakupi = null;
-/** Indeks aktivnega nabora podatkov v grafu naprav (za toggle legend). */
+/** Indeks aktivnega nabora podatkov v grafu naprav po enotah (za toggle legend). */
 let activeDatasetNaprave = null;
+/** Indeks aktivnega nabora podatkov v grafu naprav po službah (za toggle legend). */
+let activeDatasetSluzbe = null;
 /** Ključ za shranjevanje filtra starosti naprav v localStorage. */
 const STAROST_STORAGE_KEY = 'starostNaprave';
 
@@ -76,7 +80,7 @@ function zgradiLeta(minLeto, maxLeto) {
 /**
  * Nariše ali osveži stolpični graf nakupov naprav po letu proizvodnje.
  * Ob ponovnem klicu uniči obstoječi graf in ga nadomesti z novim.
- * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPloscaPodatki).
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/grafPoLetih).
  */
 function narisiGrafPoLetih(grafData) {
     const minLeto = Number(grafData?.minLeto || 0);
@@ -192,9 +196,9 @@ function narisiGrafPoLetih(grafData) {
 /**
  * Nariše ali osveži stolpični graf naprav po enotah.
  * Združi vse tipe naprav po oznaki enote v skupno mapo in pripravi nabore podatkov.
- * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPloscaPodatki).
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/grafPoEnoti).
  */
-function narisiGrafNapravePoSluzbi(grafData) {
+function narisiGrafNapravePoEnoti(grafData) {
     const enoteMap = new Map();
     const deviceTypes = ['delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci'];
     
@@ -225,11 +229,11 @@ function narisiGrafNapravePoSluzbi(grafData) {
     const grafElement = document.getElementById('napraviPosluzbiGraf');
     if (!grafElement) return;
 
-    if (grafNapravePoSluzbi) {
-        grafNapravePoSluzbi.destroy();
+    if (grafNapravePoEnoti) {
+        grafNapravePoEnoti.destroy();
     }
 
-    grafNapravePoSluzbi = new Chart(grafElement, {
+    grafNapravePoEnoti = new Chart(grafElement, {
         type: 'bar',
         data: {
             labels: enote,
@@ -319,18 +323,181 @@ function narisiGrafNapravePoSluzbi(grafData) {
 }
 
 /**
- * Pridobi posodobljene KPI vrednosti za naprave, starejše od podanega praga,
+ * Nariše ali osveži stolpični graf naprav po službah.
+ * Združi vse tipe naprav po oznaki službe v skupno mapo in pripravi nabore podatkov.
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/grafPoSluzbi).
+ */
+function narisiGrafNapravePoSluzbi(grafData) {
+    const sluzbeMap = new Map();
+    const deviceTypes = ['delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci'];
+
+    deviceTypes.forEach(tipNaprave => {
+        const podatki = grafData?.[tipNaprave] || [];
+        podatki.forEach(vnos => {
+            const sluzba = vnos.OznakaSluzbe || 'Neznana';
+            if (!sluzbeMap.has(sluzba)) {
+                sluzbeMap.set(sluzba, {
+                    delovnePostaje: 0,
+                    monitorji: 0,
+                    tiskalniki: 0,
+                    rocniCitalci: 0
+                });
+            }
+            sluzbeMap.get(sluzba)[tipNaprave] = Number(vnos.Stevilo || 0);
+        });
+    });
+
+    const sluzbe = Array.from(sluzbeMap.keys()).sort();
+    const dpVrednosti = sluzbe.map(s => sluzbeMap.get(s).delovnePostaje);
+    const monitorjiVrednosti = sluzbe.map(s => sluzbeMap.get(s).monitorji);
+    const tiskalnikiVrednosti = sluzbe.map(s => sluzbeMap.get(s).tiskalniki);
+    const citalciVrednosti = sluzbe.map(s => sluzbeMap.get(s).rocniCitalci);
+
+    const grafElement = document.getElementById('napravePoSluzbahGraf');
+    if (!grafElement) return;
+
+    if (grafNapravePoSluzbi) {
+        grafNapravePoSluzbi.destroy();
+    }
+
+    grafNapravePoSluzbi = new Chart(grafElement, {
+        type: 'bar',
+        data: {
+            labels: sluzbe,
+            datasets: [
+                {
+                    label: 'Delovne postaje',
+                    data: dpVrednosti,
+                    backgroundColor: '#3498DB',
+                    borderColor: '#3498DB',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Monitorji',
+                    data: monitorjiVrednosti,
+                    backgroundColor: '#2ECC71',
+                    borderColor: '#2ECC71',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Tiskalniki',
+                    data: tiskalnikiVrednosti,
+                    backgroundColor: '#E67E22',
+                    borderColor: '#E67E22',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Ročni čitalci',
+                    data: citalciVrednosti,
+                    backgroundColor: '#9B59B6',
+                    borderColor: '#9B59B6',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 25
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+
+                        if (activeDatasetSluzbe === index) {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = false;
+                            });
+                            activeDatasetSluzbe = null;
+                        } else {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = i !== index;
+                            });
+                            activeDatasetSluzbe = index;
+                        }
+
+                        chart.update();
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Služba'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: 'Število naprav'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/** Ali je graf po enotah že naložen (lazy-load ob prvem kliku zavihka). */
+let enotaGrafNalozen = false;
+/** Ali je graf po službah že naložen (lazy-load ob prvem kliku zavihka). */
+let sluzbaGrafNalozen = false;
+
+/**
+ * Naloži in nariše graf naprav po enotah (kliče /nadzornaPlosca/grafPoEnoti).
+ * Kliče se ob prvem prikazu zavihka "Po enoti".
+ */
+async function naloziGrafPoEnoti() {
+    if (enotaGrafNalozen) return;
+    try {
+        const response = await fetch('/nadzornaPlosca/grafPoEnoti');
+        if (!response.ok) throw new Error('Napaka pri nalaganju grafa po enotah');
+        const data = await response.json();
+        narisiGrafNapravePoEnoti(data);
+        enotaGrafNalozen = true;
+    } catch (err) {
+        console.error('Napaka pri nalaganju grafa po enotah:', err);
+    }
+}
+
+/**
+ * Naloži in nariše graf naprav po službah (kliče /nadzornaPlosca/grafPoSluzbi).
+ * Kliče se ob prvem prikazu zavihka "Po službi".
+ */
+async function naloziGrafPoSluzbi() {
+    if (sluzbaGrafNalozen) return;
+    try {
+        const response = await fetch('/nadzornaPlosca/grafPoSluzbi');
+        if (!response.ok) throw new Error('Napaka pri nalaganju grafa po službah');
+        const data = await response.json();
+        narisiGrafNapravePoSluzbi(data);
+        sluzbaGrafNalozen = true;
+    } catch (err) {
+        console.error('Napaka pri nalaganju grafa po službah:', err);
+    }
+}
+
+/**
+ * Posodobi samo kartice s številom starih naprav (kliče /nadzornaPlosca/starost).
  * in jih prikaže v karticah z oznako "Starejše od X let".
  * @param {number} [starost=0] - Starostni prag v letih.
  */
 async function fetchAndUpdateNumbers(starost = 0) {
-    const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
+    const response = await fetch(`/nadzornaPlosca/starost?starost=${starost}`);
     if (!response.ok) {
-        throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
+        throw new Error('Napaka pri pridobivanju podatkov o starosti naprav');
     }
 
-    const data = await response.json();
-    const staro = data.starejseOd5Let || {};
+    const staro = await response.json();
 
     setText('staroDP', staro.delovnePostaje);
     setText('staroMonitorji', staro.monitorji);
@@ -339,19 +506,28 @@ async function fetchAndUpdateNumbers(starost = 0) {
 }
 
 /**
- * Inicializira celotno nadzorno ploščo: naloži KPI števce, filtrira po starosti
- * in nariše oba grafa. Pokliče se ob nalaganju strani.
+ * Inicializira celotno nadzorno ploščo: naloži KPI števce, starost in graf po letih
+ * vzporedno. Grafa po enotah in po službah se naložita lazy ob prvem kliku zavihka.
  * @param {number} [starost=0] - Začetni starostni prag za filter.
  */
 async function initDashboard(starost = 0) {
-    const response = await fetch(`/nadzornaPloscaPodatki?starost=${starost}`);
-    if (!response.ok) {
+    const [kpiRes, starostRes, nerazRes, grafRes] = await Promise.all([
+        fetch('/nadzornaPlosca/kpi'),
+        fetch(`/nadzornaPlosca/starost?starost=${starost}`),
+        fetch('/nadzornaPlosca/nerazporejene'),
+        fetch('/nadzornaPlosca/grafPoLetih')
+    ]);
+
+    if (!kpiRes.ok || !starostRes.ok || !nerazRes.ok || !grafRes.ok) {
         throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
     }
 
-    const data = await response.json();
-    const kpi = data.kpi || {};
-    const staro = data.starejseOd5Let || {};
+    const [kpi, staro, neraz, graf] = await Promise.all([
+        kpiRes.json(),
+        starostRes.json(),
+        nerazRes.json(),
+        grafRes.json()
+    ]);
 
     setText('kpiDP', kpi.delovnePostaje);
     setText('kpiMonitorji', kpi.monitorji);
@@ -359,13 +535,17 @@ async function initDashboard(starost = 0) {
     setText('kpiCitalci', kpi.rocniCitalci);
     setText('kpiVM', kpi.virtualniStrezniki);
 
+    setText('nerazDP', neraz.delovnePostaje);
+    setText('nerazMonitorji', neraz.monitorji);
+    setText('nerazTiskalniki', neraz.tiskalniki);
+    setText('nerazCitalci', neraz.rocniCitalci);
+
     setText('staroDP', staro.delovnePostaje);
     setText('staroMonitorji', staro.monitorji);
     setText('staroTiskalniki', staro.tiskalniki);
     setText('staroCitalci', staro.rocniCitalci);
 
-    narisiGrafPoLetih(data.graf);
-    narisiGrafNapravePoSluzbi(data.napravePoSluzbi);
+    narisiGrafPoLetih(graf);
 }
 
 // Inicializacija nadzorne plošče ob nalaganju DOM
@@ -405,6 +585,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // Handle chart resizing when tabs are switched
     const tabLetoBtn = document.getElementById('tab-leto');
     const tabEnotaBtn = document.getElementById('tab-enota');
+    const tabSluzbaBtn = document.getElementById('tab-sluzba');
     
     if (tabLetoBtn) {
         tabLetoBtn.addEventListener('shown.bs.tab', () => {
@@ -413,7 +594,15 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     
     if (tabEnotaBtn) {
-        tabEnotaBtn.addEventListener('shown.bs.tab', () => {
+        tabEnotaBtn.addEventListener('shown.bs.tab', async () => {
+            await naloziGrafPoEnoti();
+            if (grafNapravePoEnoti) grafNapravePoEnoti.resize();
+        });
+    }
+
+    if (tabSluzbaBtn) {
+        tabSluzbaBtn.addEventListener('shown.bs.tab', async () => {
+            await naloziGrafPoSluzbi();
             if (grafNapravePoSluzbi) grafNapravePoSluzbi.resize();
         });
     }
