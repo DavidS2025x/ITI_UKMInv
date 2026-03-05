@@ -19,6 +19,37 @@
 </head>
 <body>
 
+    <div class="modal fade" id="auditJsonModal" tabindex="-1" aria-labelledby="auditJsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="auditJsonModalLabel">Podrobnosti revizijske sledi</h5>
+                    <span id="auditActionBadge" class="badge text-bg-primary ms-2"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="badge text-bg-warning">Spremenjeno</span>
+                        <span class="badge text-bg-secondary">Nespremenjeno</span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-12 col-lg-6">
+                            <h6>Stari zapis</h6>
+                            <div id="auditOldRowJson" class="border rounded p-3 bg-light mb-0" style="max-height: 60vh; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-12 col-lg-6">
+                            <h6>Novi zapis</h6>
+                            <div id="auditNewRowJson" class="border rounded p-3 bg-light mb-0" style="max-height: 60vh; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zapri</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">

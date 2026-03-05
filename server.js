@@ -675,24 +675,24 @@ server.get('/osPodatki', async (req, res) => {
 server.get('/tipiNapravPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
         const result = await SQLquery(`SELECT OznakaTipaNaprave AS 'Oznaka tipa', OpisTipaNaprave AS 'Opis', OznakaKategorijeNaprave AS 'Kategorija' FROM tipnaprave`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
 
-        server.get('/tipiKategorijeNapravPodatki', async (req, res) => {
-            if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-                const result = await SQLquery(`SELECT OznakaKategorijeNaprave AS 'Oznaka tipa', OpisKategorijeNaprave AS 'Opis' FROM tipkategorijenaprave`);
-                return res.json(result);
-            } else {
-                res.status(401).json({error: 'Not authenticated or insufficient permissions'});
-            }
-        });
+server.get('/tipiKategorijeNapravPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        const result = await SQLquery(`SELECT OznakaKategorijeNaprave AS 'Oznaka tipa', OpisKategorijeNaprave AS 'Opis' FROM tipkategorijenaprave`);
+        return res.json(result);
+    } else {
+        res.status(401).json({error: 'Not authenticated or insufficient permissions'});
+    }
+});
 
-        server.get('/dovoljenjaPodatki', async (req, res) => {
-            if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-                const result = await SQLquery(`SELECT ID_Dovoljenja AS 'ID', Koda AS 'Koda', NazivDovoljenja AS 'Naziv dovoljenja' FROM dovoljenje`);
-                return res.json(result);
-            } else {
-                res.status(401).json({error: 'Not authenticated or insufficient permissions'});
-            }
-        });
+server.get('/dovoljenjaPodatki', async (req, res) => {
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
+        const result = await SQLquery(`SELECT ID_Dovoljenja AS 'ID', Koda AS 'Koda', NazivDovoljenja AS 'Naziv dovoljenja' FROM dovoljenje`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
