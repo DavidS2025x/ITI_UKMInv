@@ -74,16 +74,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Oseba uspešno dodana!');
-                        form.reset();
+                        showNotificationModal('Uspeh', 'Oseba uspešno dodana!', '/pregledOseb');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri dodajanju osebe.');
+                        showNotificationModal('Napaka', 'Napaka pri dodajanju osebe.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju osebe.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju osebe.');
                 });
             });
         });

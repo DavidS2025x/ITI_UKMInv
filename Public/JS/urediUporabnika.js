@@ -30,8 +30,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
             const osebePoUporabniskemImenu = new Map();
 
-            // Naloži seznam vlog v spustni meni
-            fetch('/vlogaPodatki')
+            // Promise za nalaganje vlog
+            const vloge_promise = fetch('/vlogaPodatki')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('ID_Vloge')
@@ -43,7 +43,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
-            // Pridobi obstoječe podatke sistemskega uporabnika iz seje in prednapolni polja obrazca
+            // Pridobi obstoječe podatke sistemskega uporabnika in počakaj za vse fetche
             fetch('/uporabnikPodatkiEdit')
             .then(response => response.json())
             .then( data => {
@@ -53,30 +53,34 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.Geslo = data.Geslo;
                 window.ID_Vloge = data.ID_Vloge;
 
-                fetch(`/osebaZaUporabnikPodatkiForm?includeUsername=${encodeURIComponent(window.UporabniskoIme)}`)
-                .then(response => response.json())
-                .then(osebe => {
-                    const input = document.getElementById('UporabniskoIme');
-                    osebe.forEach(oseba => {
-                        osebePoUporabniskemImenu.set(oseba.UporabniskoIme, oseba);
-                        const option = document.createElement('option');
-                        option.value = oseba.UporabniskoIme;
-                        option.textContent = oseba.UporabniskoIme;
-                        input.appendChild(option);
-                    });
-
-                    input.value = window.UporabniskoIme;
-                    input.disabled = true;
-                    document.getElementById('Ime').value = window.Ime;
-                    document.getElementById('Priimek').value = window.Priimek;
-                    document.getElementById('Geslo').value = window.Geslo;
-                    document.getElementById('ID_Vloge').value = window.ID_Vloge;
-                    
-                    // Prikaži zahteve za trenutno geslo
-                    setTimeout(() => {
-                        updatePasswordValidationDisplay(window.Geslo, 'passwordRequirements');
-                    }, 0);
-                });
+                return Promise.all([
+                    vloge_promise,
+                    fetch(`/osebaZaUporabnikPodatkiForm?includeUsername=${encodeURIComponent(window.UporabniskoIme)}`)
+                    .then(response => response.json())
+                    .then(osebe => {
+                        const input = document.getElementById('UporabniskoIme');
+                        osebe.forEach(oseba => {
+                            osebePoUporabniskemImenu.set(oseba.UporabniskoIme, oseba);
+                            const option = document.createElement('option');
+                            option.value = oseba.UporabniskoIme;
+                            option.textContent = oseba.UporabniskoIme;
+                            input.appendChild(option);
+                        });
+                    })
+                ]);
+            })
+            .then(() => {
+                // Sedaj so vse možnosti naložene - nastavi vrednosti
+                const input = document.getElementById('UporabniskoIme');
+                input.value = window.UporabniskoIme;
+                input.disabled = true;
+                document.getElementById('Ime').value = window.Ime;
+                document.getElementById('Priimek').value = window.Priimek;
+                document.getElementById('Geslo').value = window.Geslo;
+                document.getElementById('ID_Vloge').value = window.ID_Vloge;
+                
+                // Prikaži zahteve za trenutno geslo
+                updatePasswordValidationDisplay(window.Geslo, 'passwordRequirements');
             })
 
             // Ob izboru uporabniškega imena samodejno izpolni ime in priimek
@@ -101,7 +105,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 const isPasswordValid = updatePasswordValidationDisplay(geslo, 'passwordRequirements');
                 
                 if (!isPasswordValid) {
-                    alert('Geslo ne izpolnjuje zahtev za varnost!');
+                    showNotificationModal('Napaka', 'Geslo ne izpolnjuje zahtev za varnost!');
                     form.Geslo.focus();
                     return;
                 }
@@ -118,16 +122,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Uporabnik uspešno urejen!');
-                        window.location.href = '/osebaPregled';
+                        showNotificationModal('Uspeh', 'Uporabnik uspešno urejen!', '/osebaPregled');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri urejanju uporabnika.');
+                        showNotificationModal('Napaka', 'Napaka pri urejanju uporabnika.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri urejanju uporabnika.');
+                    showNotificationModal('Napaka', 'Napaka pri urejanju uporabnika.');
                 });
             });
 

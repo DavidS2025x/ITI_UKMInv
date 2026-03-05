@@ -78,7 +78,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 const isPasswordValid = updatePasswordValidationDisplay(geslo, 'passwordRequirements');
                 
                 if (!isPasswordValid) {
-                    alert('Geslo ne izpolnjuje zahtev za varnost!');
+                    showNotificationModal('Napaka', 'Geslo ne izpolnjuje zahtev za varnost!');
                     form.Geslo.focus();
                     return;
                 }
@@ -97,17 +97,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Uporabnik uspešno dodan!');
-                        form.reset();
-                        document.getElementById('passwordRequirements').innerHTML = '';
+                        showNotificationModal('Uspeh', 'Uporabnik uspešno dodan!', '/osebaPregled');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri dodajanju uporabnika.');
+                        showNotificationModal('Napaka', 'Napaka pri dodajanju uporabnika.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju uporabnika.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju uporabnika.');
                 });
             });
 

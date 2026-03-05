@@ -1404,6 +1404,9 @@ server.post('/dodajDelovnoPostajo', async (req, res) => {
         if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
             OznakaTipaNaprave = null;
         }
+        if (OznakaOsebeUporabniskoIme === undefined || OznakaOsebeUporabniskoIme === ' ') {
+            OznakaOsebeUporabniskoIme = null;
+        }
         if (OznakaEnote === undefined || OznakaEnote === '') {
             OznakaEnote = null;
         }
@@ -1437,6 +1440,9 @@ server.post('/dodajMonitor', async (req, res) => {
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
         }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
+        }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;
         }
@@ -1469,6 +1475,9 @@ server.post('/dodajTiskalnik', async(req, res) => {
 
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
+        }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;
@@ -1514,6 +1523,9 @@ server.post('/dodajRocniCitalec', async (req, res) => {
         
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
+        }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;
@@ -1642,6 +1654,9 @@ server.post('/urediDelovnaPostaja', async (req, res) => {
         if (OznakaTipaNaprave === undefined || OznakaTipaNaprave === '') {
             OznakaTipaNaprave = null;
         }
+        if (OznakaOsebeUporabniskoIme === undefined || OznakaOsebeUporabniskoIme === ' ') {
+            OznakaOsebeUporabniskoIme = null;
+        }
         if (OznakaEnote === undefined || OznakaEnote === '') {
             OznakaEnote = null;
         }
@@ -1722,6 +1737,9 @@ server.post('/urediMonitor', async (req, res) => {
         if(OznakaDP == undefined || OznakaDP == ' '){
             OznakaDP = null;
         }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
+        }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;
         }
@@ -1755,6 +1773,9 @@ server.post('/urediTiskalnik', async (req, res) => {
 
         if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
+        }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;
@@ -1805,6 +1826,9 @@ server.post('/urediRocniCitalec', async (req, res) => {
 
         if(OznakaDP == undefined || OznakaDP == ' ' || OznakaDP == ''){
             OznakaDP = null;
+        }
+        if(OznakaOsebeUporabniskoIme == undefined || OznakaOsebeUporabniskoIme == ' '){
+            OznakaOsebeUporabniskoIme = null;
         }
         if(InventarnaStevilka == undefined || InventarnaStevilka == ''){
             InventarnaStevilka = null;

@@ -30,6 +30,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function izbrisiVnos(id, actionUrl){
     console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
+    
+    // Save current search term before reload
+    if (window.currentDataTable) {
+        window.preservedTableSearch = window.currentDataTable.search();
+    }
+    
     fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
         currentButtonAction = '/osebaVnos';
         tabelaOsebe('/osebaPodatki', 'Osebe');

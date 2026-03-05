@@ -47,10 +47,11 @@
             <label for="InventarnaStevilka" class="form-label me-2 form-label-col">Inventarna številka</label>
             <input type="number" name="InventarnaStevilka" class="form-control" id="InventarnaStevilka">
         </div>
-        <div class="mb-3 form-row">   
+        <div class="mb-3 form-row">
             <label for="OznakaOsebeUporabniskoIme" class="form-label me-2 form-label-col">Uporabnik</label>
             <select name="OznakaOsebeUporabniskoIme" class="form-select" id="OznakaOsebeUporabniskoIme" required>
                 <option value="" disabled selected hidden>Izberi uporabnika</option>
+                <option value=" ">Brez uporabnika</option>
             </select>
         </div>
         <div class="mb-3 form-row">
@@ -95,8 +96,8 @@
         </div>
         <hr class="mb-3">
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary me-2">Potrdi</button>
-            <button type="reset" class="btn btn-danger me-2">Ponastavi</button>
+            <button type="submit" class="btn btn-primary me-2">Potrdi vnos</button>
+            <button type="reset" class="btn btn-danger me-2">Ponastavi polja</button>
             <button type="button" class="btn btn-secondary" onclick="window.history.back()"><i class="bi bi-arrow-left"></i> Prekliči</button>
         </div>
     </form>

@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam proizvajalcev v spustni meni
-            fetch('/proizvajalecPodatkiForm')
+            const proizvajalci_promise = fetch('/proizvajalecPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaProizvajalca');
@@ -40,7 +40,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam tipov naprav v spustni meni
-            fetch('/tipNapravePodatkiForm')
+            const tipiNaprav_promise = fetch('/tipNapravePodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaTipaNaprave');
@@ -53,7 +53,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam lokacij v spustni meni
-            fetch('/lokacijaPodatkiForm')
+            const lokacije_promise = fetch('/lokacijaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaLokacije');
@@ -66,7 +66,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam oseb (dodeljeni uporabnik) v spustni meni
-            fetch('/osebaPodatkiForm')
+            const osebe_promise = fetch('/osebaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaOsebeUporabniskoIme');
@@ -79,7 +79,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam služb v spustni meni
-            fetch('/sluzbaPodatkiForm')
+            const sluzbe_promise = fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaSluzbe');
@@ -92,7 +92,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
             
             // Naloži seznam enot v spustni meni
-            fetch('/enotaPodatkiForm')
+            const enote_promise = fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaEnote');
@@ -105,7 +105,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam operacijskih sistemov v spustni meni
-            fetch('/operacijskiSistemPodatkiForm')
+            const operacijskiSistemi_promise = fetch('/operacijskiSistemPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const input = document.getElementById('OznakaOS');
@@ -145,7 +145,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.OznakaTipaNaprave = data.OznakaTipaNaprave;
                 window.OznakaLokacije = data.OznakaLokacije;
                 window.InventarnaStevilka = data.InventarnaStevilka;
-                window.OznakaOsebeUporabniskoIme = data.OznakaOsebeUporabniskoIme;
+                window.OznakaOsebeUporabniskoIme = data.OznakaOsebeUporabniskoIme || ' ';
                 window.OznakaEnote = data.OznakaEnote;
                 window.OznakaSluzbe = data.OznakaSluzbe;
                 window.OznakaOS = data.OznakaOS;
@@ -161,6 +161,19 @@ window.addEventListener("DOMContentLoaded", () => {
                 console.log('DatumProizvodnje after format:', window.DatumProizvodnje);
                 console.log('DatumNakupa after format:', window.DatumNakupa);
 
+                // Počakaj da so vse možnosti naložene pred nastavitvijo vrednosti
+                return Promise.all([
+                    proizvajalci_promise,
+                    tipiNaprav_promise,
+                    lokacije_promise,
+                    osebe_promise,
+                    sluzbe_promise,
+                    enote_promise,
+                    operacijskiSistemi_promise
+                ]);
+            })
+            .then(() => {
+                // Sedaj so vse možnosti naložene - nastavi vrednosti
                 document.getElementById('OznakaDP').value = window.OznakaDP;
                 document.getElementById('ModelDP').value = window.ModelDP;
                 document.getElementById('OznakaProizvajalca').value = window.OznakaProizvajalca;
@@ -213,16 +226,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Delovna postaja uspešno urejena!');
-                        window.location.href = '/opremaPregled';
+                        showNotificationModal('Uspeh', 'Delovna postaja uspešno urejena!', '/opremaPregled#delovnePostaje');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri urejanju delovne postaje.');
+                        showNotificationModal('Napaka', 'Napaka pri urejanju delovne postaje.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri urejanju delovne postaje.');
+                    showNotificationModal('Napaka', 'Napaka pri urejanju delovne postaje.');
                 });
             });
 

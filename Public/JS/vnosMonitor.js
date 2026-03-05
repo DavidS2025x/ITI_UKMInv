@@ -146,16 +146,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Monitor uspešno dodan!');
-                        form.reset();
+                        showNotificationModal('Uspeh', 'Monitor uspešno dodan!', '/opremaPregled#monitorji');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri dodajanju monitorja.');
+                        showNotificationModal('Napaka', 'Napaka pri dodajanju monitorja.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju monitorja.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju monitorja.');
                 });
             });
         });

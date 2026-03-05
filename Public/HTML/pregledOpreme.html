@@ -61,27 +61,27 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 app-sidebar">
         
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/delovnaPostajaVnos'; tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje'); actionUrl = '/izbrisDelovnaPostaja'; setUpAddButton();">
+        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/delovnaPostajaVnos'; tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje'); actionUrl = '/izbrisDelovnaPostaja'; setUpAddButton();">
         DP
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/monitorVnos'; tabelaMonitorji('/monitorPodatki', 'Monitorji'); actionUrl = '/izbrisMonitor'; setUpAddButton(); ">
+        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/monitorVnos'; tabelaMonitorji('/monitorPodatki', 'Monitorji'); actionUrl = '/izbrisMonitor'; setUpAddButton(); ">
         Monitorji
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/tiskalnikVnos'; tabelaTiskalniki('/tiskalnikPodatki', 'Tiskalniki'); actionUrl = '/izbrisTiskalnik'; setUpAddButton(); ">
+        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/tiskalnikVnos'; tabelaTiskalniki('/tiskalnikPodatki', 'Tiskalniki'); actionUrl = '/izbrisTiskalnik'; setUpAddButton(); ">
         Tiskalniki
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/rocniCitalecVnos'; tabelaCitalci('/rocnicitalecPodatki', 'Ročni čitalci'); actionUrl = '/izbrisRocniCitalec'; setUpAddButton(); ">
+        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/rocniCitalecVnos'; tabelaCitalci('/rocnicitalecPodatki', 'Ročni čitalci'); actionUrl = '/izbrisRocniCitalec'; setUpAddButton(); ">
         Ročni čitalci
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/virtualServerVnos'; tabela('/virtualServerPodatki', 'Virtualni strežniki'); actionUrl = '/izbrisVirtualStreznik'; removeAddButton(); ">
+        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/virtualServerVnos'; tabela('/virtualServerPodatki', 'Virtualni strežniki'); actionUrl = '/izbrisVirtualStreznik'; removeAddButton(); ">
         VM
         </button>
 

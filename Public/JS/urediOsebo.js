@@ -26,7 +26,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
 
             // Naloži seznam služb v spustni meni
-            fetch('/sluzbaPodatkiForm')
+            const sluzbe_promise = fetch('/sluzbaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const sluzbaSelect = document.getElementById('Sluzba');
@@ -39,7 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
             });
             
             // Naloži seznam enot v spustni meni
-            fetch('/enotaPodatkiForm')
+            const enote_promise = fetch('/enotaPodatkiForm')
             .then(response => response.json())
             .then(data => {
                 const enotaSelect = document.getElementById('Enota');
@@ -67,6 +67,11 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.OznakaSluzbe = data.OznakaSluzbe;
                 window.OznakaEnote = data.OznakaEnote;
 
+                // Počakaj da so vse možnosti naložene
+                return Promise.all([sluzbe_promise, enote_promise]);
+            })
+            .then(() => {
+                // Sedaj so vse možnosti naložene - nastavi vrednosti
                 document.getElementById('UporabniskoIme').value = window.UporabniskoIme;
                 document.getElementById('Ime').value = window.Ime;
                 document.getElementById('Priimek').value = window.Priimek;
@@ -99,16 +104,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Vnos uspešno spremenjen.');
-                        window.location.href = '/osebaPregled';
+                        showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', '/pregledOseb');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri spreminjanju vnosa.');
+                        showNotificationModal('Napaka', 'Napaka pri spreminjanju vnosa.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju osebe.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju osebe.');
                 });
             });
 

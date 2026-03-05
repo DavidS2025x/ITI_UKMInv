@@ -161,16 +161,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Tiskalnik uspešno dodan!');
-                        form.reset();
+                        showNotificationModal('Uspeh', 'Tiskalnik uspešno dodan!', '/opremaPregled#tiskalniki');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri dodajanju tiskalnika.');
+                        showNotificationModal('Napaka', 'Napaka pri dodajanju tiskalnika.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju tiskalnik.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju tiskalnika.');
                 });
             });
         });

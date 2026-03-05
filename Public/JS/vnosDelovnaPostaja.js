@@ -147,16 +147,15 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        alert('Delovna postaja uspešno dodana!');
-                        form.reset();
+                        showNotificationModal('Uspeh', 'Delovna postaja uspešno dodana!', '/opremaPregled#delovnePostaje');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
-                        alert('Napaka pri dodajanju delovne postaje.');
+                        showNotificationModal('Napaka', 'Napaka pri dodajanju delovne postaje.');
                     }
                 })
                 .catch(error => {
                     console.error('Error submitting form:', error);
-                    alert('Napaka pri dodajanju delovne postaje.');
+                    showNotificationModal('Napaka', 'Napaka pri dodajanju delovne postaje.');
                 });
             });
         });

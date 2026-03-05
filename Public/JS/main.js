@@ -331,6 +331,7 @@ function formatCellValue(value, columnName) {
  * Nastavi vsebino in poravnavo elementa <td> glede na vrednost in ime stolpca.
  * Kliče formatCellValue() za pridobitev prikaza vrednosti ter doda CSS razred
  * 'text-center', če stolpec spada v centeredColumns.
+ * Za stolpce z GB ali % dodaja data-order atribut z neformatirano vrednostjo za pravilno sortiranje.
  *
  * @param {HTMLTableCellElement} td - Element <td>, ki ga je treba napolniti.
  * @param {*} value - Vrednost celice.
@@ -339,6 +340,15 @@ function formatCellValue(value, columnName) {
  */
 function applyCellFormatting(td, value, columnName) {
     td.textContent = formatCellValue(value, columnName);
+    
+    // Store raw numeric value for proper sorting of GB and % columns
+    if ((gbColumns.has(columnName) || percentColumns.has(columnName)) && value !== null && value !== undefined && value !== '') {
+        const numericValue = parseFloat(value);
+        if (!isNaN(numericValue)) {
+            td.setAttribute('data-order', numericValue);
+        }
+    }
+    
     if (centeredColumns.has(columnName)) {
         td.classList.add('text-center');
     } else {
@@ -674,7 +684,15 @@ function renderTable(dataUrl, config = {}) {
                 }
             });
 
-            window.currentDataTable.search('').draw();
+            // Restore search if it was saved before reload
+            const savedSearch = window.preservedTableSearch || '';
+            window.currentDataTable.search(savedSearch).draw();
+            const searchInput = document.getElementById('tableSearch');
+            if (searchInput && savedSearch) {
+                searchInput.value = savedSearch;
+            }
+            window.preservedTableSearch = undefined;
+            
             movePaginationControls();
             resetTableScroll();
             setUpSearch();
@@ -1133,23 +1151,43 @@ function setTableTitle(title, iconClass) {
     }
 }
 
-window.uporabnikPodatki = uporabnikPodatki;
-window.logout = logout;
-window.openChangePasswordModal = openChangePasswordModal;
-window.updateUserDisplay = updateUserDisplay;
-window.validatePassword = validatePassword;
-window.updatePasswordValidationDisplay = updatePasswordValidationDisplay;
-window.addNavigationLinks = addNavigationLinks;
-window.tabela = tabela;
-window.renderTable = renderTable;
-window.tabelaOsebe = tabelaOsebe;
-window.tabelaUporabniki = tabelaUporabniki;
-window.tabelaDelovnePostaje = tabelaDelovnePostaje;
-window.tabelaMonitorji = tabelaMonitorji;
-window.tabelaTiskalniki = tabelaTiskalniki;
-window.tabelaCitalci = tabelaCitalci;
-window.tabelaPogled = tabelaPogled;
-window.executeViewQuery = executeViewQuery;
-window.setTableTitle = setTableTitle;
-window.removeAddButton = removeAddButton;
-window.setUpAddButton = setUpAddButton;
+/**
+ * Prikaži notifikacijski modal z sporočilom in opcionalnim preusmeritvijo
+ * @param {string} naslov - Naslov modala ("Uspeh" ali "Napaka")
+ * @param {string} sporocilo - Sporočilo za prikaz
+ * @param {string} redirect - URL za preusmeritev po zaprtju modala (optional)
+ * @param {number} delay - Čas v ms preden se avtomatično zapre in preusmeri (optional, privzeto 1500)
+ */
+function showNotificationModal(naslov, sporocilo, redirect = null, delay = 1500) {
+    const modal = document.getElementById('notificationModal');
+    if (!modal) {
+        console.error('Notification modal not found');
+        // Fallback na alert
+        alert(`${naslov}\n${sporocilo}`);
+        if (redirect) window.location.href = redirect;
+        return;
+    }
+    
+    document.getElementById('notificationModalTitle').textContent = naslov;
+    document.getElementById('notificationModalBody').textContent = sporocilo;
+    
+    // Nastavi barvo glede na tip sporočila
+    const headerEl = modal.querySelector('.modal-header');
+    if (naslov.includes('Uspeh') || naslov.includes('uspešno')) {
+        headerEl.className = 'modal-header bg-success text-white';
+    } else {
+        headerEl.className = 'modal-header bg-danger text-white';
+    }
+    
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modal);
+    modalInstance.show();
+    
+    // Preusmeritev ko uporabnik zapre modal
+    if (redirect) {
+        modal.addEventListener('hidden.bs.modal', () => {
+            window.location.href = redirect;
+        }, { once: true });
+    }
+}
+
+window.showNotificationModal = showNotificationModal;
