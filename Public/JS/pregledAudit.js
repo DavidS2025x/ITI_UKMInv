@@ -134,6 +134,26 @@ function showAuditJsonModal(oldRowValue, newRowValue, actionValue) {
         actionBadge.textContent = `Dejanje: ${actionValue || '—'}`;
     }
 
+    // Synchronized scroll between old and new row containers
+    if (oldRowElement && newRowElement) {
+        // Remove any existing listeners to prevent duplicates
+        oldRowElement.removeEventListener('scroll', syncScroll);
+        newRowElement.removeEventListener('scroll', syncScroll);
+
+        function syncScroll(event) {
+            if (event.target === oldRowElement) {
+                newRowElement.scrollTop = oldRowElement.scrollTop;
+                newRowElement.scrollLeft = oldRowElement.scrollLeft;
+            } else {
+                oldRowElement.scrollTop = newRowElement.scrollTop;
+                oldRowElement.scrollLeft = newRowElement.scrollLeft;
+            }
+        }
+
+        oldRowElement.addEventListener('scroll', syncScroll);
+        newRowElement.addEventListener('scroll', syncScroll);
+    }
+
     bootstrap.Modal.getOrCreateInstance('#auditJsonModal').show();
 }
 
