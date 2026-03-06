@@ -101,15 +101,6 @@ async function loadOsebaOprema() {
     }
 }
 
-/**
- * Izže HTML seznam naprav v podani vsebnik.
- * Če ima uporabnik dovoljenje za urejanje, doda gumbe za urejanje in odstranjevanje.
- * @param {Array} data - Niz naprav za prikaz.
- * @param {string} containerId - ID vsebnika, v katerega se izriše seznam.
- * @param {string} countSpanId - ID elementa za prikaz števila naprav v glavi kartice.
- * @param {string} equipmentType - Tip naprave ('delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci').
- * @param {object} userData - Podatki prijavljenega uporabnika za preverjanje dovoljenj.
- */
 function renderEquipmentList(data, containerId, countSpanId, equipmentType, userData) {
     const container = document.getElementById(containerId);
     const countSpan = document.getElementById(countSpanId);
@@ -126,52 +117,61 @@ function renderEquipmentList(data, containerId, countSpanId, equipmentType, user
         return;
     }
     
-    const list = document.createElement('ul');
-    list.className = 'list-unstyled';
+    // Get all field names from first item, excluding EditID
+    const allFields = Object.keys(data[0] || {}).filter(key => key !== 'EditID');
     
-    data.forEach(item => {
-        const li = document.createElement('li');
-        li.className = 'mb-2 pb-2 border-bottom d-flex justify-content-between align-items-center';
+    const cardsHTML = data.map(item => {
+        const editId = encodeURIComponent(item['EditID'] || '');
         
-        // Use Oznaka as the device identifier
-        const oznaka = item['Oznaka'];
+        // First field is the main identifier (like "Oznaka delovne postaje")
+        const firstField = allFields[0];
+        const firstValue = item[firstField] || '-';
         
-        let buttonsHTML = '';
-        if (hasEditPermission || hasUnassignPermission) {
-            const unassignData = UNASSIGN_CONFIG[equipmentType];
-            const unassignBtn = (hasUnassignPermission && unassignData) ? `
-                    <button class="unassign-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="openUnassignModalOS('${oznaka}', '${equipmentType}')" title="Označi kot nerazporejeno" onmouseover="this.querySelector('i').style.color='#e8590c'" onmouseout="this.querySelector('i').style.color='#fd7e14'">
-                        <i class="bi bi-person-dash-fill" style="font-size: 1rem; color: #fd7e14;"></i>
-                    </button>` : '';
-            const editBtn = hasEditPermission ? `
-                    <button class="edit-btn" style="background: none; border: none; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="editEquipment('${equipmentType}', '${oznaka}')" title="Uredi" onmouseover="this.querySelector('i').style.color='#495057'" onmouseout="this.querySelector('i').style.color='#6c757d'">
-                        <i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>
-                    </button>` : '';
-            buttonsHTML = `
-                <div class="d-flex gap-1">
-                    ${editBtn}
-                    ${unassignBtn}
+        // Rest of the fields are details
+        const detailsHTML = allFields
+            .slice(1)
+            .map(field => `<div class="small text-muted">${field}: ${item[field] ?? '-'}</div>`)
+            .join('');
+        
+        const unassignBtn = (hasUnassignPermission) ? `
+            <button class="unassign-btn" style="background: none; border: none; padding: 0.25rem 0.5rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="openUnassignModalOS('${firstValue}', '${equipmentType}')" title="Označi kot nerazporejeno" onmouseover="this.querySelector('i').style.color='#e8590c'" onmouseout="this.querySelector('i').style.color='#fd7e14'">
+                <i class="bi bi-person-dash-fill" style="font-size: 1rem; color: #fd7e14;"></i>
+            </button>` : '';
+        
+        const editBtn = hasEditPermission ? `
+            <button class="edit-btn" style="background: none; border: none; padding: 0.25rem 0.5rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" onclick="openEquipmentEdit('${equipmentType}', '${editId}')" title="Uredi" onmouseover="this.querySelector('i').style.color='#495057'" onmouseout="this.querySelector('i').style.color='#6c757d'">
+                <i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i>
+            </button>` : '';
+        
+        const buttonsHTML = (hasEditPermission || hasUnassignPermission) ? `
+            <div style="display: flex; gap: 0.5rem;">
+                ${editBtn}
+                ${unassignBtn}
+            </div>
+        ` : '';
+        
+        return `
+            <div class="d-flex justify-content-between align-items-start border rounded p-2 mb-2">
+                <div>
+                    <div><strong>${firstField}: ${firstValue}</strong></div>
+                    ${detailsHTML}
                 </div>
-            `;
-        }
-        
-        li.innerHTML = `
-            <small class="text-dark fw-500">${oznaka}</small>
-            ${buttonsHTML}
+                ${buttonsHTML}
+            </div>
         `;
-        list.appendChild(li);
-    });
+    }).join('');
     
-    container.innerHTML = '';
-    container.appendChild(list);
+    container.innerHTML = cardsHTML;
 }
 
 /**
- * Nastavi ID naprave za urejanje v sejo in preusmeri na ustrezen obrazec za urejanje.
- * @param {string} equipmentType - Tip naprave ('delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci').
- * @param {string} oznaka - Enolična oznaka naprave.
+ * Handles opening equipment edit form with proper async handling.
+ * @param {string} equipmentType - Type of equipment
+ * @param {string} editId - Encoded equipment ID
  */
-function editEquipment(equipmentType, oznaka) {
+async function openEquipmentEdit(equipmentType, editId) {
+    const decodedId = decodeURIComponent(editId || '');
+    
     const equipmentMap = {
         'delovnePostaje': '/urediDelovnaPostaja',
         'monitorji': '/urediMonitor',
@@ -179,17 +179,18 @@ function editEquipment(equipmentType, oznaka) {
         'rocniCitalci': '/urediRocniCitalec'
     };
     
-    const editUrl = equipmentMap[equipmentType];
-    if (editUrl) {
-        fetch('/nastaviEditID', {
+    const editPath = equipmentMap[equipmentType];
+    if (!editPath) return;
+    
+    try {
+        await fetch('/nastaviEditID', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({EditID: oznaka})
-        }).then(() => {
-            window.location.href = editUrl;
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ EditID: decodedId })
         });
+        window.location.href = editPath;
+    } catch (err) {
+        console.error('Error setting edit ID:', err);
     }
 }
 

@@ -1285,7 +1285,22 @@ server.get('/osebDelovnePostaje', async (req, res) => {
             return res.status(400).json({error: 'Username parameter required'});
         }
         try {
-            const result = await SQLquery(`SELECT OznakaDP AS 'Oznaka' FROM delovnapostaja WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaDP`, [username]);
+            const result = await SQLquery(`
+                SELECT
+                    dp.OznakaDP AS 'Oznaka delovne postaje',
+                    dp.ModelDP AS 'Model delovne postaje',
+                    dp.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    dp.OznakaTipaNaprave AS 'Oznaka tipa naprave',
+                    dp.OznakaOS AS 'Oznaka operacijskega sistema',
+                    dp.CPU AS 'CPU',
+                    dp.RAM AS 'RAM',
+                    dp.DiskC AS 'Disk C',
+                    dp.DiskD AS 'Disk D',
+                    dp.OznakaDP AS EditID
+                FROM delovnapostaja dp
+                WHERE dp.OznakaOsebeUporabniskoIme = ?
+                ORDER BY dp.OznakaDP
+            `, [username]);
             res.json(result);
         } catch (err) {
             res.status(500).json({error: 'Database error'});
@@ -1302,7 +1317,18 @@ server.get('/osebMonitorji', async (req, res) => {
             return res.status(400).json({error: 'Username parameter required'});
         }
         try {
-            const result = await SQLquery(`SELECT OznakaMonitorja AS 'Oznaka' FROM monitor WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaMonitorja`, [username]);
+            const result = await SQLquery(`
+                SELECT
+                    m.OznakaMonitorja AS 'Oznaka monitorja',
+                    m.ModelMonitorja AS 'Model monitorja',
+                    m.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    m.Velikost AS 'Velikost',
+                    m.Kamera AS 'Kamera',
+                    m.OznakaMonitorja AS EditID
+                FROM monitor m
+                WHERE m.OznakaOsebeUporabniskoIme = ?
+                ORDER BY m.OznakaMonitorja
+            `, [username]);
             res.json(result);
         } catch (err) {
             res.status(500).json({error: 'Database error'});
@@ -1319,7 +1345,17 @@ server.get('/osebTiskalniki', async (req, res) => {
             return res.status(400).json({error: 'Username parameter required'});
         }
         try {
-            const result = await SQLquery(`SELECT OznakaTiskalnika AS 'Oznaka' FROM tiskalnik WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaTiskalnika`, [username]);
+            const result = await SQLquery(`
+                SELECT
+                    t.OznakaTiskalnika AS 'Oznaka tiskalnika',
+                    t.ModelTiskalnika AS 'Model tiskalnika',
+                    t.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    t.OznakaTipaTiskalnika AS 'Oznaka tipa tiskalnika',
+                    t.OznakaTiskalnika AS EditID
+                FROM tiskalnik t
+                WHERE t.OznakaOsebeUporabniskoIme = ?
+                ORDER BY t.OznakaTiskalnika
+            `, [username]);
             res.json(result);
         } catch (err) {
             res.status(500).json({error: 'Database error'});
@@ -1336,7 +1372,16 @@ server.get('/osebRocniCitalci', async (req, res) => {
             return res.status(400).json({error: 'Username parameter required'});
         }
         try {
-            const result = await SQLquery(`SELECT OznakaRocnegaCitalca AS 'Oznaka' FROM rocnicitalec WHERE OznakaOsebeUporabniskoIme = ? ORDER BY OznakaRocnegaCitalca`, [username]);
+            const result = await SQLquery(`
+                SELECT
+                    r.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
+                    r.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    r.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    r.OznakaRocnegaCitalca AS EditID
+                FROM rocnicitalec r
+                WHERE r.OznakaOsebeUporabniskoIme = ?
+                ORDER BY r.OznakaRocnegaCitalca
+            `, [username]);
             res.json(result);
         } catch (err) {
             res.status(500).json({error: 'Database error'});

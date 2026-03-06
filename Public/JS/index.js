@@ -98,7 +98,7 @@ function prikaziSkladisceNapraveModal(vnosi, tip) {
                     <div><strong>${naslovPolje}: ${naslovVrednost}</strong></div>
                     ${podrobnostiHtml}
                 </div>
-                ${canEdit ? `<button type="button" class="btn btn-sm btn-outline-secondary" data-edit-id="${encodedEditId}">Uredi</button>` : ''}
+                ${canEdit ? `<button type="button" style="background: none; border: none; padding: 0.25rem 0.5rem; cursor: pointer; display: flex; align-items: center; transition: color 0.2s;" data-edit-id="${encodedEditId}" title="Uredi" onmouseover="this.style.color='#495057'" onmouseout="this.style.color='#6c757d'"><i class="bi bi-pencil-square" style="font-size: 1rem; color: #6c757d;"></i></button>` : ''}
             </div>
         `;
     }).join('');

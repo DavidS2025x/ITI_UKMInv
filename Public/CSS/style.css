@@ -89,26 +89,54 @@ body:not(.login-page) .card-header {
     flex-wrap: wrap;
     justify-content: center;
     gap: 1.25rem;
-    width: fit-content;
+    width: 100%;
     margin: 0 auto;
+    padding: 0 1rem;
 }
 
 .equipment-card-wrapper {
     margin: auto;
+    flex: 0 0 calc(25% - 1rem);
+    min-width: 300px;
 }
 
 .equipment-card {
-    min-width: 270px;
-    min-height: 300px;
-    max-height: 300px;
+    width: 100%;
+    height: 600px;
     border: 1px solid var(--app-border);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.equipment-card .card-body {
+    overflow-y: auto;
+    flex: 1;
+    max-height: none !important;
 }
 
 .equipment-card .card-header {
     color: #ffffff;
     border-bottom: none;
     background: #3498db;
+}
+
+@media (max-width: 1200px) {
+    .equipment-card {
+        height: 550px;
+    }
+}
+
+@media (max-width: 768px) {
+    .equipment-card {
+        height: 450px;
+    }
+}
+
+@media (max-width: 576px) {
+    .equipment-card {
+        height: 350px;
+    }
 }
 
 .equipment-card .card-header h5 {
@@ -719,16 +747,6 @@ table {
 .audit-container {
     width: 100%;
     max-width: 1400px;
-}
-.equipment-card {
-    min-width: 267px;
-    min-height: 300px;
-    max-height: 300px;
-}
-
-.card-body {
-    max-height: 400px;
-    overflow-y: auto;
 }
 
 .card-header h5 {

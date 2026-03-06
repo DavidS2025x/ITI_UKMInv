@@ -122,17 +122,25 @@ async function updateUserDisplay(userData) {
         userFullNameEl.textContent = userData.Ime + ' ' + userData.Priimek;
     }
     
-    if (userRoleEl && userData.ID_Vloge) {
+    if (userRoleEl) {
         // Pridobi podatke o vlogah in poišči trenutno vlogo
         try {
             const response = await fetch('/vlogaPodatki');
             const vloge = await response.json();
-            const trenutnaVloga = vloge.find(v => v.ID_Vloge === userData.ID_Vloge);
-            if (trenutnaVloga) {
-                userRoleEl.textContent = trenutnaVloga.NazivVloge;
+            
+            if (userData.ID_Vloge) {
+                const trenutnaVloga = vloge.find(v => v.ID_Vloge === userData.ID_Vloge);
+                if (trenutnaVloga) {
+                    userRoleEl.textContent = trenutnaVloga.NazivVloge;
+                }
+            } else {
+                // For guest accounts or accounts without a role, display 'Gost'
+                userRoleEl.textContent = 'Gost';
             }
         } catch (error) {
             console.error('Error fetching roles:', error);
+            // Fallback: display 'Gost' if role fetch fails
+            userRoleEl.textContent = 'Gost';
         }
     }
 };
