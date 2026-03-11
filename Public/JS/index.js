@@ -842,7 +842,7 @@ function narisiGrafNapravePoStatusu(grafData) {
         },
         { 
             key: 'skladisce', 
-            label: 'Skladišče'
+            label: 'Nerazporejene naprave'
         }
     ];
 

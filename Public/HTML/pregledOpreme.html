@@ -61,27 +61,27 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 app-sidebar">
         
         <button class="btn app-sidebar-btn mb-2"
-        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/delovnaPostajaVnos'; tabelaDelovnePostaje('/delovnaPostajaPodatki', 'Delovne postaje'); actionUrl = '/izbrisDelovnaPostaja'; setUpAddButton();">
+        onclick="switchEquipmentTable('delovnePostaje');">
         Delovne postaje
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/monitorVnos'; tabelaMonitorji('/monitorPodatki', 'Monitorji'); actionUrl = '/izbrisMonitor'; setUpAddButton(); ">
+        onclick="switchEquipmentTable('monitorji');">
         Monitorji
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/tiskalnikVnos'; tabelaTiskalniki('/tiskalnikPodatki', 'Tiskalniki'); actionUrl = '/izbrisTiskalnik'; setUpAddButton(); ">
+        onclick="switchEquipmentTable('tiskalniki');">
         Tiskalniki
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/rocniCitalecVnos'; tabelaCitalci('/rocnicitalecPodatki', 'Ročni čitalci'); actionUrl = '/izbrisRocniCitalec'; setUpAddButton(); ">
+        onclick="switchEquipmentTable('citalci');">
         Ročni čitalci
         </button>
 
         <button class="btn app-sidebar-btn mb-2"
-        onclick="window.preservedTableSearch = ''; document.getElementById('tableSearch').value = ''; currentButtonAction='/virtualServerVnos'; tabela('/virtualServerPodatki', 'Virtualni strežniki'); actionUrl = '/izbrisVirtualStreznik'; removeAddButton(); ">
+        onclick="switchEquipmentTable('vm');">
         VM
         </button>
 

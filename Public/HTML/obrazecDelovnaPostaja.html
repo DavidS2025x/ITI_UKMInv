@@ -6,7 +6,7 @@
         <hr class="mb-3">
         <div class="mb-3 form-row">
             <label for="OznakaDP" class="form-label me-2 form-label-col">Oznaka DP</label>
-            <input type="text" id="OznakaDP" class="form-control" name="OznakaDP" required>
+            <input type="text" id="OznakaDP" class="form-control" name="OznakaDP" required oninput="this.value = this.value.toUpperCase()">
         </div>
         <div class="mb-3 form-row">
             <label for="ModelDP" class="form-label me-2 form-label-col">Model DP</label>
@@ -77,7 +77,7 @@
         </div>
         <div class="mb-3 form-row">
             <label for="SerijskaStevilka" class="form-label me-2 form-label-col">Serijska številka</label>
-            <input type="text" id="SerijskaStevilka" class="form-control" name="SerijskaStevilka" required>
+            <input type="text" id="SerijskaStevilka" class="form-control" name="SerijskaStevilka" required oninput="this.value = this.value.toUpperCase()">
         </div>
         <div class="mb-3 form-row">
             <label for="DatumProizvodnje" class="form-label me-2 form-label-col">Datum proizvodnje</label>

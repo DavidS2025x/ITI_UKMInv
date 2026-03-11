@@ -45,12 +45,12 @@
     <div class="d-flex flex-column ps-2 pe-2 pt-4 me-5 app-sidebar">
         
         <button class="btn app-sidebar-btn mb-2"
-        onclick="currentButtonAction='/vnosOseba'; tabelaOsebe('/osebaPodatki', 'Osebe'); actionUrl = '/izbrisOseba'; setUpAddButton();">
+        onclick="switchPeopleTable('osebe');">
         Osebe
         </button>
 
         <button class="btn app-sidebar-btn"
-        onclick="currentButtonAction='/uporabnikVnos'; tabelaUporabniki('/uporabnikPodatki', 'Uporabniki'); actionUrl = '/izbrisUporabnik'; setUpAddButton(); ">
+        onclick="switchPeopleTable('uporabniki');">
         Uporabniki
         </button>
 

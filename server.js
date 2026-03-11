@@ -614,7 +614,7 @@ server.get('/operacijskiSistemPodatkiForm', async (req, res) => {
 
 server.get('/delovnaPostajaPodatkiForm', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT OznakaDP FROM delovnapostaja`)
+        const result = await SQLquery(`SELECT OznakaDP FROM delovnapostaja ORDER BY OznakaDP ASC`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permission'});
@@ -698,7 +698,7 @@ server.get('/uporabnikPodatki', async (req, res) => {
 
 server.get('/enotaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT e.OznakaEnote AS 'Oznaka enote', e.NazivEnote AS 'Naziv enote', CONCAT (o.Ime, ' ', o.Priimek) AS 'Vodja enote' FROM enotaukm e LEFT JOIN osebaukm o ON e.VodjaEnoteUporabniskoIme = o.UporabniskoIme ORDER BY e.OznakaEnote`);
+        const result = await SQLquery(`SELECT e.OznakaEnote AS 'Oznaka enote', e.NazivEnote AS 'Naziv enote', CONCAT(o.Priimek, ', ', o.Ime) AS 'Vodja enote' FROM enotaukm e LEFT JOIN osebaukm o ON e.VodjaEnoteUporabniskoIme = o.UporabniskoIme ORDER BY e.OznakaEnote`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -707,7 +707,7 @@ server.get('/enotaPodatki', async (req, res) => {
 
 server.get('/sluzbaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT s.OznakaSluzbe AS 'Oznaka službe', s.NazivSluzbe AS 'Naziv službe', s.OznakaEnote AS 'Oznaka enote', CONCAT(o.Ime, ' ', o.Priimek) AS 'Vodja službe'  FROM sluzbaukm s LEFT JOIN osebaukm o ON s.VodjaSluzbeUporabniskoIme = o.UporabniskoIme ORDER BY s.OznakaSluzbe`);
+        const result = await SQLquery(`SELECT s.OznakaSluzbe AS 'Oznaka službe', s.NazivSluzbe AS 'Naziv službe', s.OznakaEnote AS 'Oznaka enote', CONCAT(o.Priimek, ', ', o.Ime) AS 'Vodja službe'  FROM sluzbaukm s LEFT JOIN osebaukm o ON s.VodjaSluzbeUporabniskoIme = o.UporabniskoIme ORDER BY s.OznakaSluzbe`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -716,7 +716,7 @@ server.get('/sluzbaPodatki', async (req, res) => {
 
 server.get('/lokacijaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT OznakaLokacije AS 'Oznaka lokacije', NazivLokacije AS 'Naziv Lokacije', OznakaNadstropja AS 'Nadstropje' FROM lokacijaukm`);
+        const result = await SQLquery(`SELECT OznakaLokacije AS 'Oznaka lokacije', NazivLokacije AS 'Naziv lokacije', OznakaNadstropja AS 'Nadstropje' FROM lokacijaukm`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -815,7 +815,7 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 
 server.get('/monitorPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON m.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY m.OznakaMonitorja`);
+        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka monitorja", m.ModelMonitorja AS "Model monitorja", m.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", m.OznakaDP AS "Oznaka DP", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON m.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY m.OznakaMonitorja`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -824,7 +824,7 @@ server.get('/monitorPodatki', async (req, res) => {
 
 server.get('/tiskalnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON t.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY t.OznakaTiskalnika`);
+        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Oznaka DP", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON t.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY t.OznakaTiskalnika`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -833,7 +833,7 @@ server.get('/tiskalnikPodatki', async (req, res) => {
 
 server.get('/rocnicitalecPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON rc.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY rc.OznakaRocnegaCitalca`);
+        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", rc.OznakaDP AS "Oznaka DP", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON rc.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY rc.OznakaRocnegaCitalca`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});

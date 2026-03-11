@@ -106,6 +106,37 @@ function openChangePasswordModal(event) {
     window.location.href = '/spremembaGesla';
 };
 
+// Klik na labelo označi celotno vsebino povezanega vnosnega polja.
+document.addEventListener('click', (event) => {
+    const label = event.target.closest('label[for]');
+    if (!label) {
+        return;
+    }
+
+    const targetId = label.getAttribute('for');
+    if (!targetId) {
+        return;
+    }
+
+    const field = document.getElementById(targetId);
+    if (!field) {
+        return;
+    }
+
+    const isTextInput = field.tagName === 'INPUT' && !['checkbox', 'radio', 'file', 'button', 'submit', 'reset', 'color', 'range'].includes(field.type);
+    const isTextarea = field.tagName === 'TEXTAREA';
+    if (!isTextInput && !isTextarea) {
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        field.focus();
+        if (typeof field.select === 'function') {
+            field.select();
+        }
+    });
+});
+
 /**
  * Posodobi prikaz imena uporabnika in vloge v navigacijski vrstici.
  * Pridobi podatke o vlogah s strežnika in prikaže ustrezno vlogo.
@@ -603,6 +634,15 @@ function renderTable(dataUrl, config = {}) {
                         editBtn.onmouseout = () => editBtn.querySelector('i').style.color = '#6c757d';
                         editBtn.onclick = async () => {
                             console.log('Edit ID:', rowId);
+                            if (window.currentDataTable) {
+                                const searchTerm = window.currentDataTable.search();
+                                if (searchTerm) {
+                                    const storageKey = 'preservedSearch_' + window.location.pathname + window.location.hash;
+                                    const pageStorageKey = 'preservedSearch_' + window.location.pathname;
+                                    sessionStorage.setItem(storageKey, searchTerm);
+                                    sessionStorage.setItem(pageStorageKey, searchTerm);
+                                }
+                            }
                             await fetch('/nastaviEditID', {
                                 method: 'POST',
                                 headers: {'Content-Type': 'application/json'},
@@ -693,8 +733,14 @@ function renderTable(dataUrl, config = {}) {
                 }
             });
 
-            // Restore search if it was saved before reload
-            const savedSearch = window.preservedTableSearch || '';
+            // Restore search if it was saved before reload or before navigation
+            const storageKey = 'preservedSearch_' + window.location.pathname + window.location.hash;
+            const pageStorageKey = 'preservedSearch_' + window.location.pathname;
+            const sessionSearch = sessionStorage.getItem(storageKey);
+            const pageSessionSearch = sessionStorage.getItem(pageStorageKey);
+            if (sessionSearch) sessionStorage.removeItem(storageKey);
+            if (pageSessionSearch) sessionStorage.removeItem(pageStorageKey);
+            const savedSearch = window.preservedTableSearch || sessionSearch || pageSessionSearch || '';
             window.currentDataTable.search(savedSearch).draw();
             const searchInput = document.getElementById('tableSearch');
             if (searchInput && savedSearch) {
@@ -1123,6 +1169,8 @@ const TABLE_TITLE_ICONS = {
     'Operacijski sistemi': 'bi-cpu',
     'Tipi naprav': 'bi-tags',
     'Tipi tiskalnikov': 'bi-printer',
+    'Kategorije tipov naprav': 'bi-collection',
+    'Dovoljenja': 'bi-key',
     'Vloge': 'bi-shield-lock',
     'Revizijska sled': 'bi-clipboard-data',
     'Pogled': 'bi-eye'
@@ -1154,8 +1202,8 @@ function setTableTitle(title, iconClass) {
     }
 
     const iconEl = document.getElementById('naslovTabeleIcon');
-    const resolvedIcon = iconClass || TABLE_TITLE_ICONS[title];
-    if (iconEl && resolvedIcon) {
+    const resolvedIcon = iconClass || TABLE_TITLE_ICONS[title] || 'bi-table';
+    if (iconEl) {
         iconEl.className = `bi ${resolvedIcon}`;
     }
 }

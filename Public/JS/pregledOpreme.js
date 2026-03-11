@@ -78,6 +78,14 @@ window.addEventListener("DOMContentLoaded", () => {
             });
         });
 
+function switchEquipmentTable(hash) {
+    if (window.location.hash === '#' + hash) {
+        loadTableByHash();
+        return;
+    }
+    window.location.hash = hash;
+}
+
 // Handle hash changes to load the appropriate table
 function loadTableByHash() {
     const hash = window.location.hash.substring(1); // Remove the # character
@@ -114,6 +122,12 @@ function loadTableByHash() {
             tabelaCitalci('/rocnicitalecPodatki', 'Ročni čitalci');
             actionUrl = '/izbrisRocniCitalec';
             break;
+        case 'vm':
+            currentButtonAction = '/virtualServerVnos';
+            tabela('/virtualServerPodatki', 'Virtualni strežniki');
+            actionUrl = '/izbrisVirtualStreznik';
+            removeAddButton();
+            return;
         default:
             // Default to Delovne postaje if no hash is provided
             currentButtonAction = '/delovnaPostajaVnos';

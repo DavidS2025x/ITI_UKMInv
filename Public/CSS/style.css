@@ -667,7 +667,10 @@ body:not(.login-page) .card-header {
 #tableSearch {
     border-radius: 10px;
     border: 1px solid var(--app-border);
-    padding: 6px 12px;
+    padding: 9px 14px;
+    font-size: 1rem;
+    width: 340px;
+    max-width: 100%;
 }
 
 #addBtn {
@@ -993,6 +996,15 @@ table {
         border-top: 0;
         border-bottom: 0;
         gap: 8px;
+    }
+
+    #searchContainer {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    #tableSearch {
+        width: 100%;
     }
 }
 

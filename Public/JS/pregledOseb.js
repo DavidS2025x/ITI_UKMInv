@@ -21,12 +21,50 @@ window.addEventListener("DOMContentLoaded", () => {
                     });
                 });
             // Load initial table after user data is available
-            currentButtonAction = '/osebaVnos';
-            tabelaOsebe('/osebaPodatki', 'Osebe');
+            loadPeopleTableByHash();
         }).catch(err => {
             console.error('Error loading user data:', err);
         });
     });
+
+function switchPeopleTable(hash) {
+    if (window.location.hash === '#' + hash) {
+        loadPeopleTableByHash();
+        return;
+    }
+    window.location.hash = hash;
+}
+
+function loadPeopleTableByHash() {
+    const hash = window.location.hash.substring(1);
+
+    window.preservedTableSearch = '';
+    const searchInput = document.getElementById('tableSearch');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    if (window.currentDataTable) {
+        window.currentDataTable.search('').draw();
+    }
+
+    switch (hash) {
+        case 'uporabniki':
+            currentButtonAction = '/uporabnikVnos';
+            tabelaUporabniki('/uporabnikPodatki', 'Uporabniki');
+            actionUrl = '/izbrisUporabnik';
+            break;
+        case 'osebe':
+        default:
+            currentButtonAction = '/osebaVnos';
+            tabelaOsebe('/osebaPodatki', 'Osebe');
+            actionUrl = '/izbrisOseba';
+            break;
+    }
+
+    setUpAddButton();
+}
+
+window.addEventListener('hashchange', loadPeopleTableByHash);
 
 function izbrisiVnos(id, actionUrl){
     console.log(`Brisanje vnosa z ID: ${id} preko ${actionUrl}`);
@@ -37,7 +75,10 @@ function izbrisiVnos(id, actionUrl){
     }
     
     fetch(`${actionUrl}/`, {method: 'POST', body: JSON.stringify({"ID": id}), headers: {'Content-Type': 'application/json'}}).then(() => {
-        currentButtonAction = '/osebaVnos';
-        tabelaOsebe('/osebaPodatki', 'Osebe');
+        if (typeof window.currentTableReload === 'function') {
+            window.currentTableReload();
+        } else {
+            loadPeopleTableByHash();
+        }
     });
 }

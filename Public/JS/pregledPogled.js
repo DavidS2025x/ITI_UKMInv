@@ -86,5 +86,5 @@ window.addEventListener("DOMContentLoaded", () => {
         }).catch(err => {
             console.error('Error loading user data:', err);
         });
-        tabelaPogled('/pogledPodatki', 'Pogled');
+        tabelaPogled('/pogledPodatki', 'Pogledi');
     });
