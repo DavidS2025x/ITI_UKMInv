@@ -33,107 +33,121 @@
         <div class="row g-3 pb-3">
             <div class="col-12 col-xl-4">
                 <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <div class="card h-100">
-                                    <div class="card-header fw-semibold">Naprave po tipu</div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
-                                            <strong id="kpiDP">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
-                                            <strong id="kpiMonitorji">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
-                                            <strong id="kpiTiskalniki">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
-                                            <strong id="kpiCitalci">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-hdd-network"></i><span>Virtualni strežniki</span></div>
-                                            <strong id="kpiVM">-</strong>
-                                        </div>
-                                    </div>
+                    <div class="col-12">
+                        <div class="card h-100">
+                            <div class="card-header fw-semibold">Naprave po tipu</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                                    <strong id="kpiDP">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                                    <strong id="kpiMonitorji">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                                    <strong id="kpiTiskalniki">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                                    <strong id="kpiCitalci">-</strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-hdd-network"></i><span>Virtualni strežniki</span></div>
+                                    <strong id="kpiVM">-</strong>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="col-12 col-md-6">
-                                <div class="card h-100">
-                                    <div class="card-header fw-semibold">Nerazporejene naprave</div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <strong id="nerazDP">-</strong>
-                                                <button type="button" id="viewNerazDP" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži delovne postaje v skladišču">
-                                                    <i class="bi bi-eye-fill"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <strong id="nerazMonitorji">-</strong>
-                                                <button type="button" id="viewNerazMonitorji" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži monitorje v skladišču">
-                                                    <i class="bi bi-eye-fill"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <strong id="nerazTiskalniki">-</strong>
-                                                <button type="button" id="viewNerazTiskalniki" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži tiskalnike v skladišču">
-                                                    <i class="bi bi-eye-fill"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
-                                            <div class="d-flex align-items-center gap-2">
-                                                <strong id="nerazCitalci">-</strong>
-                                                <button type="button" id="viewNerazCitalci" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži ročne čitalce v skladišču">
-                                                    <i class="bi bi-eye-fill"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header fw-semibold">Nerazporejene naprave</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="nerazDP">-</strong>
+                                        <button type="button" id="viewNerazDP" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži delovne postaje v skladišču">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="nerazMonitorji">-</strong>
+                                        <button type="button" id="viewNerazMonitorji" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži monitorje v skladišču">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="nerazTiskalniki">-</strong>
+                                        <button type="button" id="viewNerazTiskalniki" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži tiskalnike v skladišču">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="nerazCitalci">-</strong>
+                                        <button type="button" id="viewNerazCitalci" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži ročne čitalce v skladišču">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="col-12">
-                                <div class="card h-100">
-                                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                                        <span>Starejše od</span>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <input type="number" id="starostInput" class="form-control age-input" value="0" min="0" max="50">
-                                            <span>let</span>
-                                        </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header fw-semibold">Skupna raba</div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="skupnaDP">-</strong>
+                                        <button type="button" id="viewSkupnaDP" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži delovne postaje v skupni rabi">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
                                     </div>
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
-                                            <strong id="staroDP">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
-                                            <strong id="staroMonitorji">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
-                                            <strong id="staroTiskalniki">-</strong>
-                                        </div>
-                                        <div class="d-flex justify-content-between align-items-center py-2">
-                                            <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
-                                            <strong id="staroCitalci">-</strong>
-                                        </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="skupnaMonitorji">-</strong>
+                                        <button type="button" id="viewSkupnaMonitorji" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži monitorje v skupni rabi">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="skupnaTiskalniki">-</strong>
+                                        <button type="button" id="viewSkupnaTiskalniki" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži tiskalnike v skupni rabi">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2">
+                                    <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <strong id="skupnaCitalci">-</strong>
+                                        <button type="button" id="viewSkupnaCitalci" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži ročne čitalce v skupni rabi">
+                                            <i class="bi bi-eye-fill"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -149,6 +163,9 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="tab-sluzba" data-bs-toggle="tab" data-bs-target="#content-sluzba" type="button" role="tab" aria-controls="content-sluzba" aria-selected="false">Po službi</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-nadstropje" data-bs-toggle="tab" data-bs-target="#content-nadstropje" type="button" role="tab" aria-controls="content-nadstropje" aria-selected="false">Po nadstropju</button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="tab-status" data-bs-toggle="tab" data-bs-target="#content-status" type="button" role="tab" aria-controls="content-status" aria-selected="false">Po dodeljenosti</button>
@@ -172,10 +189,129 @@
                                     <canvas id="napravePoSluzbahGraf"></canvas>
                                 </div>
                             </div>
+                            <div class="tab-pane fade" id="content-nadstropje" role="tabpanel" aria-labelledby="tab-nadstropje">
+                                <div class="chart-container">
+                                    <canvas id="napravePoNadstropjihGraf"></canvas>
+                                </div>
+                            </div>
                             <div class="tab-pane fade" id="content-status" role="tabpanel" aria-labelledby="tab-status">
                                 <div class="chart-container">
                                     <canvas id="napravePoStatusuGraf"></canvas>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center dashboard-equal-header">
+                        <span>Starejše od</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" id="starostInput" class="form-control age-input" value="0" min="0" max="50">
+                            <span>let</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-1">
+                                    <small id="staroDP-percent" class="text-muted fw-semibold">-</small>
+                                    <strong id="staroDP">-</strong>
+                                </div>
+                                <button type="button" id="viewStaroDP" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži starejše delovne postaje">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-1">
+                                    <small id="staroMonitorji-percent" class="text-muted fw-semibold">-</small>
+                                    <strong id="staroMonitorji">-</strong>
+                                </div>
+                                <button type="button" id="viewStaroMonitorji" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži starejše monitorje">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-1">
+                                    <small id="staroTiskalniki-percent" class="text-muted fw-semibold">-</small>
+                                    <strong id="staroTiskalniki">-</strong>
+                                </div>
+                                <button type="button" id="viewStaroTiskalniki" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži starejše tiskalnike">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="d-flex align-items-center gap-1">
+                                    <small id="staroCitalci-percent" class="text-muted fw-semibold">-</small>
+                                    <strong id="staroCitalci">-</strong>
+                                </div>
+                                <button type="button" id="viewStaroCitalci" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži starejše ročne čitalce">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center dashboard-equal-header">
+                        <span>Po lokaciji</span>
+                        <div class="d-flex align-items-center gap-2 lokacija-select-wrap">
+                            <select id="lokacijaDashboardSelect" class="form-select form-select-sm">
+                                <option value="">Nalaganje...</option>
+                            </select>
+                            <span id="lokacijaNadstropje" class="text-muted small">-</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-pc-display"></i><span>Delovne postaje</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong id="lokacijaDP">-</strong>
+                                <button type="button" id="viewLokacijaDP" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži delovne postaje na lokaciji">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-display"></i><span>Monitorji</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong id="lokacijaMonitorji">-</strong>
+                                <button type="button" id="viewLokacijaMonitorji" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži monitorje na lokaciji">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-printer"></i><span>Tiskalniki</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong id="lokacijaTiskalniki">-</strong>
+                                <button type="button" id="viewLokacijaTiskalniki" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži tiskalnike na lokaciji">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div class="d-flex align-items-center gap-2"><i class="bi bi-upc-scan"></i><span>Ročni čitalci</span></div>
+                            <div class="d-flex align-items-center gap-2">
+                                <strong id="lokacijaCitalci">-</strong>
+                                <button type="button" id="viewLokacijaCitalci" class="btn btn-link p-0" title="Prikaži vnose" aria-label="Prikaži ročne čitalce na lokaciji">
+                                    <i class="bi bi-eye-fill"></i>
+                                </button>
                             </div>
                         </div>
                     </div>

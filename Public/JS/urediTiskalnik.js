@@ -73,7 +73,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.forEach(data => {
                     const option = document.createElement('option');
                     option.value = data.OznakaLokacije;
-                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije;
+                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije + (data.OznakaNadstropja ? ', ' + data.OznakaNadstropja : '');
                     input.appendChild(option);
                 });
             });
@@ -241,7 +241,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 }).then(response => response.json())
                 .then(data => {
                     if(data.success) {
-                        showNotificationModal('Uspeh', data.message, '/opremaPregled#tiskalniki');
+                        fetch('/getReturnUrl').then(r => r.json())
+                            .then(d => showNotificationModal('Uspeh', data.message, d.returnUrl || '/opremaPregled#tiskalniki'))
+                            .catch(() => showNotificationModal('Uspeh', data.message, '/opremaPregled#tiskalniki'));
                     } else {
                         showNotificationModal('Napaka', data.message);
                     }

@@ -11,6 +11,8 @@ let grafNakupiPoLetih = null;
 let grafNapravePoEnoti = null;
 /** Referenca na instanco grafa naprav po službah (Chart.js). */
 let grafNapravePoSluzbi = null;
+/** Referenca na instanco grafa naprav po nadstropjih (Chart.js). */
+let grafNapravePoNadstropjih = null;
 /** Referenca na instanco grafa naprav po statusu (Chart.js). */
 let grafNapravePoStatusu = null;
 /** Indeks aktivnega nabora podatkov v grafu nakupov (za toggle legend). */
@@ -19,10 +21,16 @@ let activeDatasetNakupi = null;
 let activeDatasetNaprave = null;
 /** Indeks aktivnega nabora podatkov v grafu naprav po službah (za toggle legend). */
 let activeDatasetSluzbe = null;
+/** Indeks aktivnega nabora podatkov v grafu naprav po nadstropjih (za toggle legend). */
+let activeDatasetNadstropja = null;
 /** Indeks aktivnega nabora podatkov v grafu naprav po statusu (za toggle legend). */
 let activeDatasetStatusu = null;
 /** Ključ za shranjevanje filtra starosti naprav v localStorage. */
 const STAROST_STORAGE_KEY = 'starostNaprave';
+/** Ključ za shranjevanje izbrane lokacije na nadzorni plošči. */
+const LOKACIJA_STORAGE_KEY = 'dashboardLokacija';
+/** Preslikava lokacija -> nadstropje za prikaz ob dropdownu. */
+const lokacijaNadstropjeMap = new Map();
 
 /**
  * Prebere shranjeno vrednost filtra starosti iz localStorage.
@@ -32,6 +40,10 @@ function preberiStarostShranjeno() {
     const saved = localStorage.getItem(STAROST_STORAGE_KEY);
     const parsed = parseInt(saved, 10);
     return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function preberiLokacijoShranjeno() {
+    return localStorage.getItem(LOKACIJA_STORAGE_KEY) || '';
 }
 
 /**
@@ -65,14 +77,78 @@ const SKLADISCE_NAPRAVE_CONFIG = {
     }
 };
 
-function prikaziSkladisceNapraveModal(vnosi, tip) {
+const SKUPNA_RABA_NAPRAVE_CONFIG = {
+    delovnePostaje: {
+        modalNaslov: 'Delovne postaje v skupni rabi',
+        editPath: '/urediDelovnaPostaja'
+    },
+    monitorji: {
+        modalNaslov: 'Monitorji v skupni rabi',
+        editPath: '/urediMonitor'
+    },
+    tiskalniki: {
+        modalNaslov: 'Tiskalniki v skupni rabi',
+        editPath: '/urediTiskalnik'
+    },
+    rocniCitalci: {
+        modalNaslov: 'Ročni čitalci v skupni rabi',
+        editPath: '/urediRocniCitalec'
+    }
+};
+
+const LOKACIJA_NAPRAVE_CONFIG = {
+    delovnePostaje: {
+        modalNaslov: 'Delovne postaje na lokaciji',
+        editPath: '/urediDelovnaPostaja'
+    },
+    monitorji: {
+        modalNaslov: 'Monitorji na lokaciji',
+        editPath: '/urediMonitor'
+    },
+    tiskalniki: {
+        modalNaslov: 'Tiskalniki na lokaciji',
+        editPath: '/urediTiskalnik'
+    },
+    rocniCitalci: {
+        modalNaslov: 'Ročni čitalci na lokaciji',
+        editPath: '/urediRocniCitalec'
+    }
+};
+
+const STAROST_NAPRAVE_CONFIG = {
+    delovnePostaje: {
+        modalNaslov: 'Starejše delovne postaje',
+        editPath: '/urediDelovnaPostaja'
+    },
+    monitorji: {
+        modalNaslov: 'Starejši monitorji',
+        editPath: '/urediMonitor'
+    },
+    tiskalniki: {
+        modalNaslov: 'Starejši tiskalniki',
+        editPath: '/urediTiskalnik'
+    },
+    rocniCitalci: {
+        modalNaslov: 'Starejši ročni čitalci',
+        editPath: '/urediRocniCitalec'
+    }
+};
+
+function prikaziSkladisceNapraveModal(vnosi, tip, mode = 'skladisce', titleSuffix = '') {
     const modalTitleEl = document.getElementById('skladisceNapraveModalLabel');
     const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
-    const config = SKLADISCE_NAPRAVE_CONFIG[tip];
+    const configMapByMode = {
+        skladisce: SKLADISCE_NAPRAVE_CONFIG,
+        skupnaRaba: SKUPNA_RABA_NAPRAVE_CONFIG,
+        lokacija: LOKACIJA_NAPRAVE_CONFIG,
+        starost: STAROST_NAPRAVE_CONFIG
+    };
+    const configMap = configMapByMode[mode] || SKLADISCE_NAPRAVE_CONFIG;
+    const config = configMap[tip];
 
     if (!modalTitleEl || !modalBodyEl || !config) return;
 
-    modalTitleEl.textContent = config.modalNaslov;
+    modalTitleEl.textContent = titleSuffix ? `${config.modalNaslov} - ${titleSuffix}` : config.modalNaslov;
 
     if (!Array.isArray(vnosi) || vnosi.length === 0) {
         modalBodyEl.innerHTML = '<div class="text-muted">Ni najdenih naprav.</div>';
@@ -141,6 +217,79 @@ async function odpriSkladisceNapraveModal(tip) {
         prikaziSkladisceNapraveModal(payload.vnosi, tip);
     } catch (err) {
         console.error('Napaka pri odpiranju modala skladišča:', err);
+        modalBodyEl.innerHTML = '<div class="text-danger">Napaka pri pridobivanju podatkov.</div>';
+    }
+}
+
+async function odpriSkupnaRabaNapraveModal(tip) {
+    const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
+    const modalEl = document.getElementById('skladisceNapraveModal');
+    if (!modalBodyEl || !modalEl) return;
+
+    modalBodyEl.innerHTML = '<div class="text-muted">Nalaganje...</div>';
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    try {
+        const response = await fetch(`/nadzornaPlosca/skupnaRabaNaprave/${tip}`);
+        if (!response.ok) throw new Error('Napaka pri pridobivanju naprav v skupni rabi');
+
+        const payload = await response.json();
+        prikaziSkladisceNapraveModal(payload.vnosi, tip, 'skupnaRaba');
+    } catch (err) {
+        console.error('Napaka pri odpiranju modala skupne rabe:', err);
+        modalBodyEl.innerHTML = '<div class="text-danger">Napaka pri pridobivanju podatkov.</div>';
+    }
+}
+
+async function odpriLokacijaNapraveModal(tip) {
+    const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
+    const modalEl = document.getElementById('skladisceNapraveModal');
+    const lokacijaSelect = document.getElementById('lokacijaDashboardSelect');
+    if (!modalBodyEl || !modalEl || !lokacijaSelect) return;
+
+    const oznakaLokacije = lokacijaSelect.value;
+    if (!oznakaLokacije) {
+        modalBodyEl.innerHTML = '<div class="text-muted">Najprej izberite lokacijo.</div>';
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        return;
+    }
+
+    const selectedLabel = lokacijaSelect.options[lokacijaSelect.selectedIndex]?.text || oznakaLokacije;
+    modalBodyEl.innerHTML = '<div class="text-muted">Nalaganje...</div>';
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    try {
+        const response = await fetch(`/nadzornaPlosca/lokacijaNaprave/${tip}?oznakaLokacije=${encodeURIComponent(oznakaLokacije)}`);
+        if (!response.ok) throw new Error('Napaka pri pridobivanju naprav po lokaciji');
+
+        const payload = await response.json();
+        prikaziSkladisceNapraveModal(payload.vnosi, tip, 'lokacija', selectedLabel);
+    } catch (err) {
+        console.error('Napaka pri odpiranju modala lokacije:', err);
+        modalBodyEl.innerHTML = '<div class="text-danger">Napaka pri pridobivanju podatkov.</div>';
+    }
+}
+
+async function odpriStarejseNapraveModal(tip) {
+    const modalBodyEl = document.getElementById('skladisceNapraveModalBody');
+    const modalEl = document.getElementById('skladisceNapraveModal');
+    const starostInput = document.getElementById('starostInput');
+    if (!modalBodyEl || !modalEl || !starostInput) return;
+
+    const parsedStarost = parseInt(starostInput.value, 10);
+    const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
+
+    modalBodyEl.innerHTML = '<div class="text-muted">Nalaganje...</div>';
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+    try {
+        const response = await fetch(`/nadzornaPlosca/starejseNaprave/${tip}?starost=${encodeURIComponent(starost)}`);
+        if (!response.ok) throw new Error('Napaka pri pridobivanju starejših naprav');
+
+        const payload = await response.json();
+        prikaziSkladisceNapraveModal(payload.vnosi, tip, 'starost', `${starost} let`);
+    } catch (err) {
+        console.error('Napaka pri odpiranju modala starejših naprav:', err);
         modalBodyEl.innerHTML = '<div class="text-danger">Napaka pri pridobivanju podatkov.</div>';
     }
 }
@@ -551,6 +700,131 @@ function narisiGrafNapravePoSluzbi(grafData) {
 }
 
 /**
+ * Nariše ali osveži stolpični graf naprav po nadstropjih.
+ * Združi vse tipe naprav po oznaki nadstropja v skupno mapo in pripravi nabore podatkov.
+ * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/grafPoNadstropju).
+ */
+function narisiGrafNapravePoNadstropjih(grafData) {
+    const nadstropjaMap = new Map();
+    const deviceTypes = ['delovnePostaje', 'monitorji', 'tiskalniki', 'rocniCitalci'];
+
+    deviceTypes.forEach(tipNaprave => {
+        const podatki = grafData?.[tipNaprave] || [];
+        podatki.forEach(vnos => {
+            const nadstropje = vnos.OznakaNadstropja || 'Neznano';
+            if (!nadstropjaMap.has(nadstropje)) {
+                nadstropjaMap.set(nadstropje, {
+                    delovnePostaje: 0,
+                    monitorji: 0,
+                    tiskalniki: 0,
+                    rocniCitalci: 0
+                });
+            }
+            nadstropjaMap.get(nadstropje)[tipNaprave] = Number(vnos.Stevilo || 0);
+        });
+    });
+
+    const nadstropja = Array.from(nadstropjaMap.keys()).sort((a, b) => a.localeCompare(b, 'sl'));
+    const dpVrednosti = nadstropja.map(n => nadstropjaMap.get(n).delovnePostaje);
+    const monitorjiVrednosti = nadstropja.map(n => nadstropjaMap.get(n).monitorji);
+    const tiskalnikiVrednosti = nadstropja.map(n => nadstropjaMap.get(n).tiskalniki);
+    const citalciVrednosti = nadstropja.map(n => nadstropjaMap.get(n).rocniCitalci);
+
+    const grafElement = document.getElementById('napravePoNadstropjihGraf');
+    if (!grafElement) return;
+
+    if (grafNapravePoNadstropjih) {
+        grafNapravePoNadstropjih.destroy();
+    }
+
+    grafNapravePoNadstropjih = new Chart(grafElement, {
+        type: 'bar',
+        data: {
+            labels: nadstropja,
+            datasets: [
+                {
+                    label: 'Delovne postaje',
+                    data: dpVrednosti,
+                    backgroundColor: '#3498DB',
+                    borderColor: '#3498DB',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Monitorji',
+                    data: monitorjiVrednosti,
+                    backgroundColor: '#2ECC71',
+                    borderColor: '#2ECC71',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Tiskalniki',
+                    data: tiskalnikiVrednosti,
+                    backgroundColor: '#E67E22',
+                    borderColor: '#E67E22',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Ročni čitalci',
+                    data: citalciVrednosti,
+                    backgroundColor: '#9B59B6',
+                    borderColor: '#9B59B6',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 25
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        const index = legendItem.datasetIndex;
+                        const chart = legend.chart;
+
+                        if (activeDatasetNadstropja === index) {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = false;
+                            });
+                            activeDatasetNadstropja = null;
+                        } else {
+                            chart.data.datasets.forEach((dataset, i) => {
+                                chart.getDatasetMeta(i).hidden = i !== index;
+                            });
+                            activeDatasetNadstropja = index;
+                        }
+
+                        chart.update();
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Nadstropje'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    title: {
+                        display: true,
+                        text: 'Število naprav'
+                    }
+                }
+            }
+        }
+    });
+}
+
+/**
  * Nariše ali osveži stolpični graf naprav po statusu razporeditve.
  * Prikaže tri status kategorije (Osebno, Skupno, Skladišče) z razčlenitvijo po tipu naprave.
  * @param {object} grafData - Podatki za graf iz strežniškega odziva (/nadzornaPlosca/equipmentByStatus).
@@ -676,6 +950,8 @@ function narisiGrafNapravePoStatusu(grafData) {
 let enotaGrafNalozen = false;
 /** Ali je graf po službah že naložen (lazy-load ob prvem kliku zavihka). */
 let sluzbaGrafNalozen = false;
+/** Ali je graf po nadstropjih že naložen (lazy-load ob prvem kliku zavihka). */
+let nadstropjeGrafNalozen = false;
 /** Ali je graf po statusu že naložen (lazy-load ob prvem kliku zavihka). */
 let statusGrafNalozen = false;
 
@@ -714,6 +990,23 @@ async function naloziGrafPoSluzbi() {
 }
 
 /**
+ * Naloži in nariše graf naprav po nadstropjih (kliče /nadzornaPlosca/grafPoNadstropju).
+ * Kliče se ob prvem prikazu zavihka "Po nadstropju".
+ */
+async function naloziGrafPoNadstropju() {
+    if (nadstropjeGrafNalozen) return;
+    try {
+        const response = await fetch('/nadzornaPlosca/grafPoNadstropju');
+        if (!response.ok) throw new Error('Napaka pri nalaganju grafa po nadstropjih');
+        const data = await response.json();
+        narisiGrafNapravePoNadstropjih(data);
+        nadstropjeGrafNalozen = true;
+    } catch (err) {
+        console.error('Napaka pri nalaganju grafa po nadstropjih:', err);
+    }
+}
+
+/**
  * Naloži in nariše graf naprav po statusu (kliče /nadzornaPlosca/equipmentByStatus).
  * Kliče se ob prvem prikazu zavihka "Po statusu".
  */
@@ -747,6 +1040,75 @@ async function fetchAndUpdateNumbers(starost = 0) {
     setText('staroMonitorji', staro.monitorji);
     setText('staroTiskalniki', staro.tiskalniki);
     setText('staroCitalci', staro.rocniCitalci);
+
+    // Calculate and display percentages
+    const dpPercent = staro.vsidelovnePostaje > 0 ? ((staro.delovnePostaje / staro.vsidelovnePostaje) * 100).toFixed(1) : 0;
+    const monPercent = staro.vsimonitorji > 0 ? ((staro.monitorji / staro.vsimonitorji) * 100).toFixed(1) : 0;
+    const tiskPercent = staro.vsitiskalniki > 0 ? ((staro.tiskalniki / staro.vsitiskalniki) * 100).toFixed(1) : 0;
+    const citalPercent = staro.vsirocniCitalci > 0 ? ((staro.rocniCitalci / staro.vsirocniCitalci) * 100).toFixed(1) : 0;
+
+    const dpPercentEl = document.getElementById('staroDP-percent');
+    const monPercentEl = document.getElementById('staroMonitorji-percent');
+    const tiskPercentEl = document.getElementById('staroTiskalniki-percent');
+    const citalPercentEl = document.getElementById('staroCitalci-percent');
+
+    if (dpPercentEl) dpPercentEl.textContent = `${dpPercent}%`;
+    if (monPercentEl) monPercentEl.textContent = `${monPercent}%`;
+    if (tiskPercentEl) tiskPercentEl.textContent = `${tiskPercent}%`;
+    if (citalPercentEl) citalPercentEl.textContent = `${citalPercent}%`;
+}
+
+async function fetchAndUpdateLokacijaNumbers(oznakaLokacije) {
+    if (!oznakaLokacije) return;
+
+    const response = await fetch(`/nadzornaPlosca/poLokaciji?oznakaLokacije=${encodeURIComponent(oznakaLokacije)}`);
+    if (!response.ok) {
+        throw new Error('Napaka pri pridobivanju podatkov po lokaciji');
+    }
+
+    const poLokaciji = await response.json();
+    setText('lokacijaDP', poLokaciji.delovnePostaje);
+    setText('lokacijaMonitorji', poLokaciji.monitorji);
+    setText('lokacijaTiskalniki', poLokaciji.tiskalniki);
+    setText('lokacijaCitalci', poLokaciji.rocniCitalci);
+}
+
+function napolniLokacijeDropdown(lokacije) {
+    const lokacijaSelect = document.getElementById('lokacijaDashboardSelect');
+    if (!lokacijaSelect) return '';
+
+    const lokacijeSeznam = Array.isArray(lokacije) ? lokacije : [];
+    lokacijaNadstropjeMap.clear();
+    lokacijeSeznam.forEach(lok => {
+        lokacijaNadstropjeMap.set(lok.oznakaLokacije, lok.oznakaNadstropja || '-');
+    });
+
+    if (lokacijeSeznam.length === 0) {
+        lokacijaSelect.innerHTML = '<option value="">Ni lokacij</option>';
+        posodobiLokacijaNadstropje('');
+        return '';
+    }
+
+    lokacijaSelect.innerHTML = lokacijeSeznam
+        .map(lok => `<option value="${lok.oznakaLokacije}">${lok.oznakaLokacije} - ${lok.nazivLokacije}${lok.oznakaNadstropja ? ', ' + lok.oznakaNadstropja : ''}</option>`)
+        .join('');
+
+    const shranjenaLokacija = preberiLokacijoShranjeno();
+    const obstajaShranjena = lokacijeSeznam.some(lok => lok.oznakaLokacije === shranjenaLokacija);
+    const zacetnaLokacija = obstajaShranjena ? shranjenaLokacija : lokacijeSeznam[0].oznakaLokacije;
+
+    lokacijaSelect.value = zacetnaLokacija;
+    localStorage.setItem(LOKACIJA_STORAGE_KEY, zacetnaLokacija);
+    posodobiLokacijaNadstropje(zacetnaLokacija);
+    return zacetnaLokacija;
+}
+
+function posodobiLokacijaNadstropje(oznakaLokacije) {
+    const nadstropjeEl = document.getElementById('lokacijaNadstropje');
+    if (!nadstropjeEl) return;
+
+    const nadstropje = lokacijaNadstropjeMap.get(oznakaLokacije) || '-';
+    nadstropjeEl.textContent = `${nadstropje}`;
 }
 
 /**
@@ -755,21 +1117,25 @@ async function fetchAndUpdateNumbers(starost = 0) {
  * @param {number} [starost=0] - Začetni starostni prag za filter.
  */
 async function initDashboard(starost = 0) {
-    const [kpiRes, starostRes, nerazRes, grafRes] = await Promise.all([
+    const [kpiRes, starostRes, nerazRes, skupnaRes, lokacijeRes, grafRes] = await Promise.all([
         fetch('/nadzornaPlosca/kpi'),
         fetch(`/nadzornaPlosca/starost?starost=${starost}`),
         fetch('/nadzornaPlosca/nerazporejene'),
+        fetch('/nadzornaPlosca/skupnaRaba'),
+        fetch('/nadzornaPlosca/lokacije'),
         fetch('/nadzornaPlosca/grafPoLetih')
     ]);
 
-    if (!kpiRes.ok || !starostRes.ok || !nerazRes.ok || !grafRes.ok) {
+    if (!kpiRes.ok || !starostRes.ok || !nerazRes.ok || !skupnaRes.ok || !lokacijeRes.ok || !grafRes.ok) {
         throw new Error('Napaka pri pridobivanju podatkov nadzorne plošče');
     }
 
-    const [kpi, staro, neraz, graf] = await Promise.all([
+    const [kpi, staro, neraz, skupna, lokacije, graf] = await Promise.all([
         kpiRes.json(),
         starostRes.json(),
         nerazRes.json(),
+        skupnaRes.json(),
+        lokacijeRes.json(),
         grafRes.json()
     ]);
 
@@ -784,10 +1150,34 @@ async function initDashboard(starost = 0) {
     setText('nerazTiskalniki', neraz.tiskalniki);
     setText('nerazCitalci', neraz.rocniCitalci);
 
+    setText('skupnaDP', skupna.delovnePostaje);
+    setText('skupnaMonitorji', skupna.monitorji);
+    setText('skupnaTiskalniki', skupna.tiskalniki);
+    setText('skupnaCitalci', skupna.rocniCitalci);
+
     setText('staroDP', staro.delovnePostaje);
     setText('staroMonitorji', staro.monitorji);
     setText('staroTiskalniki', staro.tiskalniki);
     setText('staroCitalci', staro.rocniCitalci);
+
+    // Calculate and display percentages for staro (old devices)
+    const dpPercent = staro.vsidelovnePostaje > 0 ? ((staro.delovnePostaje / staro.vsidelovnePostaje) * 100).toFixed(1) : 0;
+    const monPercent = staro.vsimonitorji > 0 ? ((staro.monitorji / staro.vsimonitorji) * 100).toFixed(1) : 0;
+    const tiskPercent = staro.vsitiskalniki > 0 ? ((staro.tiskalniki / staro.vsitiskalniki) * 100).toFixed(1) : 0;
+    const citalPercent = staro.vsirocniCitalci > 0 ? ((staro.rocniCitalci / staro.vsirocniCitalci) * 100).toFixed(1) : 0;
+
+    const dpPercentEl = document.getElementById('staroDP-percent');
+    const monPercentEl = document.getElementById('staroMonitorji-percent');
+    const tiskPercentEl = document.getElementById('staroTiskalniki-percent');
+    const citalPercentEl = document.getElementById('staroCitalci-percent');
+
+    if (dpPercentEl) dpPercentEl.textContent = `${dpPercent}%`;
+    if (monPercentEl) monPercentEl.textContent = `${monPercent}%`;
+    if (tiskPercentEl) tiskPercentEl.textContent = `${tiskPercent}%`;
+    if (citalPercentEl) citalPercentEl.textContent = `${citalPercent}%`;
+
+    const zacetnaLokacija = napolniLokacijeDropdown(lokacije);
+    await fetchAndUpdateLokacijaNumbers(zacetnaLokacija);
 
     narisiGrafPoLetih(graf);
 }
@@ -810,6 +1200,19 @@ window.addEventListener("DOMContentLoaded", () => {
     const viewNerazMonitorji = document.getElementById('viewNerazMonitorji');
     const viewNerazTiskalniki = document.getElementById('viewNerazTiskalniki');
     const viewNerazCitalci = document.getElementById('viewNerazCitalci');
+    const viewSkupnaDP = document.getElementById('viewSkupnaDP');
+    const viewSkupnaMonitorji = document.getElementById('viewSkupnaMonitorji');
+    const viewSkupnaTiskalniki = document.getElementById('viewSkupnaTiskalniki');
+    const viewSkupnaCitalci = document.getElementById('viewSkupnaCitalci');
+    const viewLokacijaDP = document.getElementById('viewLokacijaDP');
+    const viewLokacijaMonitorji = document.getElementById('viewLokacijaMonitorji');
+    const viewLokacijaTiskalniki = document.getElementById('viewLokacijaTiskalniki');
+    const viewLokacijaCitalci = document.getElementById('viewLokacijaCitalci');
+    const viewStaroDP = document.getElementById('viewStaroDP');
+    const viewStaroMonitorji = document.getElementById('viewStaroMonitorji');
+    const viewStaroTiskalniki = document.getElementById('viewStaroTiskalniki');
+    const viewStaroCitalci = document.getElementById('viewStaroCitalci');
+    const lokacijaDashboardSelect = document.getElementById('lokacijaDashboardSelect');
 
     if (viewNerazDP) {
         viewNerazDP.addEventListener('click', () => odpriSkladisceNapraveModal('delovnePostaje'));
@@ -822,6 +1225,50 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     if (viewNerazCitalci) {
         viewNerazCitalci.addEventListener('click', () => odpriSkladisceNapraveModal('rocniCitalci'));
+    }
+    if (viewSkupnaDP) {
+        viewSkupnaDP.addEventListener('click', () => odpriSkupnaRabaNapraveModal('delovnePostaje'));
+    }
+    if (viewSkupnaMonitorji) {
+        viewSkupnaMonitorji.addEventListener('click', () => odpriSkupnaRabaNapraveModal('monitorji'));
+    }
+    if (viewSkupnaTiskalniki) {
+        viewSkupnaTiskalniki.addEventListener('click', () => odpriSkupnaRabaNapraveModal('tiskalniki'));
+    }
+    if (viewSkupnaCitalci) {
+        viewSkupnaCitalci.addEventListener('click', () => odpriSkupnaRabaNapraveModal('rocniCitalci'));
+    }
+    if (viewLokacijaDP) {
+        viewLokacijaDP.addEventListener('click', () => odpriLokacijaNapraveModal('delovnePostaje'));
+    }
+    if (viewLokacijaMonitorji) {
+        viewLokacijaMonitorji.addEventListener('click', () => odpriLokacijaNapraveModal('monitorji'));
+    }
+    if (viewLokacijaTiskalniki) {
+        viewLokacijaTiskalniki.addEventListener('click', () => odpriLokacijaNapraveModal('tiskalniki'));
+    }
+    if (viewLokacijaCitalci) {
+        viewLokacijaCitalci.addEventListener('click', () => odpriLokacijaNapraveModal('rocniCitalci'));
+    }
+    if (viewStaroDP) {
+        viewStaroDP.addEventListener('click', () => odpriStarejseNapraveModal('delovnePostaje'));
+    }
+    if (viewStaroMonitorji) {
+        viewStaroMonitorji.addEventListener('click', () => odpriStarejseNapraveModal('monitorji'));
+    }
+    if (viewStaroTiskalniki) {
+        viewStaroTiskalniki.addEventListener('click', () => odpriStarejseNapraveModal('tiskalniki'));
+    }
+    if (viewStaroCitalci) {
+        viewStaroCitalci.addEventListener('click', () => odpriStarejseNapraveModal('rocniCitalci'));
+    }
+    if (lokacijaDashboardSelect) {
+        lokacijaDashboardSelect.addEventListener('change', async () => {
+            const oznakaLokacije = lokacijaDashboardSelect.value;
+            localStorage.setItem(LOKACIJA_STORAGE_KEY, oznakaLokacije);
+            posodobiLokacijaNadstropje(oznakaLokacije);
+            await fetchAndUpdateLokacijaNumbers(oznakaLokacije);
+        });
     }
 
     uporabnikPodatki()
@@ -848,6 +1295,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const tabLetoBtn = document.getElementById('tab-leto');
     const tabEnotaBtn = document.getElementById('tab-enota');
     const tabSluzbaBtn = document.getElementById('tab-sluzba');
+    const tabNadstropjeBtn = document.getElementById('tab-nadstropje');
     const tabStatusBtn = document.getElementById('tab-status');
     
     if (tabLetoBtn) {
@@ -867,6 +1315,13 @@ window.addEventListener("DOMContentLoaded", () => {
         tabSluzbaBtn.addEventListener('shown.bs.tab', async () => {
             await naloziGrafPoSluzbi();
             if (grafNapravePoSluzbi) grafNapravePoSluzbi.resize();
+        });
+    }
+
+    if (tabNadstropjeBtn) {
+        tabNadstropjeBtn.addEventListener('shown.bs.tab', async () => {
+            await naloziGrafPoNadstropju();
+            if (grafNapravePoNadstropjih) grafNapravePoNadstropjih.resize();
         });
     }
 

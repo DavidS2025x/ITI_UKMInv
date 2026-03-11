@@ -53,6 +53,19 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam lokacij v spustni meni
+            fetch('/lokacijaPodatkiForm')
+            .then(response => response.json())
+            .then(data => {
+                const lokacijaSelect = document.getElementById('OznakaLokacije');
+                data.forEach(data => {
+                    const option = document.createElement('option');
+                    option.value = data.OznakaLokacije;
+                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije + (data.OznakaNadstropja ? ', ' + data.OznakaNadstropja : '');
+                    lokacijaSelect.appendChild(option);
+                });
+            });
+
             // Obravnava oddaje obrazca – zberi polja in pošlji POST zahtevo na strežnik
             document.addEventListener('submit', (event) => {
                 event.preventDefault();
@@ -65,7 +78,8 @@ window.addEventListener("DOMContentLoaded", () => {
                     MobilniTelefon: form.MobilniTelefon.value,
                     ElektronskaPosta: form.ElektronskaPosta.value,
                     OznakaSluzbe: form.Sluzba.value,
-                    OznakaEnote: form.Enota.value
+                    OznakaEnote: form.Enota.value,
+                    OznakaLokacije: form.OznakaLokacije.value
                 };
                 fetch(form.action, {
                     method: form.method,
@@ -74,7 +88,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        showNotificationModal('Uspeh', 'Oseba uspešno dodana!', '/pregledOseb');
+                        showNotificationModal('Uspeh', 'Oseba uspešno dodana!', '/osebaPregled');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
                         showNotificationModal('Napaka', 'Napaka pri dodajanju osebe.');

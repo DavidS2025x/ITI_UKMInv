@@ -2,7 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
-const mysql = require('mysql');
+const mysql = require('mysql2/promise');
 const server = express();
 const bodyparser = require('body-parser');
 const session = require('express-session');
@@ -20,8 +20,9 @@ const pool = mysql.createPool({
     database: process.env.DB_DBNAME,
     waitForConnections: true,
     queueLimit: 0,
-    acquireTimeout: 30000,
-    dateStrings: true
+    connectTimeout: 30000,
+    dateStrings: true,
+    port: process.env.DB_PORT
 });
 
 // Handle pool errors
@@ -134,10 +135,19 @@ server.post('/nastaviEditID', async (req, res) => {
         console.log(req.body.EditID);
         const id = req.body.EditID;
         req.session.editID = id;
+        const returnUrl = typeof req.body.returnUrl === 'string' ? req.body.returnUrl : null;
+        req.session.returnUrl = (returnUrl && returnUrl.startsWith('/')) ? returnUrl : null;
         return res.sendStatus(200);
     } else {
         res.redirect('login')
     }
+});
+
+server.get('/getReturnUrl', (req, res) => {
+    if (req.session.loggedIn) {
+        return res.json({ returnUrl: req.session.returnUrl || null });
+    }
+    return res.status(401).json({ error: 'Not authenticated' });
 });
 
 // ============================================================
@@ -455,7 +465,7 @@ server.get('/urediRocniCitalec', async(req, res) => {
 // ============================================================
 
 server.get('/vlogaPodatki', async (req, res) => {
-    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_UPORABNIKOV') || req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV'))){
+    if(req.session.loggedIn){
         const result = await SQLquery(`SELECT ID_Vloge, NazivVloge FROM vloga ORDER BY ID_Vloge`);
         return res.json(result);
     } else {
@@ -509,7 +519,7 @@ server.get('/tipTiskalnikaForm', async (req, res) => {
 })
 
 server.get('/lokacijaPodatkiForm', async (req, res) => {
-    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME'))){
+    if(req.session.loggedIn && (req.session.dovoljenja?.includes('DODAJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_OPREME') || req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV'))){
         const result = await SQLquery(`SELECT * FROM lokacijaukm`);
         return res.json(result);
     } else {
@@ -523,6 +533,56 @@ server.get('/osebaPodatkiForm', async (req, res) => {
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permission'});
+    }
+});
+
+server.get('/osebaPodatkiPovzetek', async (req, res) => {
+    if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
+        const username = req.query.username;
+        if(!username){
+            return res.status(400).json({error: 'Username parameter required'});
+        }
+
+        try {
+            const result = await SQLquery(`
+                SELECT
+                    o.UporabniskoIme,
+                    o.Ime,
+                    o.Priimek,
+                    o.ElektronskaPosta,
+                    o.MobilniTelefon,
+                    o.InterniTelefoni,
+                    o.OznakaEnote,
+                    o.OznakaSluzbe,
+                    CASE
+                        WHEN o.OznakaLokacije IS NULL OR o.OznakaLokacije = '' THEN '-'
+                        ELSE CONCAT(
+                            o.OznakaLokacije,
+                            ' - ',
+                            IFNULL(lok.NazivLokacije, '-'),
+                            CASE WHEN lok.OznakaNadstropja IS NOT NULL AND lok.OznakaNadstropja <> ''
+                                THEN CONCAT(', ', lok.OznakaNadstropja)
+                                ELSE ''
+                            END
+                        )
+                    END AS Lokacija
+                FROM osebaukm o
+                LEFT JOIN lokacijaukm lok ON o.OznakaLokacije = lok.OznakaLokacije
+                WHERE o.UporabniskoIme = ?
+                LIMIT 1
+            `, [username]);
+
+            if (!result || result.length === 0) {
+                return res.status(404).json({error: 'Oseba ni najdena'});
+            }
+
+            return res.json(result[0]);
+        } catch (err) {
+            console.error('Napaka pri pridobivanju podatkov osebe za povzetek:', err);
+            return res.status(500).json({error: 'Database error'});
+        }
+    } else {
+        return res.status(401).json({error: 'Not authenticated or insufficient permission'});
     }
 });
 
@@ -620,7 +680,7 @@ server.post('/izvrsiPogled', async (req, res) => {
 
 server.get('/osebaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        const result = await SQLquery(`SELECT UporabniskoIme AS "Uporabniško ime", Ime, Priimek, InterniTelefoni AS 'Interni telefoni', MobilniTelefon AS 'Mobilni telefon', ElektronskaPosta AS 'Elektronska pošta', OznakaSluzbe AS 'Služba' FROM osebaukm ORDER BY Priimek`);
+        const result = await SQLquery(`SELECT o.UporabniskoIme AS "Uporabniško ime", o.Ime, o.Priimek, o.InterniTelefoni AS 'Interni telefoni', o.MobilniTelefon AS 'Mobilni telefon', o.ElektronskaPosta AS 'Elektronska pošta', o.OznakaSluzbe AS 'Služba', lok.NazivLokacije AS 'Lokacija', lok.OznakaNadstropja AS 'Nadstropje' FROM osebaukm o LEFT JOIN lokacijaukm lok ON o.OznakaLokacije = lok.OznakaLokacije ORDER BY o.Priimek`);
         res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -746,7 +806,7 @@ server.get('/vlogePodatki', async (req, res) => {
 
 server.get('/delovnaPostajaPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT dp.OznakaDP AS 'Oznaka DP', dp.ModelDP AS 'Model DP', dp.OznakaProizvajalca AS 'Proizvajalec', tn.OpisTipaNaprave AS 'Tip naprave', lok.NazivLokacije AS 'Lokacija', dp.InventarnaStevilka AS 'Inventarna številka', CONCAT_WS(' ', os.Ime, os.Priimek) AS 'Uporabnik', dp.OznakaEnote AS 'Enota', dp.OznakaSluzbe AS 'Služba', dp.OznakaOS AS 'Operacijski sistem', dp.CPU, dp.RAM, dp.DiskC AS 'Disk C', dp.DiskD AS 'Disk D', dp.SerijskaStevilka AS 'Serijska številka', DATE_FORMAT(dp.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje', DATE_FORMAT(dp.DatumNakupa, '%Y-%m-%d') AS 'Datum nakupa', DATE_FORMAT(dp.DatumVnosa, '%Y-%m-%d') AS 'Datum vnosa', DATE_FORMAT(dp.DatumPosodobitve, '%Y-%m-%d') AS 'Datum posodobitve', dp.Opombe FROM delovnapostaja dp LEFT JOIN osebaukm os ON dp.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON dp.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON dp.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY dp.OznakaDP`);
+        const result = await SQLquery(`SELECT dp.OznakaDP AS 'Oznaka DP', dp.ModelDP AS 'Model DP', dp.OznakaProizvajalca AS 'Proizvajalec', tn.OpisTipaNaprave AS 'Tip naprave', lok.NazivLokacije AS 'Lokacija', lok.OznakaNadstropja AS 'Nadstropje', dp.InventarnaStevilka AS 'Inventarna številka', CONCAT_WS(' ', os.Ime, os.Priimek) AS 'Uporabnik', dp.OznakaEnote AS 'Enota', dp.OznakaSluzbe AS 'Služba', dp.OznakaOS AS 'Operacijski sistem', dp.CPU, dp.RAM, dp.DiskC AS 'Disk C', dp.DiskD AS 'Disk D', dp.SerijskaStevilka AS 'Serijska številka', DATE_FORMAT(dp.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje', DATE_FORMAT(dp.DatumNakupa, '%Y-%m-%d') AS 'Datum nakupa', DATE_FORMAT(dp.DatumVnosa, '%Y-%m-%d') AS 'Datum vnosa', DATE_FORMAT(dp.DatumPosodobitve, '%Y-%m-%d') AS 'Datum posodobitve', dp.Opombe FROM delovnapostaja dp LEFT JOIN osebaukm os ON dp.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON dp.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON dp.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY dp.OznakaDP`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -755,7 +815,7 @@ server.get('/delovnaPostajaPodatki', async (req, res) => {
 
 server.get('/monitorPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON m.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY m.OznakaMonitorja`);
+        const result = await SQLquery(`SELECT m.OznakaMonitorja AS "Oznaka Monitorja", m.ModelMonitorja AS "Model Monitorja", m.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", m.OznakaDP AS "Delovna Postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", m.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", m.OznakaEnote AS "Enota", m.OznakaSluzbe AS "Služba", m.Velikost, m.Kamera, m.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(m.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(m.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(m.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", m.Opombe FROM monitor m LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON m.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY m.OznakaMonitorja`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -764,7 +824,7 @@ server.get('/monitorPodatki', async (req, res) => {
 
 server.get('/tiskalnikPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON t.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY t.OznakaTiskalnika`);
+        const result = await SQLquery(`SELECT t.OznakaTiskalnika AS "Oznaka tiskalnika", t.ModelTiskalnika AS "Model tiskalnika", t.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", t.OznakaTipaTiskalnika AS "Tip tiskalnika", t.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", t.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", t.OznakaEnote AS "Enota", t.OznakaSluzbe AS "Služba", t.IP, t.TiskalniskaVrsta AS "Tiskalniška vrsta", t.SerijskaStevilka AS "Serijska številka", t.ProduktnaStevilka AS "Produktna številka", DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(t.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(t.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(t.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", t.Opombe FROM tiskalnik t LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON t.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY t.OznakaTiskalnika`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -773,7 +833,7 @@ server.get('/tiskalnikPodatki', async (req, res) => {
 
 server.get('/rocnicitalecPodatki', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('PREGLED_OPREME')){
-        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON rc.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY rc.OznakaRocnegaCitalca`);
+        const result = await SQLquery(`SELECT rc.OznakaRocnegaCitalca AS "Oznaka ročnega čitalca", rc.ModelRocnegaCitalca AS "Model ročnega čitalca", rc.OznakaProizvajalca AS "Proizvajalec", tn.OpisTipaNaprave AS "Tip naprave", rc.OznakaDP AS "Delovna postaja", lok.NazivLokacije AS "Lokacija", lok.OznakaNadstropja AS "Nadstropje", rc.InventarnaStevilka AS "Inventarna številka", CONCAT_WS(' ', os.Ime, os.Priimek) AS "Uporabnik", rc.OznakaEnote AS "Enota", rc.OznakaSluzbe AS "Služba", rc.Stojalo, rc.SerijskaStevilka AS "Serijska številka", DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS "Datum proizvodnje", DATE_FORMAT(rc.DatumNakupa, '%Y-%m-%d') AS "Datum nakupa", DATE_FORMAT(rc.DatumVnosa, '%Y-%m-%d') AS "Datum vnosa", DATE_FORMAT(rc.DatumPosodobitve, '%Y-%m-%d') AS "Datum posodobitve", rc.Opombe FROM rocnicitalec rc LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme LEFT JOIN lokacijaukm lok ON rc.OznakaLokacije = lok.OznakaLokacije LEFT JOIN tipnaprave tn ON rc.OznakaTipaNaprave = tn.OznakaTipaNaprave ORDER BY rc.OznakaRocnegaCitalca`);
         return res.json(result);
     } else {
         res.status(401).json({error: 'Not authenticated or insufficient permissions'});
@@ -994,6 +1054,37 @@ server.get('/nadzornaPlosca/nerazporejene', async (req, res) => {
 });
 
 /**
+ * Naprave v skupni rabi – število naprav brez dodeljenega uporabnika izven skladišča.
+ * Pogoj: OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> '000010'.
+ */
+server.get('/nadzornaPlosca/skupnaRaba', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const pogoj = "WHERE OznakaOsebeUporabniskoIme IS NULL AND OznakaLokacije <> '000010'";
+
+        const [delovnePostaje, monitorji, tiskalniki, rocniCitalci] = await Promise.all([
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM delovnapostaja ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM monitor ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM tiskalnik ${pogoj}`),
+            SQLquery(`SELECT COUNT(*) AS stevilo FROM rocnicitalec ${pogoj}`)
+        ]);
+
+        res.json({
+            delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
+            monitorji: Number(monitorji[0]?.stevilo || 0),
+            tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
+            rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0)
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju naprav v skupni rabi:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju naprav v skupni rabi' });
+    }
+});
+
+/**
  * Nerazporejene naprave v skladišču po tipu – seznam vnosov za modal na nadzorni plošči.
  */
 server.get('/nadzornaPlosca/skladisceNaprave/:tip', async (req, res) => {
@@ -1090,6 +1181,272 @@ server.get('/nadzornaPlosca/skladisceNaprave/:tip', async (req, res) => {
 });
 
 /**
+ * Naprave v skupni rabi po tipu – seznam vnosov za modal na nadzorni plošči.
+ */
+server.get('/nadzornaPlosca/skupnaRabaNaprave/:tip', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    const tip = req.params.tip;
+    const tipConfig = {
+        delovnePostaje: {
+            tipNaziv: 'Delovna postaja',
+            query: `
+                SELECT
+                    dp.OznakaDP AS 'Oznaka delovne postaje',
+                    dp.ModelDP AS 'Model delovne postaje',
+                    dp.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    dp.OznakaTipaNaprave AS 'Oznaka tipa naprave',
+                    dp.OznakaOS AS 'Oznaka operacijskega sistema',
+                    dp.CPU AS 'CPU',
+                    dp.RAM AS 'RAM',
+                    dp.DiskC AS 'Disk C',
+                    dp.DiskD AS 'Disk D',
+                    dp.OznakaDP AS EditID
+                FROM delovnapostaja dp
+                WHERE dp.OznakaOsebeUporabniskoIme IS NULL
+                  AND dp.OznakaLokacije <> '000010'
+                ORDER BY dp.OznakaDP
+            `
+        },
+        monitorji: {
+            tipNaziv: 'Monitor',
+            query: `
+                SELECT
+                    m.OznakaMonitorja AS 'Oznaka monitorja',
+                    m.ModelMonitorja AS 'Model monitorja',
+                    m.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    m.Velikost AS 'Velikost',
+                    m.Kamera AS 'Kamera',
+                    m.OznakaMonitorja AS EditID
+                FROM monitor m
+                WHERE m.OznakaOsebeUporabniskoIme IS NULL
+                  AND m.OznakaLokacije <> '000010'
+                ORDER BY m.OznakaMonitorja
+            `
+        },
+        tiskalniki: {
+            tipNaziv: 'Tiskalnik',
+            query: `
+                SELECT
+                    t.OznakaTiskalnika AS 'Oznaka tiskalnika',
+                    t.ModelTiskalnika AS 'Model tiskalnika',
+                    t.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    t.OznakaTipaTiskalnika AS 'Oznaka tipa tiskalnika',
+                    t.OznakaTiskalnika AS EditID
+                FROM tiskalnik t
+                WHERE t.OznakaOsebeUporabniskoIme IS NULL
+                  AND t.OznakaLokacije <> '000010'
+                ORDER BY t.OznakaTiskalnika
+            `
+        },
+        rocniCitalci: {
+            tipNaziv: 'Ročni čitalec',
+            query: `
+                SELECT
+                    rc.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
+                    rc.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    rc.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    rc.Stojalo AS 'Stojalo',
+                    rc.OznakaRocnegaCitalca AS EditID
+                FROM rocnicitalec rc
+                WHERE rc.OznakaOsebeUporabniskoIme IS NULL
+                  AND rc.OznakaLokacije <> '000010'
+                ORDER BY rc.OznakaRocnegaCitalca
+            `
+        }
+    };
+
+    const config = tipConfig[tip];
+    if (!config) {
+        return res.status(400).json({ error: 'Neveljaven tip naprave' });
+    }
+
+    try {
+        const naprave = await SQLquery(config.query);
+        res.json({
+            tip: tip,
+            tipNaziv: config.tipNaziv,
+            vnosi: naprave
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju naprav v skupni rabi:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju naprav v skupni rabi' });
+    }
+});
+
+/**
+ * Lokacije za dropdown na nadzorni plošči.
+ */
+server.get('/nadzornaPlosca/lokacije', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const lokacije = await SQLquery(`
+            SELECT OznakaLokacije, NazivLokacije, OznakaNadstropja
+            FROM lokacijaukm
+            ORDER BY OznakaLokacije
+        `);
+
+        res.json(lokacije.map(l => ({
+            oznakaLokacije: l.OznakaLokacije,
+            nazivLokacije: l.NazivLokacije,
+            oznakaNadstropja: l.OznakaNadstropja
+        })));
+    } catch (err) {
+        console.error('Napaka pri pridobivanju lokacij za nadzorno ploščo:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju lokacij' });
+    }
+});
+
+/**
+ * Število naprav po tipu za izbrano lokacijo.
+ */
+server.get('/nadzornaPlosca/poLokaciji', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const oznakaLokacije = String(req.query.oznakaLokacije || '').trim();
+        if (!oznakaLokacije) {
+            return res.status(400).json({ error: 'Manjka parameter oznakaLokacije' });
+        }
+
+        const [delovnePostaje, monitorji, tiskalniki, rocniCitalci] = await Promise.all([
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE OznakaLokacije = ?', [oznakaLokacije]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE OznakaLokacije = ?', [oznakaLokacije]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE OznakaLokacije = ?', [oznakaLokacije]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE OznakaLokacije = ?', [oznakaLokacije])
+        ]);
+
+        res.json({
+            oznakaLokacije,
+            delovnePostaje: Number(delovnePostaje[0]?.stevilo || 0),
+            monitorji: Number(monitorji[0]?.stevilo || 0),
+            tiskalniki: Number(tiskalniki[0]?.stevilo || 0),
+            rocniCitalci: Number(rocniCitalci[0]?.stevilo || 0)
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju naprav po lokaciji:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju naprav po lokaciji' });
+    }
+});
+
+/**
+ * Naprave po lokaciji in tipu – seznam vnosov za modal na nadzorni plošči.
+ */
+server.get('/nadzornaPlosca/lokacijaNaprave/:tip', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    const tip = req.params.tip;
+    const oznakaLokacije = String(req.query.oznakaLokacije || '').trim();
+    if (!oznakaLokacije) {
+        return res.status(400).json({ error: 'Manjka parameter oznakaLokacije' });
+    }
+
+    const tipConfig = {
+        delovnePostaje: {
+            tipNaziv: 'Delovna postaja',
+            query: `
+                SELECT
+                    dp.OznakaDP AS 'Oznaka delovne postaje',
+                    dp.ModelDP AS 'Model delovne postaje',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(dp.OznakaSluzbe, '-') AS 'Služba',
+                    dp.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    dp.OznakaTipaNaprave AS 'Oznaka tipa naprave',
+                    dp.OznakaOS AS 'Oznaka operacijskega sistema',
+                    dp.CPU AS 'CPU',
+                    dp.RAM AS 'RAM',
+                    dp.DiskC AS 'Disk C',
+                    dp.DiskD AS 'Disk D',
+                    dp.OznakaDP AS EditID
+                FROM delovnapostaja dp
+                LEFT JOIN osebaukm os ON dp.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE dp.OznakaLokacije = ?
+                ORDER BY dp.OznakaDP
+            `
+        },
+        monitorji: {
+            tipNaziv: 'Monitor',
+            query: `
+                SELECT
+                    m.OznakaMonitorja AS 'Oznaka monitorja',
+                    m.ModelMonitorja AS 'Model monitorja',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(m.OznakaSluzbe, '-') AS 'Služba',
+                    m.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    m.Velikost AS 'Velikost',
+                    m.Kamera AS 'Kamera',
+                    m.OznakaMonitorja AS EditID
+                FROM monitor m
+                LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE m.OznakaLokacije = ?
+                ORDER BY m.OznakaMonitorja
+            `
+        },
+        tiskalniki: {
+            tipNaziv: 'Tiskalnik',
+            query: `
+                SELECT
+                    t.OznakaTiskalnika AS 'Oznaka tiskalnika',
+                    t.ModelTiskalnika AS 'Model tiskalnika',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(t.OznakaSluzbe, '-') AS 'Služba',
+                    t.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    t.OznakaTipaTiskalnika AS 'Oznaka tipa tiskalnika',
+                    t.OznakaTiskalnika AS EditID
+                FROM tiskalnik t
+                LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE t.OznakaLokacije = ?
+                ORDER BY t.OznakaTiskalnika
+            `
+        },
+        rocniCitalci: {
+            tipNaziv: 'Ročni čitalec',
+            query: `
+                SELECT
+                    rc.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
+                    rc.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(rc.OznakaSluzbe, '-') AS 'Služba',
+                    rc.OznakaProizvajalca AS 'Oznaka proizvajalca',
+                    rc.Stojalo AS 'Stojalo',
+                    rc.OznakaRocnegaCitalca AS EditID
+                FROM rocnicitalec rc
+                LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE rc.OznakaLokacije = ?
+                ORDER BY rc.OznakaRocnegaCitalca
+            `
+        }
+    };
+
+    const config = tipConfig[tip];
+    if (!config) {
+        return res.status(400).json({ error: 'Neveljaven tip naprave' });
+    }
+
+    try {
+        const naprave = await SQLquery(config.query, [oznakaLokacije]);
+        res.json({
+            tip: tip,
+            tipNaziv: config.tipNaziv,
+            oznakaLokacije,
+            vnosi: naprave
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju naprav po lokaciji za modal:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju naprav po lokaciji' });
+    }
+});
+
+/**
  * Starost – število naprav, starejših od podanega praga (v letih).
  * 4 COUNT poizvedb s filtrom na DatumProizvodnje.
  */
@@ -1102,22 +1459,141 @@ server.get('/nadzornaPlosca/starost', async (req, res) => {
         const parsedStarost = parseInt(req.query.starost, 10);
         const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
 
-        const [stareDp, stariMonitorji, stariTiskalniki, stariCitalci] = await Promise.all([
+        const [stareDp, stariMonitorji, stariTiskalniki, stariCitalci, vsiDp, vsiMonitorji, vsiTiskalniki, vsiCitalci] = await Promise.all([
             SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
             SQLquery('SELECT COUNT(*) AS stevilo FROM monitor WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
             SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
-            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost])
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec WHERE DatumProizvodnje IS NOT NULL AND DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)', [starost]),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM delovnapostaja'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM monitor'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM tiskalnik'),
+            SQLquery('SELECT COUNT(*) AS stevilo FROM rocnicitalec')
         ]);
 
+        const stareDpCount = Number(stareDp[0]?.stevilo || 0);
+        const stariMonitCount = Number(stariMonitorji[0]?.stevilo || 0);
+        const stariTiskCount = Number(stariTiskalniki[0]?.stevilo || 0);
+        const stariCitalCount = Number(stariCitalci[0]?.stevilo || 0);
+        const vsiDpCount = Number(vsiDp[0]?.stevilo || 0);
+        const vsiMonCount = Number(vsiMonitorji[0]?.stevilo || 0);
+        const vsiTiskCount = Number(vsiTiskalniki[0]?.stevilo || 0);
+        const vsiCitalCount = Number(vsiCitalci[0]?.stevilo || 0);
+
         res.json({
-            delovnePostaje: Number(stareDp[0]?.stevilo || 0),
-            monitorji: Number(stariMonitorji[0]?.stevilo || 0),
-            tiskalniki: Number(stariTiskalniki[0]?.stevilo || 0),
-            rocniCitalci: Number(stariCitalci[0]?.stevilo || 0)
+            delovnePostaje: stareDpCount,
+            monitorji: stariMonitCount,
+            tiskalniki: stariTiskCount,
+            rocniCitalci: stariCitalCount,
+            vsidelovnePostaje: vsiDpCount,
+            vsimonitorji: vsiMonCount,
+            vsitiskalniki: vsiTiskCount,
+            vsirocniCitalci: vsiCitalCount
         });
     } catch (err) {
         console.error('Napaka pri pridobivanju podatkov o starosti naprav:', err);
         res.status(500).json({ error: 'Napaka pri pridobivanju podatkov o starosti naprav' });
+    }
+});
+
+/**
+ * Naprave starejše od podanega praga po tipu – seznam vnosov za modal na nadzorni plošči.
+ */
+server.get('/nadzornaPlosca/starejseNaprave/:tip', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    const tip = req.params.tip;
+    const parsedStarost = parseInt(req.query.starost, 10);
+    const starost = Number.isFinite(parsedStarost) ? parsedStarost : 0;
+
+    const tipConfig = {
+        delovnePostaje: {
+            tipNaziv: 'Delovna postaja',
+            query: `
+                SELECT
+                    dp.OznakaDP AS 'Oznaka delovne postaje',
+                    dp.ModelDP AS 'Model delovne postaje',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(dp.OznakaSluzbe, '-') AS 'Služba',
+                    DATE_FORMAT(dp.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje',
+                    dp.OznakaDP AS EditID
+                FROM delovnapostaja dp
+                LEFT JOIN osebaukm os ON dp.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE dp.DatumProizvodnje IS NOT NULL
+                  AND dp.DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+                ORDER BY dp.DatumProizvodnje ASC, dp.OznakaDP
+            `
+        },
+        monitorji: {
+            tipNaziv: 'Monitor',
+            query: `
+                SELECT
+                    m.OznakaMonitorja AS 'Oznaka monitorja',
+                    m.ModelMonitorja AS 'Model monitorja',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(m.OznakaSluzbe, '-') AS 'Služba',
+                    DATE_FORMAT(m.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje',
+                    m.OznakaMonitorja AS EditID
+                FROM monitor m
+                LEFT JOIN osebaukm os ON m.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE m.DatumProizvodnje IS NOT NULL
+                  AND m.DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+                ORDER BY m.DatumProizvodnje ASC, m.OznakaMonitorja
+            `
+        },
+        tiskalniki: {
+            tipNaziv: 'Tiskalnik',
+            query: `
+                SELECT
+                    t.OznakaTiskalnika AS 'Oznaka tiskalnika',
+                    t.ModelTiskalnika AS 'Model tiskalnika',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(t.OznakaSluzbe, '-') AS 'Služba',
+                    DATE_FORMAT(t.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje',
+                    t.OznakaTiskalnika AS EditID
+                FROM tiskalnik t
+                LEFT JOIN osebaukm os ON t.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE t.DatumProizvodnje IS NOT NULL
+                  AND t.DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+                ORDER BY t.DatumProizvodnje ASC, t.OznakaTiskalnika
+            `
+        },
+        rocniCitalci: {
+            tipNaziv: 'Ročni čitalec',
+            query: `
+                SELECT
+                    rc.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
+                    rc.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    IFNULL(CONCAT_WS(' ', os.Ime, os.Priimek), '-') AS 'Uporabnik',
+                    IFNULL(rc.OznakaSluzbe, '-') AS 'Služba',
+                    DATE_FORMAT(rc.DatumProizvodnje, '%Y-%m-%d') AS 'Datum proizvodnje',
+                    rc.OznakaRocnegaCitalca AS EditID
+                FROM rocnicitalec rc
+                LEFT JOIN osebaukm os ON rc.OznakaOsebeUporabniskoIme = os.UporabniskoIme
+                WHERE rc.DatumProizvodnje IS NOT NULL
+                  AND rc.DatumProizvodnje < DATE_SUB(CURDATE(), INTERVAL ? YEAR)
+                ORDER BY rc.DatumProizvodnje ASC, rc.OznakaRocnegaCitalca
+            `
+        }
+    };
+
+    const config = tipConfig[tip];
+    if (!config) {
+        return res.status(400).json({ error: 'Neveljaven tip naprave' });
+    }
+
+    try {
+        const naprave = await SQLquery(config.query, [starost]);
+        res.json({
+            tip,
+            tipNaziv: config.tipNaziv,
+            starost,
+            vnosi: naprave
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju starejših naprav za modal:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju starejših naprav' });
     }
 });
 
@@ -1224,6 +1700,43 @@ server.get('/nadzornaPlosca/grafPoSluzbi', async (req, res) => {
     }
 });
 
+/**
+ * Graf po nadstropjih – število naprav po nadstropju.
+ * 4 poizvedbe (delovne postaje, monitorji, tiskalniki, ročni čitalci po nadstropju).
+ */
+server.get('/nadzornaPlosca/grafPoNadstropju', async (req, res) => {
+    if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
+        return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
+    }
+
+    try {
+        const bazaNadstropij = `
+            FROM (
+                SELECT DISTINCT OznakaNadstropja
+                FROM lokacijaukm
+            ) n
+            LEFT JOIN lokacijaukm l ON l.OznakaNadstropja = n.OznakaNadstropja
+        `;
+
+        const [dpPoNadstropju, monitorjiPoNadstropju, tiskalnikiPoNadstropju, citalciPoNadstropju] = await Promise.all([
+            SQLquery(`SELECT n.OznakaNadstropja, COUNT(d.OznakaDP) AS Stevilo ${bazaNadstropij} LEFT JOIN delovnapostaja d ON d.OznakaLokacije = l.OznakaLokacije GROUP BY n.OznakaNadstropja ORDER BY n.OznakaNadstropja`),
+            SQLquery(`SELECT n.OznakaNadstropja, COUNT(m.OznakaMonitorja) AS Stevilo ${bazaNadstropij} LEFT JOIN monitor m ON m.OznakaLokacije = l.OznakaLokacije GROUP BY n.OznakaNadstropja ORDER BY n.OznakaNadstropja`),
+            SQLquery(`SELECT n.OznakaNadstropja, COUNT(t.OznakaTiskalnika) AS Stevilo ${bazaNadstropij} LEFT JOIN tiskalnik t ON t.OznakaLokacije = l.OznakaLokacije GROUP BY n.OznakaNadstropja ORDER BY n.OznakaNadstropja`),
+            SQLquery(`SELECT n.OznakaNadstropja, COUNT(r.OznakaRocnegaCitalca) AS Stevilo ${bazaNadstropij} LEFT JOIN rocnicitalec r ON r.OznakaLokacije = l.OznakaLokacije GROUP BY n.OznakaNadstropja ORDER BY n.OznakaNadstropja`)
+        ]);
+
+        res.json({
+            delovnePostaje: dpPoNadstropju,
+            monitorji: monitorjiPoNadstropju,
+            tiskalniki: tiskalnikiPoNadstropju,
+            rocniCitalci: citalciPoNadstropju
+        });
+    } catch (err) {
+        console.error('Napaka pri pridobivanju grafa po nadstropjih:', err);
+        res.status(500).json({ error: 'Napaka pri pridobivanju grafa po nadstropjih' });
+    }
+});
+
 server.get('/nadzornaPlosca/equipmentByStatus', async (req, res) => {
     if (!(req.session.loggedIn && req.session.dovoljenja?.includes('NADZORNA_PLOSCA'))) {
         return res.status(401).json({ error: 'Not authenticated or insufficient permissions' });
@@ -1289,6 +1802,18 @@ server.get('/osebDelovnePostaje', async (req, res) => {
                 SELECT
                     dp.OznakaDP AS 'Oznaka delovne postaje',
                     dp.ModelDP AS 'Model delovne postaje',
+                    CASE
+                        WHEN dp.OznakaLokacije IS NULL THEN '-'
+                        ELSE CONCAT(
+                            dp.OznakaLokacije,
+                            ' - ',
+                            IFNULL(lok.NazivLokacije, '-'),
+                            CASE WHEN lok.OznakaNadstropja IS NOT NULL AND lok.OznakaNadstropja <> ''
+                                THEN CONCAT(', ', lok.OznakaNadstropja)
+                                ELSE ''
+                            END
+                        )
+                    END AS 'Lokacija',
                     dp.OznakaProizvajalca AS 'Oznaka proizvajalca',
                     dp.OznakaTipaNaprave AS 'Oznaka tipa naprave',
                     dp.OznakaOS AS 'Oznaka operacijskega sistema',
@@ -1298,6 +1823,7 @@ server.get('/osebDelovnePostaje', async (req, res) => {
                     dp.DiskD AS 'Disk D',
                     dp.OznakaDP AS EditID
                 FROM delovnapostaja dp
+                LEFT JOIN lokacijaukm lok ON dp.OznakaLokacije = lok.OznakaLokacije
                 WHERE dp.OznakaOsebeUporabniskoIme = ?
                 ORDER BY dp.OznakaDP
             `, [username]);
@@ -1321,11 +1847,24 @@ server.get('/osebMonitorji', async (req, res) => {
                 SELECT
                     m.OznakaMonitorja AS 'Oznaka monitorja',
                     m.ModelMonitorja AS 'Model monitorja',
+                    CASE
+                        WHEN m.OznakaLokacije IS NULL THEN '-'
+                        ELSE CONCAT(
+                            m.OznakaLokacije,
+                            ' - ',
+                            IFNULL(lok.NazivLokacije, '-'),
+                            CASE WHEN lok.OznakaNadstropja IS NOT NULL AND lok.OznakaNadstropja <> ''
+                                THEN CONCAT(', ', lok.OznakaNadstropja)
+                                ELSE ''
+                            END
+                        )
+                    END AS 'Lokacija',
                     m.OznakaProizvajalca AS 'Oznaka proizvajalca',
                     m.Velikost AS 'Velikost',
                     m.Kamera AS 'Kamera',
                     m.OznakaMonitorja AS EditID
                 FROM monitor m
+                LEFT JOIN lokacijaukm lok ON m.OznakaLokacije = lok.OznakaLokacije
                 WHERE m.OznakaOsebeUporabniskoIme = ?
                 ORDER BY m.OznakaMonitorja
             `, [username]);
@@ -1349,10 +1888,23 @@ server.get('/osebTiskalniki', async (req, res) => {
                 SELECT
                     t.OznakaTiskalnika AS 'Oznaka tiskalnika',
                     t.ModelTiskalnika AS 'Model tiskalnika',
+                    CASE
+                        WHEN t.OznakaLokacije IS NULL THEN '-'
+                        ELSE CONCAT(
+                            t.OznakaLokacije,
+                            ' - ',
+                            IFNULL(lok.NazivLokacije, '-'),
+                            CASE WHEN lok.OznakaNadstropja IS NOT NULL AND lok.OznakaNadstropja <> ''
+                                THEN CONCAT(', ', lok.OznakaNadstropja)
+                                ELSE ''
+                            END
+                        )
+                    END AS 'Lokacija',
                     t.OznakaProizvajalca AS 'Oznaka proizvajalca',
                     t.OznakaTipaTiskalnika AS 'Oznaka tipa tiskalnika',
                     t.OznakaTiskalnika AS EditID
                 FROM tiskalnik t
+                LEFT JOIN lokacijaukm lok ON t.OznakaLokacije = lok.OznakaLokacije
                 WHERE t.OznakaOsebeUporabniskoIme = ?
                 ORDER BY t.OznakaTiskalnika
             `, [username]);
@@ -1376,9 +1928,22 @@ server.get('/osebRocniCitalci', async (req, res) => {
                 SELECT
                     r.OznakaRocnegaCitalca AS 'Oznaka ročnega čitalca',
                     r.ModelRocnegaCitalca AS 'Model ročnega čitalca',
+                    CASE
+                        WHEN r.OznakaLokacije IS NULL THEN '-'
+                        ELSE CONCAT(
+                            r.OznakaLokacije,
+                            ' - ',
+                            IFNULL(lok.NazivLokacije, '-'),
+                            CASE WHEN lok.OznakaNadstropja IS NOT NULL AND lok.OznakaNadstropja <> ''
+                                THEN CONCAT(', ', lok.OznakaNadstropja)
+                                ELSE ''
+                            END
+                        )
+                    END AS 'Lokacija',
                     r.OznakaProizvajalca AS 'Oznaka proizvajalca',
                     r.OznakaRocnegaCitalca AS EditID
                 FROM rocnicitalec r
+                LEFT JOIN lokacijaukm lok ON r.OznakaLokacije = lok.OznakaLokacije
                 WHERE r.OznakaOsebeUporabniskoIme = ?
                 ORDER BY r.OznakaRocnegaCitalca
             `, [username]);
@@ -1397,16 +1962,19 @@ server.get('/osebRocniCitalci', async (req, res) => {
 
 server.post('/dodajOsebo', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        let { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote } = req.body;
+        let { Ime, Priimek, UporabniskoIme, OznakaSluzbe, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaEnote, OznakaLokacije } = req.body;
         if (OznakaEnote === undefined || OznakaEnote === '') {
             OznakaEnote = null;
         }
         if (OznakaSluzbe === undefined || OznakaSluzbe === '') {
             OznakaSluzbe = null;
         }
+        if (OznakaLokacije === undefined || OznakaLokacije === '') {
+            OznakaLokacije = null;
+        }
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote]);
+        const result = await SQLqueryWithAppUser(appUser, `INSERT INTO osebaukm (UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote, OznakaLokacije) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [UporabniskoIme, Ime, Priimek, InterniTelefoni, MobilniTelefon, ElektronskaPosta, OznakaSluzbe, OznakaEnote, OznakaLokacije]);
         if(result.affectedRows === 1) {
             res.status(200).json({success: true, message: 'Oseba dodana'});
         }else {
@@ -1607,7 +2175,7 @@ server.post('/dodajRocniCitalec', async (req, res) => {
 
 server.post('/urediOsebo', async (req, res) => {
     if(req.session.loggedIn && req.session.dovoljenja?.includes('UREJANJE_UPORABNIKOV')){
-        let {UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID} = req.body;
+        let {UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,OznakaLokacije,ID} = req.body;
         if(InterniTelefoni == undefined || InterniTelefoni == ''){
             InterniTelefoni = null;
         }
@@ -1620,9 +2188,12 @@ server.post('/urediOsebo', async (req, res) => {
         if(OznakaEnote == undefined || OznakaEnote == ''){
             OznakaEnote = null;
         }
+        if(OznakaLokacije == undefined || OznakaLokacije == ''){
+            OznakaLokacije = null;
+        }
         const appUser = getAppUserOrRespond(req, res);
         if (!appUser) return;
-        const result = await SQLqueryWithAppUser(appUser, 'UPDATE osebaukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, InterniTelefoni = ?, MobilniTelefon = ?, ElektronskaPosta = ?, OznakaSluzbe = ?, OznakaEnote = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,ID]);
+        const result = await SQLqueryWithAppUser(appUser, 'UPDATE osebaukm SET UporabniskoIme = ?, Ime = ?, Priimek = ?, InterniTelefoni = ?, MobilniTelefon = ?, ElektronskaPosta = ?, OznakaSluzbe = ?, OznakaEnote = ?, OznakaLokacije = ? WHERE UporabniskoIme = ?', [UporabniskoIme,Ime,Priimek,InterniTelefoni,MobilniTelefon,ElektronskaPosta,OznakaSluzbe,OznakaEnote,OznakaLokacije,ID]);
         if(result.affectedRows === 1){
             res.status(200).json({success: true, message: 'Vnos uspešno spremenjen'});
         } else {
@@ -2020,48 +2591,24 @@ server.listen(serverPort, () => {
 // UTILITY FUNCTIONS
 // ============================================================
 
-function SQLquery(SQLquery, params=[]) {
-    return new Promise((resolve, reject) => {
-        pool.query(SQLquery, params, (err, results) => {
-            if (err){
-                reject(err);
-            } else {
-                resolve(results);
-            }
-        });
-    });
+async function SQLquery(SQLquery, params=[]) {
+    const [results] = await pool.query(SQLquery, params);
+    return results;
 }
 
-function SQLqueryWithAppUser(appUser, SQLquery, params = []) {
+async function SQLqueryWithAppUser(appUser, SQLquery, params = []) {
     if (!appUser) {
-        return Promise.reject(new Error('Missing app user for audited write query.'));
+        throw new Error('Missing app user for audited write query.');
     }
     const resolvedUser = appUser;
-    return new Promise((resolve, reject) => {
-        pool.getConnection((err, connection) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-
-            connection.query('SET @app_user = ?', [resolvedUser], (setErr) => {
-                if (setErr) {
-                    connection.release();
-                    reject(setErr);
-                    return;
-                }
-
-                connection.query(SQLquery, params, (queryErr, results) => {
-                    connection.release();
-                    if (queryErr) {
-                        reject(queryErr);
-                    } else {
-                        resolve(results);
-                    }
-                });
-            });
-        });
-    });
+    const connection = await pool.getConnection();
+    try {
+        await connection.query('SET @app_user = ?', [resolvedUser]);
+        const [results] = await connection.query(SQLquery, params);
+        return results;
+    } finally {
+        connection.release();
+    }
 }
 
 /**

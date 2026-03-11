@@ -59,7 +59,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.forEach(data => {
                     const option = document.createElement('option');
                     option.value = data.OznakaLokacije;
-                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije;
+                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije + (data.OznakaNadstropja ? ', ' + data.OznakaNadstropja : '');
                     input.appendChild(option);
                 });
             });

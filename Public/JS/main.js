@@ -297,7 +297,8 @@ const centeredColumns = new Set([
     'Urejanje uporabnikov',
     'Odpis opreme',
     'Pregled nadzorne plošče',
-    'Odstranitev uporabnika opreme'
+    'Odstranitev uporabnika opreme',
+    'Nadstropje'
 ])
 
 /**

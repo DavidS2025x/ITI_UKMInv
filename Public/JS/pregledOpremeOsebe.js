@@ -16,6 +16,7 @@ async function loadOsebeDropdown() {
         const response = await fetch('/osebaPodatkiForm');
         const osebe = await response.json();
         const select = document.getElementById('osebaSelect');
+        const refreshButton = document.getElementById('refreshOsebaButton');
         
         osebe.forEach(oseba => {
             const option = document.createElement('option');
@@ -25,6 +26,16 @@ async function loadOsebeDropdown() {
         });
         
         select.addEventListener('change', loadOsebaOprema);
+        refreshButton.addEventListener('click', loadOsebaOprema);
+
+        // Auto-select person and load their data when returning from an edit page
+        const preselect = new URLSearchParams(window.location.search).get('username');
+        if (preselect) {
+            select.value = preselect;
+            if (select.value === preselect) {
+                await loadOsebaOprema();
+            }
+        }
     } catch (err) {
         console.error('Error loading osebe:', err);
     }
@@ -40,6 +51,51 @@ const UNASSIGN_CONFIG = {
     rocniCitalci: { url: '/nerazporejenRocniCitalec', label: 'ročnega čitalca' }
 };
 
+function fallbackValue(value) {
+    if (value === null || value === undefined || value === '') {
+        return '-';
+    }
+    return value;
+}
+
+function renderUserSummary(user) {
+    const placeholder = document.getElementById('userSummaryPlaceholder');
+    const content = document.getElementById('userSummaryContent');
+
+    if (!user) {
+        placeholder.classList.remove('d-none');
+        content.classList.add('d-none');
+        return;
+    }
+
+    document.getElementById('selectedUserFullName').textContent = `${fallbackValue(user.Ime)} ${fallbackValue(user.Priimek)}`.trim();
+    document.getElementById('selectedUserUsername').textContent = fallbackValue(user.UporabniskoIme);
+    document.getElementById('selectedUserEmail').textContent = fallbackValue(user.ElektronskaPosta);
+    document.getElementById('selectedUserMobile').textContent = fallbackValue(user.MobilniTelefon);
+    document.getElementById('selectedUserInternal').textContent = fallbackValue(user.InterniTelefoni);
+    document.getElementById('selectedUserEnota').textContent = fallbackValue(user.OznakaEnote);
+    document.getElementById('selectedUserSluzba').textContent = fallbackValue(user.OznakaSluzbe);
+    document.getElementById('selectedUserLokacija').textContent = fallbackValue(user.Lokacija);
+
+    placeholder.classList.add('d-none');
+    content.classList.remove('d-none');
+}
+
+function resetUserSummary() {
+    renderUserSummary(null);
+    document.getElementById('chipDelovnePostaje').textContent = 'DP: 0';
+    document.getElementById('chipMonitorji').textContent = 'MON: 0';
+    document.getElementById('chipTiskalniki').textContent = 'TIS: 0';
+    document.getElementById('chipRocniCitalci').textContent = 'RC: 0';
+}
+
+function updateSummaryCountChips(delovnePostaje, monitorji, tiskalniki, rocniCitalci) {
+    document.getElementById('chipDelovnePostaje').textContent = `DP: ${delovnePostaje.length}`;
+    document.getElementById('chipMonitorji').textContent = `MON: ${monitorji.length}`;
+    document.getElementById('chipTiskalniki').textContent = `TIS: ${tiskalniki.length}`;
+    document.getElementById('chipRocniCitalci').textContent = `RC: ${rocniCitalci.length}`;
+}
+
 /**
  * Naloži in prikaže vso opremo izbrane osebe iz spustnega seznama.
  * Ob spremembi izbire zbriše obstoječo vsebino in pridobi nove podatke s strežnika za vse tipe naprav.
@@ -53,6 +109,7 @@ async function loadOsebaOprema() {
     document.getElementById('monitorjiContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
     document.getElementById('tiskalnikContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
     document.getElementById('rocniCitalecContainer').innerHTML = '<p class="text-muted text-center">Nalaganje...</p>';
+    document.getElementById('userSummaryPlaceholder').textContent = 'Nalaganje podrobnosti osebe...';
     
     if (!uporabniskoIme) {
         document.getElementById('delovnePostajeContainer').innerHTML = '<p class="text-muted text-center">Izberite osebo za prikaz podatkov</p>';
@@ -63,27 +120,29 @@ async function loadOsebaOprema() {
         document.getElementById('countMonitorji').textContent = '[0]';
         document.getElementById('countTiskalniki').textContent = '[0]';
         document.getElementById('countRocniCitalci').textContent = '[0]';
+        document.getElementById('userSummaryPlaceholder').textContent = 'Izberite osebo za prikaz podrobnosti';
+        resetUserSummary();
         return;
     }
     
     try {
-        // Fetch delovne postaje
-        const dpResponse = await fetch(`/osebDelovnePostaje?username=${encodeURIComponent(uporabniskoIme)}`);
+        const [osebaResponse, dpResponse, mResponse, tResponse, rcResponse] = await Promise.all([
+            fetch(`/osebaPodatkiPovzetek?username=${encodeURIComponent(uporabniskoIme)}`),
+            fetch(`/osebDelovnePostaje?username=${encodeURIComponent(uporabniskoIme)}`),
+            fetch(`/osebMonitorji?username=${encodeURIComponent(uporabniskoIme)}`),
+            fetch(`/osebTiskalniki?username=${encodeURIComponent(uporabniskoIme)}`),
+            fetch(`/osebRocniCitalci?username=${encodeURIComponent(uporabniskoIme)}`)
+        ]);
+
+        const oseba = osebaResponse.ok ? await osebaResponse.json() : null;
         const delovnePostaje = dpResponse.ok ? await dpResponse.json() : [];
-        
-        // Fetch monitorji
-        const mResponse = await fetch(`/osebMonitorji?username=${encodeURIComponent(uporabniskoIme)}`);
         const monitorji = mResponse.ok ? await mResponse.json() : [];
-        
-        // Fetch tiskalniki
-        const tResponse = await fetch(`/osebTiskalniki?username=${encodeURIComponent(uporabniskoIme)}`);
         const tiskalniki = tResponse.ok ? await tResponse.json() : [];
-        
-        // Fetch ročni čitalci
-        const rcResponse = await fetch(`/osebRocniCitalci?username=${encodeURIComponent(uporabniskoIme)}`);
         const rocniCitalci = rcResponse.ok ? await rcResponse.json() : [];
         
         // Render data
+        renderUserSummary(oseba);
+        updateSummaryCountChips(delovnePostaje, monitorji, tiskalniki, rocniCitalci);
         renderEquipmentList(delovnePostaje, 'delovnePostajeContainer', 'countDelovnePostaje', 'delovnePostaje', currentUserData);
         renderEquipmentList(monitorji, 'monitorjiContainer', 'countMonitorji', 'monitorji', currentUserData);
         renderEquipmentList(tiskalniki, 'tiskalnikContainer', 'countTiskalniki', 'tiskalniki', currentUserData);
@@ -98,6 +157,8 @@ async function loadOsebaOprema() {
         document.getElementById('countMonitorji').textContent = '[0]';
         document.getElementById('countTiskalniki').textContent = '[0]';
         document.getElementById('countRocniCitalci').textContent = '[0]';
+        document.getElementById('userSummaryPlaceholder').textContent = 'Napaka pri nalaganju podrobnosti osebe';
+        resetUserSummary();
     }
 }
 
@@ -186,7 +247,13 @@ async function openEquipmentEdit(equipmentType, editId) {
         await fetch('/nastaviEditID', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ EditID: decodedId })
+            body: JSON.stringify({
+                EditID: decodedId,
+                returnUrl: (() => {
+                    const u = document.getElementById('osebaSelect').value;
+                    return u ? '/opremaOsebePregled?username=' + encodeURIComponent(u) : null;
+                })()
+            })
         });
         window.location.href = editPath;
     } catch (err) {
@@ -300,6 +367,7 @@ async function removeEquipmentFromUser(equipmentType, oznaka) {
 
 // Inicializacija strani: naloži podatke prijavljenega uporabnika in zapolni spustni seznam oseb
 window.addEventListener("DOMContentLoaded", () => {
+    resetUserSummary();
     uporabnikPodatki()
         .then(data => {
             // Store user data for use in renderEquipmentList

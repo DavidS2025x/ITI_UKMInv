@@ -46,12 +46,43 @@
             <h2 class="mb-0">Pregled opreme osebe</h2>
         </div>
         
-        <!-- Person Selector -->
-        <div class="person-selector">
-            <label for="osebaSelect" class="form-label mb-0">Izberite osebo:</label>
-            <select id="osebaSelect" class="form-select">
-                <option value="" disabled selected hidden>-- Izberite osebo --</option>
-            </select>
+        <div class="selection-summary-row">
+            <div class="person-selector">
+                <label for="osebaSelect" class="form-label mb-0">Izberite osebo:</label>
+                <select id="osebaSelect" class="form-select">
+                    <option value="" disabled selected hidden>-- Izberite osebo --</option>
+                </select>
+                <button type="button" id="refreshOsebaButton" class="btn btn-outline-secondary person-refresh-btn" title="Osveži podatke" aria-label="Osveži podatke osebe">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+
+            <div class="user-summary-inline" id="userSummaryCard">
+                <div id="userSummaryPlaceholder" class="text-muted small">Izberite osebo za prikaz podrobnosti</div>
+                <div id="userSummaryContent" class="d-none">
+                    <div class="user-summary-inline-top">
+                        <div class="user-summary-identity">
+                            <strong id="selectedUserFullName">-</strong>
+                            <span class="text-muted small" id="selectedUserUsername">-</span>
+                        </div>
+                        <div class="user-summary-chips">
+                            <span class="badge summary-chip summary-chip--dp" id="chipDelovnePostaje">DP: 0</span>
+                            <span class="badge summary-chip summary-chip--monitor" id="chipMonitorji">MON: 0</span>
+                            <span class="badge summary-chip summary-chip--tiskalnik" id="chipTiskalniki">TIS: 0</span>
+                            <span class="badge summary-chip summary-chip--citalec" id="chipRocniCitalci">RC: 0</span>
+                        </div>
+                    </div>
+
+                    <div class="user-summary-inline-fields">
+                        <span><span class="label">E-pošta:</span> <span id="selectedUserEmail">-</span></span>
+                        <span><span class="label">Mobilni:</span> <span id="selectedUserMobile">-</span></span>
+                        <span><span class="label">Interni:</span> <span id="selectedUserInternal">-</span></span>
+                        <span><span class="label">Enota:</span> <span id="selectedUserEnota">-</span></span>
+                        <span><span class="label">Služba:</span> <span id="selectedUserSluzba">-</span></span>
+                        <span><span class="label">Lokacija:</span> <span id="selectedUserLokacija">-</span></span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

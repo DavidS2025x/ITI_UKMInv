@@ -51,14 +51,40 @@ body:not(.login-page) .card-header {
     width: 80px;
 }
 
+.lokacija-select-wrap {
+    flex-wrap: nowrap;
+}
+
+#lokacijaDashboardSelect {
+    width: 220px;
+}
+
+#lokacijaNadstropje {
+    white-space: nowrap;
+}
+
 .dashboard-page .card-body strong {
     font-size: 1.05rem;
+}
+
+/* Tighten row height in dashboard cards while keeping readability. */
+.dashboard-page .card-body .py-2 {
+    padding-top: 0.3rem !important;
+    padding-bottom: 0.3rem !important;
+}
+
+.dashboard-page .card-body .d-flex.align-items-center {
+    line-height: 1.5;
 }
 
 .dashboard-page .card-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.dashboard-page .card-header.dashboard-equal-header {
+    min-height: 56px;
 }
 
 .equipment-page {
@@ -70,9 +96,16 @@ body:not(.login-page) .card-header {
     margin: 3rem 0 1.5rem 3rem;
 }
 
+.equipment-page .selection-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
 .equipment-page .person-selector {
     display: flex;
-    gap: 12px;
+    gap: 6px;
     align-items: center;
 }
 
@@ -82,6 +115,184 @@ body:not(.login-page) .card-header {
 
 .equipment-page .person-selector .form-select {
     max-width: 320px;
+}
+
+.equipment-page .person-refresh-btn {
+    flex: 0 0 auto;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.45rem;
+    border: none;
+    background: transparent;
+    color: var(--app-muted);
+    box-shadow: none;
+}
+
+.equipment-page .person-refresh-btn:hover,
+.equipment-page .person-refresh-btn:focus,
+.equipment-page .person-refresh-btn:active {
+    border: none;
+    background: transparent;
+    color: var(--app-primary);
+    box-shadow: none;
+}
+
+.equipment-page .user-summary-inline {
+    flex: 1 1 520px;
+    height: 62px;
+    padding: 0.55rem 1rem;
+    border: 1px solid var(--app-border);
+    border-radius: 12px;
+    background: var(--app-surface);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.equipment-page #userSummaryPlaceholder,
+.equipment-page #userSummaryContent {
+    width: 100%;
+    line-height: 1.2;
+}
+
+.equipment-page #userSummaryPlaceholder {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.equipment-page #userSummaryContent {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.equipment-page .user-summary-inline-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 20px;
+    margin-bottom: 0.4rem;
+}
+
+.equipment-page .user-summary-chips {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.equipment-page .user-summary-identity {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.equipment-page .user-summary-identity strong,
+.equipment-page .user-summary-identity span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.equipment-page .user-summary-identity strong {
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.equipment-page .user-summary-identity .small {
+    font-size: 0.88rem !important;
+    line-height: 1.2;
+}
+
+.equipment-page .user-summary-inline-fields {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem 1rem;
+    margin-top: 0;
+    font-size: 0.92rem;
+    line-height: 1.25;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.equipment-page .user-summary-inline-fields > span {
+    white-space: nowrap;
+}
+
+.equipment-page .user-summary-inline-fields .label {
+    color: var(--app-muted);
+    font-weight: 600;
+}
+
+.equipment-page .summary-chip {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.equipment-page .summary-chip--dp {
+    background: #3498db;
+}
+
+.equipment-page .summary-chip--monitor {
+    background: #2ecc71;
+}
+
+.equipment-page .summary-chip--tiskalnik {
+    background: #e67e22;
+}
+
+.equipment-page .summary-chip--citalec {
+    background: #9b59b6;
+}
+
+@media (max-width: 992px) {
+    .equipment-page .selection-summary-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .equipment-page .user-summary-inline {
+        height: auto;
+        min-height: 62px;
+    }
+
+    .equipment-page .user-summary-chips,
+    .equipment-page .user-summary-identity,
+    .equipment-page .user-summary-inline-fields {
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .equipment-page .page-header {
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .equipment-page .person-selector {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .equipment-page .person-selector .form-label,
+    .equipment-page .person-selector .form-select {
+        min-width: 0;
+        max-width: none;
+    }
+
+    .equipment-page .user-summary-inline-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 .equipment-grid {

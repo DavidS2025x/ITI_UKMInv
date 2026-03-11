@@ -60,7 +60,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 data.forEach(data => {
                     const option = document.createElement('option');
                     option.value = data.OznakaLokacije;
-                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije;
+                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije + (data.OznakaNadstropja ? ', ' + data.OznakaNadstropja : '');
                     input.appendChild(option);
                 });
             });
@@ -226,7 +226,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        showNotificationModal('Uspeh', 'Delovna postaja uspešno urejena!', '/opremaPregled#delovnePostaje');
+                        fetch('/getReturnUrl').then(r => r.json())
+                            .then(d => showNotificationModal('Uspeh', 'Delovna postaja uspešno urejena!', d.returnUrl || '/opremaPregled#delovnePostaje'))
+                            .catch(() => showNotificationModal('Uspeh', 'Delovna postaja uspešno urejena!', '/opremaPregled#delovnePostaje'));
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
                         showNotificationModal('Napaka', 'Napaka pri urejanju delovne postaje.');

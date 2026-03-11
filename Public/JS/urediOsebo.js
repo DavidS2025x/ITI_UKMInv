@@ -51,6 +51,19 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            // Naloži seznam lokacij v spustni meni
+            const lokacije_promise = fetch('/lokacijaPodatkiForm')
+            .then(response => response.json())
+            .then(data => {
+                const lokacijaSelect = document.getElementById('OznakaLokacije');
+                data.forEach(data => {
+                    const option = document.createElement('option');
+                    option.value = data.OznakaLokacije;
+                    option.textContent = data.OznakaLokacije + ' - ' + data.NazivLokacije + (data.OznakaNadstropja ? ', ' + data.OznakaNadstropja : '');
+                    lokacijaSelect.appendChild(option);
+                });
+            });
+
             const naslov = document.getElementById("naslov")
             naslov.innerText = "Uredi osebo";
 
@@ -66,9 +79,10 @@ window.addEventListener("DOMContentLoaded", () => {
                 window.ElektronskaPosta = data.ElektronskaPosta;
                 window.OznakaSluzbe = data.OznakaSluzbe;
                 window.OznakaEnote = data.OznakaEnote;
+                window.OznakaLokacije = data.OznakaLokacije;
 
                 // Počakaj da so vse možnosti naložene
-                return Promise.all([sluzbe_promise, enote_promise]);
+                return Promise.all([sluzbe_promise, enote_promise, lokacije_promise]);
             })
             .then(() => {
                 // Sedaj so vse možnosti naložene - nastavi vrednosti
@@ -80,6 +94,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('ElektronskaPosta').value = window.ElektronskaPosta;
                 document.getElementById('Sluzba').value = window.OznakaSluzbe;
                 document.getElementById('Enota').value = window.OznakaEnote;
+                document.getElementById('OznakaLokacije').value = window.OznakaLokacije || '';
             })
 
             // Obravnava oddaje obrazca – zberi spremembe in pošlji POST na strežnik
@@ -95,6 +110,7 @@ window.addEventListener("DOMContentLoaded", () => {
                     ElektronskaPosta: form.ElektronskaPosta.value,
                     OznakaSluzbe: form.Sluzba.value,
                     OznakaEnote: form.Enota.value,
+                    OznakaLokacije: form.OznakaLokacije.value,
                     ID: window.UporabniskoIme
                 };
                 fetch('/urediOsebo', {
@@ -104,7 +120,7 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', '/pregledOseb');
+                        showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', '/osebaPregled');
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
                         showNotificationModal('Napaka', 'Napaka pri spreminjanju vnosa.');
@@ -127,5 +143,6 @@ window.addEventListener("DOMContentLoaded", () => {
                 document.getElementById('ElektronskaPosta').value = window.ElektronskaPosta;
                 document.getElementById('Sluzba').value = window.OznakaSluzbe;
                 document.getElementById('Enota').value = window.OznakaEnote;
+                document.getElementById('OznakaLokacije').value = window.OznakaLokacije || '';
             });
         });
