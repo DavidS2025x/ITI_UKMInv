@@ -63,22 +63,60 @@ function renderUserSummary(user) {
     const content = document.getElementById('userSummaryContent');
 
     if (!user) {
+        updateEditSelectedUserButton(null);
         placeholder.classList.remove('d-none');
         content.classList.add('d-none');
         return;
     }
 
     document.getElementById('selectedUserFullName').textContent = `${fallbackValue(user.Ime)} ${fallbackValue(user.Priimek)}`.trim();
-    document.getElementById('selectedUserUsername').textContent = fallbackValue(user.UporabniskoIme);
+    document.getElementById('selectedUserUsername').textContent = user.UporabniskoIme ? user.UporabniskoIme : '';
     document.getElementById('selectedUserEmail').textContent = fallbackValue(user.ElektronskaPosta);
     document.getElementById('selectedUserMobile').textContent = fallbackValue(user.MobilniTelefon);
     document.getElementById('selectedUserInternal').textContent = fallbackValue(user.InterniTelefoni);
     document.getElementById('selectedUserEnota').textContent = fallbackValue(user.OznakaEnote);
     document.getElementById('selectedUserSluzba').textContent = fallbackValue(user.OznakaSluzbe);
     document.getElementById('selectedUserLokacija').textContent = fallbackValue(user.Lokacija);
+    updateEditSelectedUserButton(user.UporabniskoIme || null);
 
     placeholder.classList.add('d-none');
     content.classList.remove('d-none');
+}
+
+function updateEditSelectedUserButton(username) {
+    const editBtn = document.getElementById('editSelectedUserButton');
+    if (!editBtn) return;
+
+    const canEditUsers = currentUserData && currentUserData.dovoljenja?.includes('UREJANJE_UPORABNIKOV');
+    const validUsername = username && username !== '-';
+    const visible = Boolean(canEditUsers && validUsername);
+
+    editBtn.classList.toggle('d-none', !visible);
+    editBtn.disabled = !visible;
+    editBtn.dataset.username = visible ? username : '';
+}
+
+async function openSelectedUserEdit() {
+    const canEditUsers = currentUserData && currentUserData.dovoljenja?.includes('UREJANJE_UPORABNIKOV');
+    if (!canEditUsers) return;
+
+    const editBtn = document.getElementById('editSelectedUserButton');
+    const selectedUsername = (editBtn?.dataset?.username || document.getElementById('osebaSelect')?.value || '').trim();
+    if (!selectedUsername) return;
+
+    try {
+        await fetch('/nastaviEditID', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                EditID: selectedUsername,
+                returnUrl: '/opremaOsebePregled?username=' + encodeURIComponent(selectedUsername)
+            })
+        });
+        window.location.href = '/urediOsebo';
+    } catch (err) {
+        console.error('Error setting selected person edit ID:', err);
+    }
 }
 
 function resetUserSummary() {
@@ -368,10 +406,15 @@ async function removeEquipmentFromUser(equipmentType, oznaka) {
 // Inicializacija strani: naloži podatke prijavljenega uporabnika in zapolni spustni seznam oseb
 window.addEventListener("DOMContentLoaded", () => {
     resetUserSummary();
+    const editSelectedUserButton = document.getElementById('editSelectedUserButton');
+    if (editSelectedUserButton) {
+        editSelectedUserButton.addEventListener('click', openSelectedUserEdit);
+    }
     uporabnikPodatki()
         .then(data => {
             // Store user data for use in renderEquipmentList
             currentUserData = data;
+            updateEditSelectedUserButton(null);
             // Update navbar with user info
             updateUserDisplay(data);
             // Generate action buttons based on permissions

@@ -77,6 +77,8 @@ window.addEventListener("DOMContentLoaded", () => {
                 });
             });
 
+            bindAutoFillOrgByUser('OznakaOsebeUporabniskoIme', 'OznakaEnote', 'OznakaSluzbe');
+
             // Naloži seznam služb v spustni meni
             fetch('/sluzbaPodatkiForm')
             .then(response => response.json())

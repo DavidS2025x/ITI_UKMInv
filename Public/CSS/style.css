@@ -187,6 +187,33 @@ body:not(.login-page) .card-header {
     flex-shrink: 0;
 }
 
+.equipment-page .user-summary-edit-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--app-muted);
+    box-shadow: none;
+    margin-left: 0.05rem;
+}
+
+.equipment-page .user-summary-edit-btn i {
+    font-size: 1.05rem;
+}
+
+.equipment-page .user-summary-edit-btn:hover,
+.equipment-page .user-summary-edit-btn:focus,
+.equipment-page .user-summary-edit-btn:active {
+    color: var(--app-primary);
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+
 .equipment-page .user-summary-identity {
     display: flex;
     align-items: baseline;
@@ -270,6 +297,7 @@ body:not(.login-page) .card-header {
     .equipment-page .user-summary-inline-fields {
         flex-wrap: wrap;
     }
+
 }
 
 @media (max-width: 768px) {

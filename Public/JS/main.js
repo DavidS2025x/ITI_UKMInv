@@ -106,6 +106,76 @@ function openChangePasswordModal(event) {
     window.location.href = '/spremembaGesla';
 };
 
+/**
+ * Glede na izbranega uporabnika samodejno nastavi Enoto in Službo na obrazcu.
+ *
+ * @async
+ * @param {string} personSelectId - ID select polja za uporabnika.
+ * @param {string} enotaSelectId - ID select polja za enoto.
+ * @param {string} sluzbaSelectId - ID select polja za službo.
+ * @returns {Promise<void>}
+ */
+async function autoFillOrgBySelectedUser(personSelectId = 'OznakaOsebeUporabniskoIme', enotaSelectId = 'OznakaEnote', sluzbaSelectId = 'OznakaSluzbe') {
+    const personSelect = document.getElementById(personSelectId);
+    const enotaSelect = document.getElementById(enotaSelectId);
+    const sluzbaSelect = document.getElementById(sluzbaSelectId);
+    if (!personSelect || !enotaSelect || !sluzbaSelect) {
+        return;
+    }
+
+    const username = (personSelect.value || '').trim();
+    if (!username) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/osebaPodatkiPovzetek?username=${encodeURIComponent(username)}`);
+        if (!response.ok) {
+            return;
+        }
+
+        const result = await response.json();
+        const oseba = Array.isArray(result)
+            ? (result.length > 0 ? result[0] : null)
+            : result;
+        if (!oseba) {
+            return;
+        }
+
+        if (oseba.OznakaEnote) {
+            enotaSelect.value = oseba.OznakaEnote;
+        }
+        if (oseba.OznakaSluzbe) {
+            sluzbaSelect.value = oseba.OznakaSluzbe;
+        }
+    } catch (error) {
+        console.warn('Samodejno izpolnjevanje Enote/Službe ni uspelo:', error);
+    }
+}
+
+/**
+ * Veže samodejno posodabljanje Enote in Službe na spremembo izbranega uporabnika.
+ *
+ * @param {string} personSelectId - ID select polja za uporabnika.
+ * @param {string} enotaSelectId - ID select polja za enoto.
+ * @param {string} sluzbaSelectId - ID select polja za službo.
+ * @returns {void}
+ */
+function bindAutoFillOrgByUser(personSelectId = 'OznakaOsebeUporabniskoIme', enotaSelectId = 'OznakaEnote', sluzbaSelectId = 'OznakaSluzbe') {
+    const personSelect = document.getElementById(personSelectId);
+    if (!personSelect) {
+        return;
+    }
+
+    personSelect.addEventListener('change', () => {
+        autoFillOrgBySelectedUser(personSelectId, enotaSelectId, sluzbaSelectId);
+    });
+
+    if (personSelect.value) {
+        autoFillOrgBySelectedUser(personSelectId, enotaSelectId, sluzbaSelectId);
+    }
+}
+
 // Klik na labelo označi celotno vsebino povezanega vnosnega polja.
 document.addEventListener('click', (event) => {
     const label = event.target.closest('label[for]');

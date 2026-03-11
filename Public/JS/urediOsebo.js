@@ -120,7 +120,9 @@ window.addEventListener("DOMContentLoaded", () => {
                 })
                 .then(response => {
                     if (response.ok) {
-                        showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', '/osebaPregled');
+                        fetch('/getReturnUrl').then(r => r.json())
+                            .then(d => showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', d.returnUrl || '/osebaPregled'))
+                            .catch(() => showNotificationModal('Uspeh', 'Vnos uspešno spremenjen.', '/osebaPregled'));
                     } else {
                         response.json().then(j => console.error(j)).catch(()=>{});
                         showNotificationModal('Napaka', 'Napaka pri spreminjanju vnosa.');
